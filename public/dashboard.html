@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paygate Sandbox</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    // Immediate auth check - redirect before page renders
+    if (!localStorage.getItem('admin_password')) {
+      window.location.replace('/login');
+    }
+    
+    // Theme management - load saved theme immediately
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      
+      // Function to update theme toggle icon
+      function updateThemeIcon() {
+        const toggleBtn = document.getElementById('theme-toggle');
+        if (toggleBtn) {
+          const currentTheme = document.documentElement.getAttribute('data-theme');
+          const iconSvg = toggleBtn.querySelector('svg');
+          if (iconSvg) {
+            // Update SVG based on theme (shows icon for the theme you'll switch TO)
+            if (currentTheme === 'dark') {
+              // Show sun icon (switch to light)
+              iconSvg.innerHTML = '<circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>';
+            } else {
+              // Show moon icon (switch to dark)
+              iconSvg.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+            }
+          }
+        }
+      }
+      
+      // Theme toggle function
+      window.toggleTheme = function() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon();
+      };
+      
+      // Update icon when DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updateThemeIcon);
+      } else {
+        updateThemeIcon();
+      }
+    })();
+  </script>
+  <style>
+    /* Hide body until auth confirmed */
+    body { visibility: hidden; }
+    body.authenticated { visibility: visible; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <a href="/dashboard" class="logo">
+        <div class="logo-text">Paygate Sandbox</div>
+      </a>
+      <div class="header-actions">
+        <a href="/inspector" class="btn btn-secondary btn-sm header-link" title="Callback inspector">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 17V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"></path>
+            <polyline points="8 10 11 13 8 16"></polyline>
+            <line x1="13" y1="16" x2="16" y2="16"></line>
+          </svg>
+          <span>Inspector</span>
+        </a>
+        <button class="theme-toggle" onclick="toggleTheme()" id="theme-toggle" title="Toggle theme" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+          </svg>
+        </button>
+        <button class="btn btn-secondary" onclick="openConfigModal()" title="Global Configuration" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+        <button class="btn btn-secondary" onclick="logout()" title="Logout" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="payments" onclick="switchTab('payments')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;">
+          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+          <line x1="1" y1="10" x2="23" y2="10"></line>
+        </svg>
+        Payments
+      </button>
+      <button class="tab-btn" data-tab="logs" onclick="switchTab('logs')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        Request Logs
+      </button>
+    </div>
+
+    <!-- Payments Tab -->
+    <div class="tab-content active" id="tab-payments">
+      <!-- Stats -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value stat-total" id="stat-total">-</div>
+          <div class="stat-label">Total Payments</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value stat-pending" id="stat-pending">-</div>
+          <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value stat-success" id="stat-success">-</div>
+          <div class="stat-label">Success</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value stat-failed" id="stat-failed">-</div>
+          <div class="stat-label">Failed</div>
+        </div>
+      </div>
+
+    <!-- Payments Table -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Payments</h2>
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="refresh-payments-btn" class="btn btn-secondary btn-sm" onclick="refreshPayments()" title="Refresh payments" style="gap: 0.25rem;">
+            <svg id="refresh-payments-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            <span id="refresh-payments-text">Refresh</span>
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="openClearPaymentsModal()" title="Clear all payments" style="gap: 0.25rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Clear Payments
+          </button>
+        </div>
+      </div>
+      
+      <!-- Filters -->
+      <div class="card-body" style="border-bottom: 1px solid var(--border);">
+        <div class="filters">
+          <div class="filter-group" style="flex: 1; min-width: 280px;">
+            <label for="search-input">Search</label>
+            <input type="text" id="search-input" class="form-input search-input" 
+                   placeholder="Invoice number..." onkeyup="handleSearch(event)">
+          </div>
+          <div class="filter-group" style="width: 160px;">
+            <label for="provider-filter">Provider</label>
+            <div class="form-select-wrapper">
+              <select id="provider-filter" class="form-select" onchange="handleProviderFilterChange()">
+                <option value="all">All Providers</option>
+                <option value="2c2p">2C2P</option>
+                <option value="omise">Omise</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-group" style="width: 160px;">
+            <label for="method-filter">Method</label>
+            <div class="form-select-wrapper">
+              <select id="method-filter" class="form-select" onchange="handleMethodFilterChange()">
+                <option value="all">All Methods</option>
+                <option value="CC">Credit Card</option>
+                <option value="3DS">3D Secure</option>
+                <option value="QR">QR Payment</option>
+                <option value="DPAY">Digital Wallet</option>
+                <option value="PC">Pay at Counter</option>
+                <option value="SSM">Self Service</option>
+                <option value="IB">Internet Banking</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-group" style="width: 160px;">
+            <label for="status-filter">Status</label>
+            <div class="form-select-wrapper">
+              <select id="status-filter" class="form-select" onchange="handleStatusFilterChange()">
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="success">Success</option>
+                <option value="failed">Failed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Invoice No</th>
+              <th>Provider</th>
+              <th>Method</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Callbacks</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="payments-tbody">
+            <tr>
+              <td colspan="8">
+                <div class="loading">
+                  <div class="spinner"></div>
+                  Loading payments...
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Payments Pagination -->
+      <div class="pagination-container" id="payments-pagination">
+        <div class="pagination-info">Loading...</div>
+      </div>
+    </div>
+    </div><!-- End Payments Tab -->
+
+    <!-- Logs Tab -->
+    <div class="tab-content" id="tab-logs">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Request/Response Logs</h2>
+          <div class="header-actions">
+            <button id="refresh-logs-btn" class="btn btn-secondary btn-sm" onclick="refreshLogs()" title="Refresh logs" style="gap: 0.25rem;">
+              <svg id="refresh-logs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+              <span id="refresh-logs-text">Refresh</span>
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="openClearLogsModal()" title="Clear all logs" style="gap: 0.25rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              Clear Logs
+            </button>
+          </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="card-body" style="border-bottom: 1px solid var(--border);">
+          <div class="filters">
+            <div class="filter-group" style="width: 160px;">
+              <label for="log-type-filter">Type</label>
+              <div class="form-select-wrapper">
+                <select id="log-type-filter" class="form-select" onchange="handleLogTypeFilterChange()">
+                  <option value="all">All Types</option>
+                  <optgroup label="2C2P">
+                    <option value="token">Token</option>
+                    <option value="inquiry">Inquiry</option>
+                  </optgroup>
+                  <optgroup label="Omise">
+                    <option value="omise-charge">Charge (Create)</option>
+                    <option value="omise-charge-get">Charge (Get)</option>
+                    <option value="omise-token">Token</option>
+                    <option value="omise-source">Source</option>
+                  </optgroup>
+                  <optgroup label="Other">
+                    <option value="callback">Callback</option>
+                  </optgroup>
+                </select>
+              </div>
+            </div>
+            <div class="filter-group">
+              <input type="text" id="log-invoice-filter" class="form-input" 
+                     placeholder="Filter by invoice..." onkeyup="handleLogSearch(event)" style="width: 200px;">
+            </div>
+            <div class="filter-group">
+              <span id="log-ttl-info" class="text-muted" style="font-size: 0.875rem;">
+                TTL: 7 days
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Logs Table -->
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Type</th>
+                <th>Invoice</th>
+                <th>Method</th>
+                <th>Path</th>
+                <th>Status</th>
+                <th>Duration</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="logs-tbody">
+              <tr>
+                <td colspan="8">
+                  <div class="loading">
+                    <div class="spinner"></div>
+                    Loading logs...
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Logs Pagination -->
+        <div class="pagination-container" id="logs-pagination">
+          <div class="pagination-info">Loading...</div>
+        </div>
+      </div>
+    </div><!-- End Logs Tab -->
+  </main>
+
+  <!-- Config Modal -->
+  <div class="modal-overlay" id="config-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Global Configuration</h3>
+        <button class="modal-close" onclick="closeConfigModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.5rem;">
+          Configure global simulation settings that apply to all API requests across the gateway.
+        </p>
+        <div class="config-panel">
+          <div class="config-item">
+            <div class="config-item-header">
+              <span class="config-item-title">Global Delay</span>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <input type="number" id="config-delay" class="form-input" 
+                     placeholder="Delay in ms" min="0" step="100">
+              <small style="color: var(--text-muted); font-size: 0.75rem;">
+                Add delay to all API responses (milliseconds)
+              </small>
+            </div>
+          </div>
+          
+          <div class="config-item">
+            <div class="config-item-header">
+              <span class="config-item-title">Force Error (2C2P)</span>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <div class="form-select-wrapper">
+                <select id="config-error-2c2p" class="form-select">
+                  <option value="">No error (normal response)</option>
+                </select>
+              </div>
+              <small style="color: var(--text-muted); font-size: 0.75rem;">
+                Force all 2C2P requests to return this error code
+              </small>
+            </div>
+          </div>
+          
+          <div class="config-item">
+            <div class="config-item-header">
+              <span class="config-item-title">Force Error (Omise)</span>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <div class="form-select-wrapper">
+                <select id="config-error-omise" class="form-select">
+                  <option value="">No error (normal response)</option>
+                </select>
+              </div>
+              <small style="color: var(--text-muted); font-size: 0.75rem;">
+                Force all Omise requests to return this error code
+              </small>
+            </div>
+          </div>
+          
+          <div class="config-item">
+            <div class="config-item-header">
+              <span class="config-item-title">Failure Rate</span>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <input type="number" id="config-failure-rate" class="form-input" 
+                     placeholder="Percentage (0-100)" min="0" max="100">
+              <small style="color: var(--text-muted); font-size: 0.75rem;">
+                Random failure percentage for requests
+              </small>
+            </div>
+          </div>
+          
+          <div class="config-item">
+            <div class="config-item-header">
+              <span class="config-item-title">Duplicate Callbacks</span>
+            </div>
+            <label class="form-checkbox">
+              <input type="checkbox" id="config-duplicate">
+              <span>Send callbacks twice</span>
+            </label>
+            <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 0.5rem;">
+              Test idempotency by sending duplicate callbacks
+            </small>
+          </div>
+          
+          <div class="config-item" style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
+            <div class="config-item-header">
+              <span class="config-item-title">Auto-Refresh Payments</span>
+            </div>
+            <label class="form-checkbox">
+              <input type="checkbox" id="config-auto-refresh" onchange="toggleAutoRefresh()">
+              <span>Automatically check for new payments</span>
+            </label>
+            <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 0.5rem;">
+              ⚠️ With multiple team members, disable this to prevent exceeding Vercel rate limits (100 requests/hour on Hobby plan). 
+              <br>When enabled, polls every 60 seconds (60 requests/hour per user).
+            </small>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeConfigModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveConfig()">Save Global Config</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Update Modal -->
+  <div class="modal-overlay" id="status-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Update Payment Status</h3>
+        <button class="modal-close" onclick="closeStatusModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+          Invoice: <strong id="status-modal-invoice" style="color: var(--text-primary);"></strong>
+        </p>
+        <div class="form-group">
+          <label class="form-label">New Status</label>
+          <select id="new-status" class="form-select" onchange="onStatusModalChange()">
+            <option value="pending">Pending</option>
+            <option value="success">Success</option>
+            <option value="failed">Failed</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="expired">Expired</option>
+          </select>
+        </div>
+        <div class="form-group" id="resp-code-group" style="display: none;">
+          <label class="form-label">Response Code</label>
+          <select id="resp-code" class="form-select">
+            <!-- Populated dynamically -->
+          </select>
+          <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.5rem; display: block;">
+            Select specific error code to test how your system handles different failure scenarios
+          </small>
+        </div>
+        <label class="form-checkbox" style="margin-top: 1rem;">
+          <input type="checkbox" id="send-callback-after">
+          <span>Send callback after status update</span>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeStatusModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmUpdateStatus()">Update Status</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Callback Modal -->
+  <div class="modal-overlay" id="callback-modal">
+    <div class="modal" style="max-width: 800px;">
+      <div class="modal-header">
+        <h3 class="modal-title">📤 Send Callback</h3>
+        <button class="modal-close" onclick="closeCallbackModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 0.5rem; color: var(--text-secondary);">
+          Invoice: <strong id="callback-modal-invoice" style="color: var(--text-primary);"></strong>
+        </p>
+        <!-- Custom Callback Fields -->
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <div class="custom-fields-header">
+            <label class="form-label">Custom Fields</label>
+            <select id="custom-field-preset" class="form-input custom-field-preset" onchange="applyCustomFieldPreset(this.value)">
+              <option value="">Presets…</option>
+            </select>
+          </div>
+          <div id="custom-fields-list" class="custom-fields-list"></div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addCustomField()">+ Add field</button>
+          <p class="form-hint">
+            Merged into the callback payload alongside the provider's own fields.
+            Configure reusable presets in <strong>Settings → Custom field presets</strong>.
+          </p>
+        </div>
+        <!-- Mode Tabs -->
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border);">
+          <button id="callback-mode-sequence" class="callback-mode-btn active" onclick="switchCallbackMode('sequence')">
+            Sequence
+          </button>
+          <button id="callback-mode-custom" class="callback-mode-btn" onclick="switchCallbackMode('custom')">
+            Custom Payload
+          </button>
+        </div>
+        
+        <!-- Sequence Mode -->
+        <div id="callback-sequence-mode">
+          <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+            Configure and send callbacks to your system. Build a sequence to test different scenarios.
+          </p>
+          <div id="callback-sequence-list"></div>
+          <button class="btn btn-secondary btn-sm" onclick="addCallbackToSequence()" style="margin-top: 1rem;">
+            + Add Callback
+          </button>
+          <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 1rem;">
+            Tip: Add multiple callbacks to test idempotency, status changes, or retry patterns.
+          </p>
+        </div>
+        
+        <!-- Custom Payload Mode -->
+        <div id="callback-custom-mode" style="display: none;">
+          <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+            Edit the callback payload before sending. Useful for testing invalid payloads or amount mismatches.
+          </p>
+          <div class="form-group">
+            <label class="form-label">Callback Payload (JSON)</label>
+            <textarea id="callback-payload-editor" class="form-input" rows="15" style="font-family: var(--font-mono); font-size: 0.85rem;"></textarea>
+            <div id="callback-json-error" style="display: none; color: var(--error); font-size: 0.75rem; margin-top: 0.5rem;"></div>
+          </div>
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+            <button class="btn btn-secondary btn-sm" onclick="loadCallbackPreview()">Load Preview</button>
+            <button class="btn btn-secondary btn-sm" onclick="resetCallbackPayload()">Reset to Default</button>
+            <button class="btn btn-secondary btn-sm" onclick="formatCallbackPayload()">Format JSON</button>
+          </div>
+          <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius); font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem;">
+            <strong>Tip:</strong> Edit fields like <code>amount</code>, <code>invoiceNo</code>, or <code>respCode</code> to test how your system handles invalid payloads or mismatches.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeCallbackModal()">Cancel</button>
+        <button id="callback-send-btn" class="btn btn-primary" onclick="handleCallbackSend()">Send Sequence</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log Detail Modal -->
+  <div class="modal-overlay" id="log-modal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title">📋 Log Details</h3>
+        <button class="modal-close" onclick="closeLogModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="log-modal-body">
+        <!-- Log details will be rendered here -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeLogModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clear Payments Confirmation Modal -->
+  <div class="modal-overlay" id="clear-payments-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">⚠️ Clear All Payments</h3>
+        <button class="modal-close" onclick="closeClearPaymentsModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1rem;">
+          Are you sure you want to delete <strong>all payments</strong>?
+        </p>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">
+          This action cannot be undone. All payment records, status history, and callback history will be permanently deleted.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeClearPaymentsModal()">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmClearPayments()">Yes, Clear All Payments</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clear Logs Confirmation Modal -->
+  <div class="modal-overlay" id="clear-logs-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">⚠️ Clear All Logs</h3>
+        <button class="modal-close" onclick="closeClearLogsModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1rem;">
+          Are you sure you want to delete <strong>all request logs</strong>?
+        </p>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">
+          This action cannot be undone. All API request and response logs will be permanently deleted.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeClearLogsModal()">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmClearLogs()">Yes, Clear All Logs</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="/js/custom-fields.js"></script>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>

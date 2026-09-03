@@ -1,0 +1,9 @@
+# Linting rules for openapi.yaml.
+extends:
+  - recommended
+
+rules:
+  # This is a self-hosted sandbox: localhost really is the primary server, and
+  # is the URL every example in the docs uses. The rule exists to catch specs
+  # that shipped with a placeholder by accident, which is not the case here.
+  no-server-example.com: off

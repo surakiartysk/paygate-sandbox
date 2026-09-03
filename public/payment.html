@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Details - Paygate Sandbox</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    if (!localStorage.getItem('admin_password')) {
+      window.location.replace('/login');
+    }
+    
+    // Theme management - load saved theme immediately
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      
+      // Function to update theme toggle icon
+      function updateThemeIcon() {
+        const toggleBtn = document.getElementById('theme-toggle');
+        if (toggleBtn) {
+          const currentTheme = document.documentElement.getAttribute('data-theme');
+          const iconSvg = toggleBtn.querySelector('svg');
+          if (iconSvg) {
+            // Update SVG based on theme (shows icon for the theme you'll switch TO)
+            if (currentTheme === 'dark') {
+              // Show sun icon (switch to light)
+              iconSvg.innerHTML = '<circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>';
+            } else {
+              // Show moon icon (switch to dark)
+              iconSvg.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+            }
+          }
+        }
+      }
+      
+      // Theme toggle function
+      window.toggleTheme = function() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon();
+      };
+      
+      // Update icon when DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updateThemeIcon);
+      } else {
+        updateThemeIcon();
+      }
+    })();
+  </script>
+  <style>body { visibility: hidden; } body.authenticated { visibility: visible; }</style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <a href="/dashboard" class="logo">
+        <div class="logo-icon">MP</div>
+        <div class="logo-text">Mock <span>Payment</span> Gateway</div>
+      </a>
+      <div class="header-actions">
+        <button class="theme-toggle" onclick="toggleTheme()" id="theme-toggle" title="Toggle theme" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+          </svg>
+        </button>
+        <a href="/dashboard" class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: middle;">
+            <path d="M19 12H5M12 19l-7-7 7-7"></path>
+          </svg>
+          Back to List
+        </a>
+        <button class="btn btn-secondary btn-sm" onclick="logout()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: middle;">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    <!-- Detail Header -->
+    <div class="detail-header">
+      <div>
+        <h1 class="detail-title">Payment Details</h1>
+        <p class="detail-subtitle" id="invoice-display">Loading...</p>
+        <div id="provider-badge" style="margin-top: 0.5rem;"></div>
+      </div>
+      <div style="display: flex; gap: 0.75rem;">
+        <button class="btn btn-secondary" id="btn-update-status" onclick="openStatusModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: middle;">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          Update Status
+        </button>
+        <button class="btn btn-primary" id="btn-send-callback" onclick="openCallbackModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: middle;">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+          Send Callback
+        </button>
+        <button class="btn btn-danger" onclick="deletePaymentAndRedirect()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: middle;">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Delete
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="detail-grid">
+      <!-- Payment Info -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Payment Information</h3>
+          <span class="badge" id="status-badge">-</span>
+        </div>
+        <div class="card-body">
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Invoice No</div>
+              <div class="info-value mono" id="info-invoice">-</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Amount</div>
+              <div class="info-value" id="info-amount">-</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Currency</div>
+              <div class="info-value" id="info-currency">-</div>
+            </div>
+          <div class="info-item">
+            <div class="info-label">Merchant ID</div>
+            <div class="info-value mono" id="info-merchant">-</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Payment Method</div>
+            <div class="info-value" id="info-method">-</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Transaction Ref</div>
+            <div class="info-value mono" id="info-tranref">-</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Approval Code</div>
+            <div class="info-value mono" id="info-approval">-</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label" id="resp-code-label">Response Code</div>
+            <div class="info-value mono" id="info-respcode">-</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label" id="resp-desc-label">Response Desc</div>
+            <div class="info-value" id="info-respdesc">-</div>
+          </div>
+            <div class="info-item" style="grid-column: span 2;">
+              <div class="info-label">Description</div>
+              <div class="info-value" id="info-description">-</div>
+            </div>
+            <div class="info-item" style="grid-column: span 2;">
+              <div class="info-label">Payment Token</div>
+              <div class="info-value mono" id="info-token" style="font-size: 0.75rem;">-</div>
+            </div>
+            <div class="info-item" id="info-qr-item" style="grid-column: span 2; display: none;">
+              <div class="info-label">QR Code</div>
+              <div class="info-value mono" id="info-qr-code" style="font-size: 0.85rem;">-</div>
+            </div>
+            <div class="info-item" id="info-ref-item" style="grid-column: span 2; display: none;">
+              <div class="info-label">Payment Reference</div>
+              <div class="info-value mono" id="info-payment-ref" style="font-size: 0.85rem;">-</div>
+            </div>
+            <div class="info-item" id="info-redirect-item" style="grid-column: span 2; display: none;">
+              <div class="info-label">Redirect URL</div>
+              <div class="info-value mono" id="info-redirect-url" style="font-size: 0.75rem; word-break: break-all;">-</div>
+            </div>
+            <div class="info-item" style="grid-column: span 2;">
+              <div class="info-label">Backend Return URL</div>
+              <div class="info-value mono" id="info-backend-url" style="font-size: 0.8rem;">-</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Created At</div>
+              <div class="info-value mono" id="info-created">-</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Updated At</div>
+              <div class="info-value mono" id="info-updated">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status History -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Status History</h3>
+        </div>
+        <div class="card-body">
+          <div class="timeline" id="status-timeline">
+            <div class="loading">
+              <div class="spinner"></div>
+              Loading...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Callback History -->
+    <div class="card" style="margin-top: 1.5rem;">
+      <div class="card-header">
+        <h3 class="card-title">
+          Callback History 
+          <span class="badge badge-pending" id="callback-count" style="margin-left: 0.5rem;">0</span>
+        </h3>
+        <button class="btn btn-primary btn-sm" onclick="openCallbackModal()">
+          📤 Send Callback
+        </button>
+      </div>
+      <div class="card-body" id="callback-history">
+        <div class="empty-state">
+          <div class="empty-state-icon">📭</div>
+          <div class="empty-state-title">No callbacks sent yet</div>
+          <p>Click "Send Callback" to notify your system</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inquiry Simulation -->
+    <div class="card" style="margin-top: 1.5rem;">
+      <div class="card-header">
+        <h3 class="card-title">🔍 Inquiry Simulation</h3>
+        <span class="badge" id="inquiry-behavior-badge">NORMAL</span>
+      </div>
+      <div class="card-body">
+        <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.875rem;">
+          Control how the <code>/api/2c2p/inquiry</code> API responds when your system asks about this payment.
+        </p>
+        <div class="info-grid" style="gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">Behavior</label>
+            <select id="inquiry-behavior" class="form-select" onchange="onInquiryBehaviorChange()">
+              <option value="normal">Normal - Return real payment status</option>
+              <option value="delay">Delay - Respond after specified time</option>
+              <option value="error">Error - Return specific error code</option>
+              <option value="timeout">Timeout - Never respond (hang forever)</option>
+            </select>
+          </div>
+          <div class="form-group" id="inquiry-delay-group" style="display: none;">
+            <label class="form-label">Delay (milliseconds)</label>
+            <input type="number" id="inquiry-delay" class="form-input" value="5000" min="0" step="1000" placeholder="5000">
+          </div>
+          <div class="form-group" id="inquiry-error-group" style="display: none;">
+            <label class="form-label">Error Code</label>
+            <select id="inquiry-error-code" class="form-select">
+              <option value="0999">0999 - System temporarily unavailable</option>
+              <option value="9999">9999 - System error</option>
+              <option value="5002">5002 - Timeout</option>
+              <option value="5998">5998 - Internal Error</option>
+              <option value="2002">2002 - Transaction not found</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top: 1rem; display: flex; gap: 0.75rem;">
+          <button class="btn btn-primary" onclick="saveInquiryConfig()">💾 Save Inquiry Settings</button>
+          <button class="btn btn-secondary" onclick="resetInquiryConfig()">↺ Reset to Normal</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Callback Sequence Modal -->
+  <div class="modal-overlay" id="callback-modal">
+    <div class="modal" style="max-width: 800px;">
+      <div class="modal-header">
+        <h3 class="modal-title">📤 Send Callback</h3>
+        <button class="modal-close" onclick="closeCallbackModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Custom Callback Fields -->
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <div class="custom-fields-header">
+            <label class="form-label">Custom Fields</label>
+            <select id="custom-field-preset" class="form-input custom-field-preset" onchange="applyCustomFieldPreset(this.value)">
+              <option value="">Presets…</option>
+            </select>
+          </div>
+          <div id="custom-fields-list" class="custom-fields-list"></div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addCustomField()">+ Add field</button>
+          <p class="form-hint">
+            Merged into the callback payload alongside the provider's own fields.
+            Configure reusable presets in <strong>Settings → Custom field presets</strong>.
+          </p>
+        </div>
+        <!-- Mode Tabs -->
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border);">
+          <button id="callback-mode-sequence" class="callback-mode-btn active" onclick="switchCallbackMode('sequence')">
+            Sequence
+          </button>
+          <button id="callback-mode-custom" class="callback-mode-btn" onclick="switchCallbackMode('custom')">
+            Custom Payload
+          </button>
+        </div>
+        
+        <!-- Sequence Mode -->
+        <div id="callback-sequence-mode" style="display: block;">
+          <p style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.875rem;">
+            Configure and send callbacks to your system. Build a sequence to test different scenarios.
+          </p>
+          
+          <!-- Callback Sequence Builder -->
+          <div id="callback-sequence-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <label class="form-label" style="margin: 0;">Callback Sequence</label>
+              <button class="btn btn-secondary btn-sm" onclick="addCallbackToSequence()">+ Add</button>
+            </div>
+            <div id="callback-sequence-list" style="max-height: 300px; overflow-y: auto;">
+              <!-- Sequence items added dynamically -->
+            </div>
+          </div>
+          
+          <div style="margin-top: 1rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius); font-size: 0.8rem; color: var(--text-muted);">
+            <strong>Tip:</strong> Add multiple callbacks to test idempotency, status changes, or retry patterns.
+          </div>
+        </div>
+        
+        <!-- Custom Payload Mode -->
+        <div id="callback-custom-mode" style="display: none;">
+          <p style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.875rem;">
+            Edit the callback payload before sending to test invalid payload / amount mismatch scenarios.
+          </p>
+          
+          <!-- Preview Section -->
+          <div style="margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <label class="form-label" style="margin: 0;">Callback Payload Preview</label>
+              <button class="btn btn-secondary btn-sm" onclick="loadCallbackPreview()">🔄 Load Preview</button>
+            </div>
+            <div id="callback-preview-container" style="position: relative;">
+              <textarea id="callback-payload-editor" class="form-input" rows="15" style="font-family: var(--font-mono); font-size: 0.85rem; resize: vertical;" spellcheck="false"></textarea>
+              <div id="callback-json-error" style="display: none; color: var(--error); font-size: 0.8rem; margin-top: 0.25rem;"></div>
+            </div>
+          </div>
+          
+          <!-- Action Buttons -->
+          <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+            <button class="btn btn-secondary btn-sm" onclick="resetCallbackPayload()">↺ Reset to Default</button>
+            <button class="btn btn-secondary btn-sm" onclick="formatCallbackPayload()">✨ Format JSON</button>
+          </div>
+          
+          <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius); font-size: 0.8rem; color: var(--text-muted);">
+            <strong>Tip:</strong> Edit fields like <code>amount</code>, <code>invoiceNo</code>, or <code>respCode</code> to test how your system handles invalid payloads or mismatches.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeCallbackModal()">Cancel</button>
+        <button id="callback-send-btn" class="btn btn-primary" onclick="handleCallbackSend()">Send Sequence</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Update Modal -->
+  <div class="modal-overlay" id="status-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Update Payment Status</h3>
+        <button class="modal-close" onclick="closeStatusModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+          Current Status: <span class="badge" id="current-status-badge">-</span>
+        </p>
+        <div class="form-group">
+          <label class="form-label">New Status</label>
+          <select id="new-status" class="form-select" onchange="onStatusChange()">
+            <option value="pending">Pending</option>
+            <option value="success">Success</option>
+            <option value="failed">Failed</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="expired">Expired</option>
+          </select>
+        </div>
+        <div class="form-group" id="resp-code-group" style="display: none;">
+          <label class="form-label">Response Code (2C2P Error Code)</label>
+          <select id="resp-code" class="form-select">
+            <!-- Populated dynamically -->
+          </select>
+          <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.5rem; display: block;">
+            Select specific error code to test how your system handles different failure scenarios
+          </small>
+        </div>
+        <label class="form-checkbox" style="margin-top: 1rem;">
+          <input type="checkbox" id="send-callback-after">
+          <span>Send callback after status update</span>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeStatusModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmUpdateStatus()">Update Status</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="/js/custom-fields.js"></script>
+  <script src="/js/payment-detail.js"></script>
+</body>
+</html>

@@ -1,0 +1,733 @@
+openapi: 3.0.3
+
+info:
+  title: Paygate Sandbox
+  version: 1.0.0
+  description: |
+    A self-hosted sandbox that emulates the 2C2P and Omise payment APIs for integration testing.
+
+    Endpoints fall into three groups:
+
+    - **Provider APIs** (`/api/2c2p`, `/api/omise`) — what your integration calls. Unauthenticated,
+      so the sandbox is a drop-in replacement for the real gateway.
+    - **Admin API** (`/api/admin`) — drives the sandbox. Requires the admin password.
+    - **Sandbox APIs** (`/api/inspect`, `/api/demo`) — built-in callback receiver and guided demo.
+
+    Unofficial and not affiliated with 2C2P or Omise. Processes no real money.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+  - url: https://{deployment}
+    description: Your own deployment
+    variables:
+      deployment:
+        default: paygate-sandbox.vercel.app
+        description: Host of the instance you are calling.
+
+tags:
+  - name: 2C2P
+    description: 2C2P provider API
+  - name: Omise
+    description: Omise provider API
+  - name: Admin
+    description: Control the sandbox
+  - name: Inspector
+    description: Built-in callback receiver
+  - name: Demo
+    description: Sample data and the guided scenario
+
+security: []
+
+paths:
+  /api/2c2p/token:
+    post:
+      tags: [2C2P]
+      summary: Create a payment and issue a token
+      operationId: createPaymentToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
+            example:
+              invoiceNo: INV-0001
+              amount: 1500
+              currencyCode: THB
+              description: Order #1234
+              paymentChannel: [CC]
+              backendReturnUrl: https://your-app.example.com/payment/callback
+      responses:
+        '200':
+          description: Token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/2c2p/inquiry:
+    post:
+      tags: [2C2P]
+      summary: Look up a payment
+      description: |
+        Returns HTTP 200 even when the transaction is unknown; check `respCode` (`2002` means not
+        found). This mirrors the provider's own behaviour.
+      operationId: inquirePayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invoiceNo]
+              properties:
+                invoiceNo:
+                  type: string
+                  example: INV-0001
+      responses:
+        '200':
+          description: Current state of the payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InquiryResponse'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/omise/charges:
+    post:
+      tags: [Omise]
+      summary: Create a charge
+      description: Amounts are in subunits (satang), matching Omise.
+      operationId: createCharge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, currency]
+              properties:
+                amount:
+                  type: integer
+                  description: Subunits, e.g. 150000 for ฿1,500.00
+                  example: 150000
+                currency:
+                  type: string
+                  example: thb
+                description:
+                  type: string
+                return_uri:
+                  type: string
+                  format: uri
+                metadata:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Charge created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Charge'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/omise/charges/{chargeId}:
+    get:
+      tags: [Omise]
+      summary: Retrieve a charge
+      operationId: getCharge
+      parameters:
+        - name: chargeId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: chrg_test_ahfdyq5lbjporso
+      responses:
+        '200':
+          description: The charge
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Charge'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/admin/payments:
+    get:
+      tags: [Admin]
+      summary: List payments
+      operationId: listPayments
+      security: [{ adminPassword: [] }]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: limit, in: query, schema: { type: integer, default: 20 } }
+        - name: provider
+          in: query
+          schema: { type: string, enum: [2c2p, omise] }
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, success, failed, cancelled, expired]
+        - { name: search, in: query, description: Matches invoice number, schema: { type: string } }
+      responses:
+        '200':
+          description: Matching payments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  payments:
+                    type: array
+                    items: { $ref: '#/components/schemas/Payment' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/admin/payments/{invoiceNo}:
+    get:
+      tags: [Admin]
+      summary: Get one payment
+      operationId: getPayment
+      security: [{ adminPassword: [] }]
+      parameters:
+        - $ref: '#/components/parameters/InvoiceNo'
+        - name: preview
+          in: query
+          description: Pass `callback` to preview the payload without sending it.
+          schema: { type: string, enum: [callback] }
+      responses:
+        '200':
+          description: The payment
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  payment: { $ref: '#/components/schemas/Payment' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Admin]
+      summary: Delete a payment
+      operationId: deletePayment
+      security: [{ adminPassword: [] }]
+      parameters:
+        - $ref: '#/components/parameters/InvoiceNo'
+      responses:
+        '200': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/admin/payments/{invoiceNo}/status:
+    post:
+      tags: [Admin]
+      summary: Change a payment's status
+      description: |
+        Moving a payment to `success` generates an approval code and reference number when it does
+        not already have them. No callback is sent — use the callback endpoint for that.
+      operationId: updatePaymentStatus
+      security: [{ adminPassword: [] }]
+      parameters:
+        - $ref: '#/components/parameters/InvoiceNo'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [pending, success, failed, cancelled, expired]
+                respCode:
+                  type: string
+                  description: Defaults to a sensible code for the status.
+                  example: '4010'
+      responses:
+        '200': { description: Status updated }
+        '400': { description: Invalid status }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/admin/payments/{invoiceNo}/callback:
+    post:
+      tags: [Admin]
+      summary: Deliver one or more callbacks
+      description: |
+        2C2P callbacks are delivered as `{ "payload": { … } }`. Omise uses its own event envelope.
+
+        `delayAfter` is milliseconds to wait after that callback before sending the next, which is
+        how you reproduce duplicates and out-of-order delivery. The delay on the final entry is
+        never applied.
+
+        A sequence is delivered synchronously and must finish inside the platform's function
+        timeout, so it is limited to 10 callbacks, 8000ms per delay, and 8000ms in total.
+
+        `customFields` cannot overwrite fields that identify the transaction or state its outcome
+        (invoiceNo, amount, currencyCode, merchantID, respCode, respDesc, tranRef, referenceNo,
+        approvalCode); those keys are ignored. Use `customPayload` for full control.
+      operationId: sendCallback
+      security: [{ adminPassword: [] }]
+      parameters:
+        - $ref: '#/components/parameters/InvoiceNo'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sequence:
+                  type: array
+                  maxItems: 10
+                  items:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        enum: [pending, success, failed, cancelled, expired]
+                      respCode: { type: string }
+                      delayAfter:
+                        type: integer
+                        minimum: 0
+                        maximum: 8000
+                        description: Milliseconds to wait before the next callback.
+                customFields:
+                  type: object
+                  additionalProperties: { type: string }
+                  description: |
+                    Merged into the payload; for Omise, into `data.metadata`. Reserved
+                    provider fields cannot be overwritten.
+                callbackUrl:
+                  type: string
+                  format: uri
+                  description: Overrides the payment's `backendReturnUrl`.
+                customPayload:
+                  type: object
+                  description: |
+                    Send these exact fields instead of a generated payload. The provider envelope
+                    still applies, so a 2C2P callback arrives as `{ "payload": { … } }`.
+            examples:
+              duplicate:
+                summary: Duplicate webhook
+                value:
+                  sequence:
+                    - { status: success, respCode: '0000', delayAfter: 500 }
+                    - { status: success, respCode: '0000', delayAfter: 0 }
+              declined:
+                summary: Declined for insufficient funds
+                value:
+                  sequence:
+                    - { status: failed, respCode: '4010', delayAfter: 0 }
+      responses:
+        '200':
+          description: Delivery results, one per callback
+        '400': { description: No callback URL configured }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/admin/payments/{invoiceNo}/inquiry-config:
+    post:
+      tags: [Admin]
+      summary: Make inquiries on this payment misbehave
+      operationId: setInquiryBehavior
+      security: [{ adminPassword: [] }]
+      parameters:
+        - $ref: '#/components/parameters/InvoiceNo'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                behavior:
+                  type: string
+                  enum: [normal, delay, error, timeout]
+                delay:
+                  type: integer
+                  description: Milliseconds, when behavior is `delay`.
+                errorCode:
+                  type: string
+                  description: Response code, when behavior is `error`.
+      responses:
+        '200': { description: Updated }
+        '400': { description: Invalid behavior }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/admin/config:
+    get:
+      tags: [Admin]
+      summary: Read simulation settings
+      operationId: getConfig
+      security: [{ adminPassword: [] }]
+      responses:
+        '200':
+          description: Current settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  config: { $ref: '#/components/schemas/Config' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [Admin]
+      summary: Update simulation settings
+      operationId: updateConfig
+      security: [{ adminPassword: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Config' }
+            examples:
+              slow:
+                summary: Add 5 seconds to every response
+                value: { globalDelay: 5000 }
+              flaky:
+                summary: Fail 30% of requests
+                value: { failureRate: 30 }
+              duplicates:
+                summary: Send every callback twice
+                value: { duplicateCallback: true }
+      responses:
+        '200': { description: Updated }
+        '400': { description: Unknown key or invalid value }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/inspect:
+    post:
+      tags: [Inspector]
+      summary: Mint an inspector session
+      description: Returns a session id and the URL to use as `backendReturnUrl`.
+      operationId: createInspectorSession
+      responses:
+        '200':
+          description: Session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  sessionId: { type: string, example: s_mthdz48kst3cgr }
+                  callbackUrl: { type: string, format: uri }
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/inspect/{sessionId}:
+    post:
+      tags: [Inspector]
+      summary: Receive a callback
+      description: Point `backendReturnUrl` here. Always answers 200 so delivery is recorded.
+      operationId: receiveCallback
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: Recorded }
+        '400':
+          description: Invalid session id
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    get:
+      tags: [Inspector]
+      summary: Read captured callbacks
+      operationId: getInspectorSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: What arrived
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  sessionId: { type: string }
+                  captures:
+                    type: array
+                    items: { $ref: '#/components/schemas/Capture' }
+        '400':
+          description: Invalid session id
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags: [Inspector]
+      summary: Discard a session
+      operationId: clearInspectorSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200': { description: Cleared }
+        '400':
+          description: Invalid session id
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/demo/scenario:
+    post:
+      tags: [Demo]
+      summary: Run one payment end to end
+      description: |
+        Creates a payment, settles it, delivers the callback to a fresh inspector session, and
+        returns the narrated steps along with what was received.
+      operationId: runDemoScenario
+      responses:
+        '200':
+          description: The run
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  invoiceNo: { type: string }
+                  sessionId: { type: string }
+                  steps:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        step: { type: integer }
+                        title: { type: string }
+                        detail: { type: string }
+                        result: { type: string }
+                  received:
+                    type: array
+                    items: { $ref: '#/components/schemas/Capture' }
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/demo/seed:
+    post:
+      tags: [Demo]
+      summary: Populate an empty instance
+      description: Refuses to run when payments already exist, so it never overwrites your data.
+      operationId: seedDemoData
+      responses:
+        '200':
+          description: Result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  seeded: { type: boolean }
+                  count: { type: integer }
+                  message: { type: string }
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+components:
+  securitySchemes:
+    adminPassword:
+      type: apiKey
+      in: header
+      name: X-Admin-Password
+      description: Set by `ADMIN_PASSWORD`; defaults to `mockpay`.
+
+  parameters:
+    InvoiceNo:
+      name: invoiceNo
+      in: path
+      required: true
+      schema: { type: string }
+      example: INV-0001
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      description: Letters, digits, hyphen and underscore, up to 64 characters.
+      schema:
+        type: string
+        pattern: '^[A-Za-z0-9_-]{1,64}$'
+      example: s_mthdz48kst3cgr
+
+  responses:
+    Unauthorized:
+      description: Missing or wrong admin password
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: No such record
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    RateLimited:
+      description: Too many requests
+      headers:
+        Retry-After:
+          schema: { type: integer }
+          description: Seconds until the window resets.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    TokenRequest:
+      type: object
+      required: [invoiceNo, amount]
+      properties:
+        invoiceNo:
+          type: string
+          description: Your reference; must be unique.
+        amount:
+          type: number
+          description: Major units, e.g. 1500 for ฿1,500.00.
+        currencyCode: { type: string, default: THB }
+        description: { type: string }
+        backendReturnUrl:
+          type: string
+          format: uri
+          description: Where the callback is POSTed.
+        frontendReturnUrl:
+          type: string
+          format: uri
+          description: Where the customer returns after paying.
+        paymentChannel:
+          type: array
+          items:
+            type: string
+            enum: [CC, 3DS, QR, DPAY, PC, SSM, IB]
+          default: [CC]
+        paymentExpiry:
+          type: string
+          description: '`YYYY-MM-DD HH:mm:ss` or ISO 8601.'
+        merchantID: { type: string, default: MOCK_MERCHANT }
+        locale: { type: string, default: en }
+
+    TokenResponse:
+      type: object
+      properties:
+        paymentToken: { type: string }
+        webPaymentUrl:
+          type: string
+          format: uri
+          description: Where a customer would be redirected to pay.
+        respCode: { type: string, example: '0000' }
+        respDesc: { type: string, example: Success }
+
+    InquiryResponse:
+      type: object
+      properties:
+        merchantID: { type: string }
+        invoiceNo: { type: string }
+        amount: { type: string, example: '1500.00' }
+        currencyCode: { type: string }
+        tranRef: { type: string }
+        referenceNo: { type: string }
+        approvalCode: { type: string, nullable: true }
+        transactionDateTime: { type: string, example: '20260901143022' }
+        channelCode: { type: string }
+        cardType: { type: string }
+        respCode: { type: string }
+        respDesc: { type: string }
+
+    Payment:
+      type: object
+      properties:
+        provider: { type: string, enum: [2c2p, omise] }
+        invoiceNo: { type: string }
+        amount: { type: number }
+        currencyCode: { type: string }
+        status:
+          type: string
+          enum: [pending, success, failed, cancelled, expired]
+        respCode: { type: string }
+        channelCode: { type: string }
+        backendReturnUrl: { type: string, nullable: true }
+        callbackCount: { type: integer }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    Charge:
+      type: object
+      properties:
+        object: { type: string, example: charge }
+        id: { type: string, example: chrg_test_ahfdyq5lbjporso }
+        amount: { type: integer, description: Subunits. }
+        currency: { type: string }
+        status:
+          type: string
+          enum: [pending, successful, failed, expired, reversed]
+        paid: { type: boolean }
+        authorized: { type: boolean }
+        authorize_uri: { type: string, nullable: true }
+        metadata: { type: object, additionalProperties: true }
+        created_at: { type: string, format: date-time }
+
+    Config:
+      type: object
+      properties:
+        globalDelay:
+          type: integer
+          description: Milliseconds added to every provider response.
+        failureRate:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Percentage of requests that fail randomly.
+        duplicateCallback:
+          type: boolean
+          description: Send every callback twice.
+        forceError2c2p: { type: string, nullable: true }
+        forceErrorOmise: { type: string, nullable: true }
+        logTTLDays: { type: integer, minimum: 1 }
+        customFieldPresets:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              fields:
+                type: object
+                additionalProperties: { type: string }
+
+    Capture:
+      type: object
+      properties:
+        receivedAt: { type: string, format: date-time }
+        method: { type: string }
+        headers: { type: object, additionalProperties: { type: string } }
+        body: { type: object, description: The callback payload as received. }
+
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+        message: { type: string }

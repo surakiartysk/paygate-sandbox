@@ -1,0 +1,22 @@
+{
+  "name": "paygate-sandbox",
+  "version": "1.0.0",
+  "description": "A self-hosted sandbox that emulates 2C2P and Omise payment APIs for integration testing",
+  "type": "module",
+  "scripts": {
+    "dev": "node dev-server.js",
+    "vercel-dev": "vercel dev",
+    "build": "echo 'No build step required'",
+    "start": "node dev-server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@vercel/kv": "^3.0.0"
+  },
+  "devDependencies": {
+    "vercel": "^37.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

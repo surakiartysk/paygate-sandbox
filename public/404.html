@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Not Found - Paygate Sandbox</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    // If logged in, redirect to dashboard
+    if (localStorage.getItem('admin_password')) {
+      window.location.href = '/';
+    }
+  </script>
+</head>
+<body>
+  <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+    <div style="text-align: center;">
+      <div style="font-size: 4rem; margin-bottom: 1rem;">🔍</div>
+      <h1 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Page Not Found</h1>
+      <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">The page you're looking for doesn't exist.</p>
+      <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paygate Sandbox — 2C2P & Omise payment simulator</title>
+  <meta name="description" content="A self-hosted sandbox that emulates the 2C2P and Omise payment APIs so you can test an integration against every response a gateway can return.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function () {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+</head>
+<body>
+  <div class="landing">
+
+    <!-- Hero -->
+    <header class="landing-hero">
+      <p class="landing-eyebrow">Payment gateway simulator</p>
+      <h1 class="landing-title">
+        Test the payment paths<br>you can't trigger in staging.
+      </h1>
+      <p class="landing-lede">
+        A self-hosted sandbox that speaks the <strong>2C2P</strong> and <strong>Omise</strong> APIs.
+        Point your integration at it and reproduce a declined card, a duplicate webhook,
+        a timeout, or a callback that arrives twice out of order — on demand, in seconds.
+      </p>
+
+      <div class="landing-actions">
+        <button class="btn btn-primary btn-lg" id="run-demo" onclick="runScenario()">
+          Run a payment end to end
+        </button>
+        <a class="btn btn-secondary btn-lg" href="/dashboard">Open the dashboard</a>
+      </div>
+      <p class="landing-hint">
+        No sign-up. The demo creates a real transaction, delivers its callback,
+        and shows you exactly what the merchant received.
+      </p>
+    </header>
+
+    <!-- Live demo output -->
+    <section id="demo-output" class="landing-demo" hidden>
+      <div class="landing-demo-header">
+        <h2 class="landing-section-title">Live run</h2>
+        <span id="demo-invoice" class="landing-demo-invoice"></span>
+      </div>
+      <ol id="demo-steps" class="demo-steps"></ol>
+      <div id="demo-payload-wrap" class="demo-payload-wrap" hidden>
+        <div class="demo-payload-header">
+          <span>Callback received by the merchant</span>
+          <a id="demo-inspector-link" class="btn btn-secondary btn-sm" href="/inspector">Open in inspector</a>
+        </div>
+        <pre class="demo-payload"><code id="demo-payload"></code></pre>
+      </div>
+    </section>
+
+    <!-- What it does -->
+    <section class="landing-section">
+      <h2 class="landing-section-title">What it does</h2>
+      <div class="landing-grid">
+        <article class="landing-card">
+          <h3>Speaks the real API shapes</h3>
+          <p>
+            Token requests, inquiries, charges and webhooks follow the providers'
+            published schemas, down to the response codes. Your integration needs
+            no sandbox-specific branches.
+          </p>
+        </article>
+        <article class="landing-card">
+          <h3>Drives the failure cases</h3>
+          <p>
+            Set a payment to declined with code 4010, make an inquiry time out,
+            force a duplicate callback, or add latency — the paths that are
+            painful to reproduce against a real gateway.
+          </p>
+        </article>
+        <article class="landing-card">
+          <h3>Callback sequences</h3>
+          <p>
+            Build an ordered sequence with delays between steps: pending, then
+            success, then a duplicate. This is how you prove your webhook handler
+            is actually idempotent.
+          </p>
+        </article>
+        <article class="landing-card">
+          <h3>Built-in callback inspector</h3>
+          <p>
+            A callback endpoint inside the sandbox captures what was delivered,
+            headers and all. No external request-bin, no tunnel to your laptop.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <!-- How it fits -->
+    <section class="landing-section">
+      <h2 class="landing-section-title">How it fits your stack</h2>
+      <div class="landing-flow">
+        <div class="flow-node">
+          <span class="flow-label">Your backend</span>
+          <span class="flow-detail">Unchanged integration code</span>
+        </div>
+        <div class="flow-arrow" aria-hidden="true">→</div>
+        <div class="flow-node flow-node-accent">
+          <span class="flow-label">Paygate Sandbox</span>
+          <span class="flow-detail">Stands in for the gateway</span>
+        </div>
+        <div class="flow-arrow" aria-hidden="true">→</div>
+        <div class="flow-node">
+          <span class="flow-label">Your webhook</span>
+          <span class="flow-detail">Receives the callback</span>
+        </div>
+      </div>
+      <p class="landing-flow-note">
+        Swap one base URL in your configuration. Everything else stays as it is in production.
+      </p>
+    </section>
+
+    <!-- Quick start -->
+    <section class="landing-section">
+      <h2 class="landing-section-title">Try it from your terminal</h2>
+      <p class="landing-section-lede">
+        Create a payment exactly as your backend would, then watch the callback arrive.
+      </p>
+      <pre class="landing-code"><code id="quickstart-code"></code></pre>
+      <button class="btn btn-secondary btn-sm" onclick="copyQuickstart()">Copy</button>
+    </section>
+
+    <footer class="landing-footer">
+      <p>
+        <strong>Unofficial and not affiliated with 2C2P or Omise.</strong>
+        Request and response shapes follow each provider's public API documentation.
+        This is a testing tool: it processes no real money and holds no real credentials.
+      </p>
+      <p class="landing-footer-links">
+        <a href="/dashboard">Dashboard</a>
+        <span aria-hidden="true">·</span>
+        <a href="/inspector">Callback inspector</a>
+      </p>
+    </footer>
+  </div>
+
+  <script src="/js/landing.js"></script>
+</body>
+</html>

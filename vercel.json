@@ -1,0 +1,73 @@
+{
+  "version": 2,
+  "framework": null,
+  "buildCommand": null,
+  "outputDirectory": "public",
+  "rewrites": [
+    {
+      "source": "/api/inspect",
+      "destination": "/api/inspect/index"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/payment/:invoiceNo",
+      "destination": "/payment.html"
+    },
+    {
+      "source": "/mock-pay/:token",
+      "destination": "/mock-pay.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/login.html"
+    },
+    {
+      "source": "/api/admin/response-codes",
+      "destination": "/api/admin/config"
+    },
+    {
+      "source": "/api/admin/payments/clear",
+      "destination": "/api/admin/payments"
+    },
+    {
+      "source": "/inspector",
+      "destination": "/inspector.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, X-Mock-Delay, X-Mock-Error, X-Admin-Password"
+        }
+      ]
+    }
+  ],
+  "functions": {
+    "api/omise/[...slug].js": {
+      "includeFiles": "lib/**"
+    },
+    "api/demo/[...slug].js": {
+      "includeFiles": "lib/**"
+    },
+    "api/2c2p/[...slug].js": {
+      "includeFiles": "lib/**"
+    },
+    "api/inspect/[[...slug]].js": {
+      "includeFiles": "lib/**"
+    }
+  }
+}

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Callback Inspector - Paygate Sandbox</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    // The inspector is deliberately public — it is part of the guided demo.
+    (function () {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+</head>
+<body>
+  <div class="inspector-page">
+    <header class="inspector-header">
+      <div>
+        <h1 class="inspector-title">Callback Inspector</h1>
+        <p class="inspector-subtitle">
+          A callback endpoint built into the sandbox. Point <code>backendReturnUrl</code> at the
+          URL below and every callback the gateway sends lands here, in full.
+        </p>
+      </div>
+      <a href="/dashboard" class="btn btn-secondary btn-sm">← Dashboard</a>
+    </header>
+
+    <section class="inspector-panel">
+      <label class="form-label" for="session-input">Session</label>
+      <div class="inspector-session-row">
+        <input id="session-input" class="form-input" placeholder="Session id"
+               autocomplete="off" spellcheck="false">
+        <button class="btn btn-secondary" onclick="loadSession()">Load</button>
+        <button class="btn btn-primary" onclick="newSession()">New session</button>
+      </div>
+
+      <label class="form-label" for="callback-url">Callback URL</label>
+      <div class="inspector-session-row">
+        <input id="callback-url" class="form-input inspector-url" readonly>
+        <button class="btn btn-secondary" onclick="copyCallbackUrl()">Copy</button>
+      </div>
+
+      <div class="inspector-toolbar">
+        <label class="inspector-autorefresh">
+          <input type="checkbox" id="auto-refresh" checked>
+          <span>Auto-refresh</span>
+        </label>
+        <span id="capture-count" class="inspector-count">No callbacks yet</span>
+        <div class="inspector-toolbar-actions">
+          <button class="btn btn-secondary btn-sm" onclick="loadSession()">Refresh</button>
+          <button class="btn btn-secondary btn-sm" onclick="clearSession()">Clear</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="captures" class="inspector-captures">
+      <div class="inspector-empty">
+        <p class="inspector-empty-title">Waiting for callbacks</p>
+        <p>Send one from the dashboard, or run the guided scenario from the home page.</p>
+      </div>
+    </section>
+  </div>
+
+  <script src="/js/inspector.js"></script>
+</body>
+</html>

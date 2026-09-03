@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paygate Sandbox</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .mock-pay-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    
+    .mock-info-banner {
+      background: var(--accent-dim);
+      border: 1px dashed var(--accent);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--accent);
+      text-align: center;
+    }
+    
+    .status-waiting {
+      background: var(--pending-bg);
+      border: 1px solid var(--pending);
+      color: var(--pending);
+    }
+  </style>
+</head>
+<body>
+  <div class="mock-pay-container">
+    <div class="mock-pay-card">
+      <!-- Logo -->
+      <div class="mock-pay-logo">
+        <div class="logo" style="justify-content: center;">
+          <div class="logo-icon">MP</div>
+          <div class="logo-text">Mock <span>Payment</span> Gateway</div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loading-state">
+        <div class="loading">
+          <div class="spinner"></div>
+          Loading payment details...
+        </div>
+      </div>
+
+      <!-- Payment Details -->
+      <div id="payment-details" style="display: none;">
+        <!-- Mock Info Banner -->
+        <div class="mock-info-banner">
+          🔧 This is a <strong>mock payment page</strong>. The payment status will be updated from the Admin Dashboard.
+        </div>
+        
+        <!-- Amount -->
+        <div class="mock-pay-amount" id="pay-amount">-</div>
+        <div class="mock-pay-currency" id="pay-currency">-</div>
+
+        <!-- Info -->
+        <div class="mock-pay-info">
+          <div class="mock-pay-info-row">
+            <span class="mock-pay-info-label">Invoice</span>
+            <span class="mock-pay-info-value" id="pay-invoice">-</span>
+          </div>
+          <div class="mock-pay-info-row">
+            <span class="mock-pay-info-label">Merchant</span>
+            <span class="mock-pay-info-value" id="pay-merchant">-</span>
+          </div>
+          <div class="mock-pay-info-row">
+            <span class="mock-pay-info-label">Description</span>
+            <span class="mock-pay-info-value" id="pay-description">-</span>
+          </div>
+          <div class="mock-pay-info-row">
+            <span class="mock-pay-info-label">Status</span>
+            <span class="mock-pay-info-value">
+              <span class="badge badge-pending" id="pay-status">PENDING</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Waiting for Admin State -->
+        <div id="waiting-state" class="mock-pay-note status-waiting">
+          ⏳ <strong>Waiting for payment confirmation...</strong><br>
+          <span style="font-size: 0.8rem;">The Admin Dashboard will update the status and trigger a callback.</span>
+        </div>
+        
+        <!-- Redirect Button (shown when frontendReturnUrl exists) -->
+        <div id="redirect-button-container" style="display: none; margin-top: 1.5rem;">
+          <button class="btn btn-primary" style="width: 100%;" onclick="returnToMerchant()">
+            ← Return to Merchant
+          </button>
+        </div>
+        
+        <!-- Completed State -->
+        <div id="completed-state" style="display: none;">
+          <div class="mock-pay-note" id="completed-message" style="background: var(--success-bg); border-color: var(--success); color: var(--success);">
+            ✅ Payment completed!
+          </div>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div id="error-state" style="display: none;">
+        <div class="empty-state" style="padding: 2rem 0;">
+          <div class="empty-state-icon">❌</div>
+          <div class="empty-state-title">Payment Not Found</div>
+          <p id="error-message">The payment token is invalid or expired.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Get token from URL
+    const pathParts = window.location.pathname.split('/');
+    const token = decodeURIComponent(pathParts[pathParts.length - 1]);
+    
+    let payment = null;
+    let frontendReturnUrl = null;
+
+    async function loadPayment() {
+      const loadingState = document.getElementById('loading-state');
+      const paymentDetails = document.getElementById('payment-details');
+      const errorState = document.getElementById('error-state');
+
+      try {
+        // Use public API - no auth required
+        const response = await fetch(`/api/2c2p/info?token=${encodeURIComponent(token)}`);
+        
+        // Safely parse JSON response
+        let data;
+        try {
+          if (!response.ok) {
+            const errorText = await response.text().catch(() => 'Unknown error');
+            throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`);
+          }
+          const contentType = response.headers.get('content-type');
+          if (contentType && !contentType.includes('application/json')) {
+            const text = await response.text().catch(() => 'Non-JSON response');
+            throw new Error(`Expected JSON but got ${contentType}: ${text.substring(0, 200)}`);
+          }
+          const text = await response.text();
+          if (!text.trim()) {
+            throw new Error('Empty response body');
+          }
+          data = JSON.parse(text);
+        } catch (error) {
+          if (error instanceof SyntaxError) {
+            throw new Error(`Invalid JSON response: ${error.message}`);
+          }
+          throw error;
+        }
+
+        if (!data.success) {
+          loadingState.style.display = 'none';
+          errorState.style.display = 'block';
+          document.getElementById('error-message').textContent = data.error || 'Payment not found';
+          return;
+        }
+
+        payment = data.payment;
+        frontendReturnUrl = payment.frontendReturnUrl;
+        
+        // Display payment details
+        document.getElementById('pay-amount').textContent = formatAmount(payment.amount);
+        document.getElementById('pay-currency').textContent = payment.currencyCode;
+        document.getElementById('pay-invoice').textContent = payment.invoiceNo;
+        document.getElementById('pay-merchant').textContent = payment.merchantID;
+        document.getElementById('pay-description').textContent = payment.description || '-';
+        
+        // Show redirect button if frontendReturnUrl exists
+        if (frontendReturnUrl) {
+          document.getElementById('redirect-button-container').style.display = 'block';
+        }
+        
+        updateStatusDisplay(payment.status);
+
+        loadingState.style.display = 'none';
+        paymentDetails.style.display = 'block';
+
+      } catch (error) {
+        console.error('Error loading payment:', error);
+        loadingState.style.display = 'none';
+        errorState.style.display = 'block';
+        document.getElementById('error-message').textContent = error.message;
+      }
+    }
+    
+    function updateStatusDisplay(status) {
+      const statusBadge = document.getElementById('pay-status');
+      const waitingState = document.getElementById('waiting-state');
+      const completedState = document.getElementById('completed-state');
+      const completedMessage = document.getElementById('completed-message');
+      
+      statusBadge.textContent = status.toUpperCase();
+      statusBadge.className = `badge badge-${status}`;
+      
+      if (status === 'pending') {
+        waitingState.style.display = 'block';
+        completedState.style.display = 'none';
+      } else {
+        waitingState.style.display = 'none';
+        completedState.style.display = 'block';
+        
+        if (status === 'success') {
+          completedMessage.style.background = 'var(--success-bg)';
+          completedMessage.style.borderColor = 'var(--success)';
+          completedMessage.style.color = 'var(--success)';
+          completedMessage.innerHTML = '✅ <strong>Payment completed successfully!</strong>';
+        } else if (status === 'failed') {
+          completedMessage.style.background = 'var(--error-bg)';
+          completedMessage.style.borderColor = 'var(--error)';
+          completedMessage.style.color = 'var(--error)';
+          completedMessage.innerHTML = '❌ <strong>Payment failed</strong>';
+        } else if (status === 'cancelled') {
+          completedMessage.style.background = 'var(--warning-bg)';
+          completedMessage.style.borderColor = 'var(--warning)';
+          completedMessage.style.color = 'var(--warning)';
+          completedMessage.innerHTML = '⚠️ <strong>Payment was cancelled</strong>';
+        }
+      }
+    }
+    
+    function returnToMerchant() {
+      if (frontendReturnUrl) {
+        // Build return URL with payment info
+        const returnUrl = new URL(frontendReturnUrl);
+        returnUrl.searchParams.set('invoiceNo', payment.invoiceNo);
+        returnUrl.searchParams.set('status', payment.status);
+        window.location.href = returnUrl.toString();
+      } else {
+        alert('No return URL configured for this payment');
+      }
+    }
+    
+    function formatAmount(amount) {
+      return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(amount);
+    }
+
+    // Load payment on page load
+    loadPayment();
+  </script>
+</body>
+</html>

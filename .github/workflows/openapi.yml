@@ -1,0 +1,23 @@
+name: OpenAPI
+
+on:
+  push:
+    branches: [main]
+    paths: ['openapi.yaml', '.github/workflows/openapi.yml']
+  pull_request:
+    paths: ['openapi.yaml', '.github/workflows/openapi.yml']
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # The spec is published for people to import into Postman, so a broken
+      # one is a broken promise rather than a broken build.
+      - run: npx --yes @redocly/cli@latest lint openapi.yaml

@@ -70,7 +70,8 @@ The same flow runs from the landing page with one click, if you would rather wat
 
 **Speaks the real API shapes.** Token requests, inquiries, charges and webhooks follow the
 providers' published schemas down to the response codes, so your integration needs no
-sandbox-specific branches.
+sandbox-specific branches around the transaction itself. The exception is payload
+encryption, which this sandbox does not implement: see [What it does not do](#what-it-does-not-do).
 
 **Drives the failure cases.** Decline with a specific issuer code, make an inquiry time out or
 return an error, add latency globally or per payment, or fail a configurable percentage of requests.
@@ -84,6 +85,28 @@ headers included. No external request-bin, no tunnel to your laptop.
 **Custom callback fields.** Merchant integrations usually carry extra correlation data through a
 transaction. Attach arbitrary key/value pairs to a callback and save the combinations you use often
 as presets.
+
+## What it does not do
+
+**Payload encryption.** 2C2P's production API wraps requests and responses in JWT/JWE
+with a merchant key pair; this sandbox speaks plain JSON only. That is a deliberate
+limit, not an oversight: reproducing the crypto would mean shipping a key exchange and
+would make the sandbox harder to point at than the thing it replaces, while testing
+almost nothing about your own integration.
+
+The consequence is worth stating plainly, because it contradicts a claim this README
+would otherwise make. If your integration builds a signed payload before sending, that
+signing step is **not** exercised here, and pointing it at this sandbox needs the
+encryption layer disabled in test configuration. Two ways round it:
+
+- Keep the signing code in the path and let it wrap a payload this sandbox ignores.
+  Your code runs; only the sandbox's verification is missing.
+- Switch the encryption off in the test environment, which is what most integrations
+  already support, and test the transaction logic in isolation.
+
+Either way, the crypto layer needs its own test against the provider's real sandbox at
+least once. This tool is for the state machine around it: the declines, the duplicates,
+the ordering and the timeouts.
 
 ## Documentation
 

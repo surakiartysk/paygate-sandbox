@@ -27,6 +27,12 @@ Anything else returns `401`.
 
 ## 2C2P
 
+> **Plain JSON, not JWT.** 2C2P's production API wraps request and response payloads in
+> JWT/JWE signed with a merchant key pair. This sandbox accepts and returns unwrapped JSON.
+> Point an integration at it with encryption disabled in test configuration, or let your
+> signing code wrap a payload the sandbox ignores. The signing step itself is not exercised
+> here and needs its own test against the provider's real sandbox.
+
 ### `POST /api/2c2p/token`
 
 Creates a payment and returns a token plus the URL a customer would be redirected to.

@@ -81,10 +81,20 @@ const SCAN_EXTENSIONS = new Set([
  * is not caught by "lease".
  */
 function looseWord(term) {
-  const body = term
-    .trim()
+  const trimmed = term.trim()
+  const escape = (part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+  // A term that is not plain words — a hex colour, a token with punctuation —
+  // is matched literally. Splitting it on separators and prefixing `\b` would
+  // silently fail: `\b` finds no boundary before `#`, so "#c0ffee" matched
+  // nothing at all while appearing to be covered.
+  if (!/^[\w\s_-]+$/.test(trimmed)) {
+    return new RegExp(escape(trimmed).replace(/,\s*/g, ',\\s*'), 'i')
+  }
+
+  const body = trimmed
     .split(/[\s_-]+/)
-    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .map(escape)
     .join('[-_ .]?')
   return new RegExp(`\\b${body}`, 'i')
 }

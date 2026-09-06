@@ -8,7 +8,8 @@
     "vercel-dev": "vercel dev",
     "build": "echo 'No build step required'",
     "start": "node dev-server.js",
-    "test": "node --test test/*.test.js"
+    "test": "node scripts/check-leak.mjs && node --test test/*.test.js",
+    "check:leak": "node scripts/check-leak.mjs"
   },
   "dependencies": {
     "@vercel/kv": "^3.0.0"

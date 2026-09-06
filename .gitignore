@@ -9,3 +9,7 @@ node_modules/
 data/
 .vercel
 .env*
+
+# The leak checker word list — local only, never published.
+# See the note at the top of scripts/check-leak.mjs.
+.leakwords.json

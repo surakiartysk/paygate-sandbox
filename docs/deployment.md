@@ -45,8 +45,12 @@ Set these in the Vercel dashboard, or with `vercel env add`:
 | `ALLOW_PRIVATE_CALLBACKS` | `false` | **Required for a public instance** — see below |
 | `RATE_LIMIT_MAX` | `60` | Or lower, if the instance is widely shared |
 
-Redeploy after changing them; environment variables are read at request time, but existing warm
-instances keep the values they started with.
+Redeploy after changing them; existing warm instances keep the values they started with.
+
+Most of these are read per request, so a new instance picks them up immediately. `ADMIN_PASSWORD`
+is the exception — it is captured once when `lib/auth.js` loads, so a rotated password does not
+take effect until every warm instance has cycled. Rotate it expecting a window where both the old
+and new value are live somewhere, rather than a clean cutover.
 
 ## Hardening a public instance
 

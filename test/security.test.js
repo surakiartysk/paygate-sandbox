@@ -9,7 +9,9 @@
 
 import { test, describe, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { createServer } from 'node:http';
 import { checkCallbackUrl, assertCallbackUrlAllowed, BlockedCallbackUrlError } from '../lib/urlGuard.js';
+import { executeCallback } from '../lib/callback.js';
 
 describe('callback URL guard — strict mode', () => {
   beforeEach(() => {
@@ -126,5 +128,75 @@ describe('callback URL guard — local development', () => {
     assert.equal(checkCallbackUrl('http://10.0.0.5/cb').allowed, true);
     assert.equal(checkCallbackUrl('http://192.168.1.20:3001/cb').allowed, true);
     assert.equal(checkCallbackUrl('http://[::ffff:127.0.0.1]/cb').allowed, true);
+  });
+});
+
+/**
+ * The guard is only a choke point if nothing routes around it.
+ *
+ * `executeCallback` calls it on the URL it is given and then hands that URL to
+ * `fetch`, whose default is `redirect: 'follow'`. So the guard saw the first
+ * URL and the runtime followed whatever came back — an attacker supplies a
+ * public `backendReturnUrl` that passes, their server answers 302 with a
+ * Location pointing anywhere, and the request is made without the guard ever
+ * being consulted about the destination.
+ *
+ * Confirmed before fixing: a redirect to http://169.254.169.254/ was followed,
+ * with `blocked` undefined on the result because nothing had refused it.
+ */
+describe('callback redirects', () => {
+  /** A server that answers every request with a redirect to `target`. */
+  const redirectorTo = async (target) => {
+    const server = createServer((req, res) => {
+      res.writeHead(302, { Location: target });
+      res.end();
+    });
+    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+    return { server, url: `http://127.0.0.1:${server.address().port}/cb` };
+  };
+
+  test('does not follow a redirect to somewhere the guard would refuse', async () => {
+    delete process.env.ALLOW_PRIVATE_CALLBACKS;
+
+    const { server, url } = await redirectorTo('http://169.254.169.254/latest/meta-data/');
+
+    try {
+      const result = await executeCallback(url, { invoiceNo: 'REDIR-1' }, null);
+
+      // The 3xx is the answer, reported as-is. What must not happen is a
+      // second request to a destination the guard never saw.
+      assert.equal(result.status, 302);
+    } finally {
+      server.close();
+    }
+  });
+
+  test('does not follow a redirect even to an allowed target', async () => {
+    delete process.env.ALLOW_PRIVATE_CALLBACKS;
+
+    let secondHopReached = false;
+    const destination = createServer((req, res) => {
+      secondHopReached = true;
+      res.end('ok');
+    });
+    await new Promise(resolve => destination.listen(0, '127.0.0.1', resolve));
+
+    const { server, url } = await redirectorTo(
+      `http://127.0.0.1:${destination.address().port}/internal`
+    );
+
+    try {
+      const result = await executeCallback(url, { invoiceNo: 'REDIR-2' }, null);
+
+      assert.equal(result.status, 302);
+      assert.equal(
+        secondHopReached,
+        false,
+        'the redirect target was requested — the guard is not the only path out'
+      );
+    } finally {
+      server.close();
+      destination.close();
+    }
   });
 });

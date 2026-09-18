@@ -140,6 +140,15 @@ See [.env.example](.env.example) for the annotated version.
 npm test
 ```
 
+`npm test` runs the leak check first, then the suite. A pre-commit hook runs
+that leak check on its own — it is the only layer that can stop a leaked word
+rather than report one, because by the time CI runs the commit is on a public
+repository and the word is in its history permanently. The vocabulary half of
+the check needs `.leakwords.json`, which is gitignored and never published, so
+it exists where someone is writing rather than on a runner; CI enforces the
+structural rules and says out loud that it is doing only half.
+
+
 Node's built-in test runner — no test framework dependency. The suite boots a real server against a
 throwaway data directory and drives it over HTTP, covering both providers' flows, the callback
 inspector, the admin API, and the SSRF guard.

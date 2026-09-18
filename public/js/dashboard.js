@@ -707,6 +707,22 @@ function renderPayments() {
     return;
   }
 
+  /*
+   * Every payment field interpolated below is supplied by whoever called the
+   * provider API, which needs no authentication — so this table renders
+   * attacker-controlled strings into the admin's own page.
+   *
+   * `invoiceNo` was the proven case: the `title` attribute one line down was
+   * escaped with `escapeAttr` and the text node directly beneath it was not,
+   * so `<img src=x onerror=…>` as an invoice number ran in the admin's
+   * session — where the admin password sits in localStorage. Confirmed by
+   * POSTing it to /api/2c2p/token, which accepted it (respCode 0000) and
+   * stored it verbatim.
+   *
+   * Escape anything from `payment` that reaches markup: `jsArg` for the
+   * onclick attributes, `escapeAttr` for other attributes, `escapeHtml` for
+   * text.
+   */
   tbody.innerHTML = payments.map(payment => {
     const provider = payment.provider || '2c2p';
     const providerBadge = provider === 'omise' 
@@ -737,7 +753,7 @@ function renderPayments() {
       <td>
         <div style="display: flex; align-items: center; gap: 0.5rem; max-width: 100%;">
           <a href="/payment/${encodeURIComponent(payment.invoiceNo)}" style="font-family: var(--font-mono); font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttr(payment.invoiceNo)}">
-            ${invoiceDisplay}
+            ${escapeHtml(invoiceDisplay)}
           </a>
           ${isTruncated ? `
             <button onclick="copyInvoiceNo(${jsArg(payment.invoiceNo)}, event)" style="flex-shrink: 0; background: none; border: none; cursor: pointer; padding: 4px; display: inline-flex; align-items: center; color: var(--text-muted); opacity: 0.7; transition: opacity 0.2s;" title="Copy full invoice ID" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">
@@ -752,7 +768,7 @@ function renderPayments() {
       <td>${providerBadge}</td>
       <td>${methodBadge}</td>
       <td>
-        <span class="cell-amount">${formatAmount(payment.amount)}<span class="cell-currency">${payment.currencyCode}</span></span>
+        <span class="cell-amount">${formatAmount(payment.amount)}<span class="cell-currency">${escapeHtml(payment.currencyCode)}</span></span>
       </td>
       <td>
         <span class="badge badge-${payment.status}">
@@ -871,7 +887,7 @@ function renderLogs() {
           return `
             <div style="display: flex; align-items: center; gap: 0.5rem; max-width: 100%;">
               <a href="/payment/${encodeURIComponent(log.invoiceNo)}" style="font-family: var(--font-mono); font-size: 0.8rem; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttr(log.invoiceNo)}">
-                ${invoiceDisplay}
+                ${escapeHtml(invoiceDisplay)}
               </a>
               ${isTruncated ? `
                 <button onclick="copyInvoiceNo(${jsArg(log.invoiceNo)}, event)" style="flex-shrink: 0; background: none; border: none; cursor: pointer; padding: 4px; display: inline-flex; align-items: center; color: var(--text-muted); opacity: 0.7; transition: opacity 0.2s;" title="Copy full invoice ID" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">

@@ -12,6 +12,8 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { checkCallbackUrl, assertCallbackUrlAllowed, BlockedCallbackUrlError } from '../lib/urlGuard.js';
 import { executeCallback } from '../lib/callback.js';
+import { isAuthenticated, verifyPassword } from '../lib/auth.js';
+import { deploymentProblems } from '../lib/deployment.js';
 
 describe('callback URL guard — strict mode', () => {
   beforeEach(() => {
@@ -198,5 +200,73 @@ describe('callback redirects', () => {
       server.close();
       destination.close();
     }
+  });
+});
+
+/**
+ * The two settings docs/deployment.md calls required, enforced.
+ *
+ * That table says ADMIN_PASSWORD must be "something long and random" because
+ * "the default is public knowledge", and marks ALLOW_PRIVATE_CALLBACKS=false
+ * "**Required for a public instance**". Nothing enforced either: a deployment
+ * that forgot them served a dashboard whose password is printed in the README,
+ * with the callback guard in its permissive mode, and said nothing at all.
+ *
+ * The companion dashboard solved this with assertDeployable, which refuses to
+ * serve and names the problem. That shape needs a single entry point and this
+ * has none — every file under api/ is its own function — so the same idea is
+ * applied at the two chokepoints every affected path already goes through.
+ */
+describe('deployment configuration', () => {
+  afterEach(() => {
+    delete process.env.VERCEL;
+    delete process.env.ALLOW_PRIVATE_CALLBACKS;
+  });
+
+  test('says nothing when running locally', () => {
+    delete process.env.VERCEL;
+    assert.deepEqual(deploymentProblems(), []);
+  });
+
+  test('names both settings when deployed without them', () => {
+    process.env.VERCEL = '1';
+    const problems = deploymentProblems().join(' ');
+
+    assert.match(problems, /ADMIN_PASSWORD/);
+    assert.match(problems, /ALLOW_PRIVATE_CALLBACKS/);
+  });
+
+  /*
+   * Locking the owner out is the safe direction and it is recoverable: set the
+   * variable and redeploy. An admin surface open to anyone holding a password
+   * printed in the README is not.
+   */
+  test('refuses admin access rather than accept the published default', () => {
+    process.env.VERCEL = '1';
+
+    assert.equal(verifyPassword('mockpay'), false);
+    assert.equal(
+      isAuthenticated({ headers: { 'x-admin-password': 'mockpay' } }),
+      false
+    );
+  });
+
+  test('accepts it locally, where the default is the point', () => {
+    delete process.env.VERCEL;
+
+    assert.equal(verifyPassword('mockpay'), true);
+  });
+
+  /*
+   * Unset means "local yes, deployed no". An explicit `true` still works, so a
+   * deployment that genuinely wants private targets says so rather than
+   * getting them by forgetting.
+   */
+  test('defaults the callback guard to strict once deployed', () => {
+    process.env.VERCEL = '1';
+    assert.equal(checkCallbackUrl('http://10.0.0.5/cb').allowed, false);
+
+    process.env.ALLOW_PRIVATE_CALLBACKS = 'true';
+    assert.equal(checkCallbackUrl('http://10.0.0.5/cb').allowed, true);
   });
 });

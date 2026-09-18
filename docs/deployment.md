@@ -40,12 +40,38 @@ Set these in the Vercel dashboard, or with `vercel env add`:
 
 | Variable | Value | Why |
 | --- | --- | --- |
-| `ADMIN_PASSWORD` | something long and random | The default is public knowledge |
+| `ADMIN_PASSWORD` | something long and random | The default is public knowledge — **enforced**: admin routes are refused without it |
 | `MOCK_SERVER_URL` | `https://your-app.vercel.app` | Builds correct redirect and inspector URLs |
-| `ALLOW_PRIVATE_CALLBACKS` | `false` | **Required for a public instance** — see below |
+| `ALLOW_PRIVATE_CALLBACKS` | `false` | **Required for a public instance** — **enforced**: unset behaves as `false` once deployed |
 | `RATE_LIMIT_MAX` | `60` | Or lower, if the instance is widely shared |
 
 Redeploy after changing them; existing warm instances keep the values they started with.
+
+### The first two are enforced, not advised
+
+They used to be advice, and advice in a table is a thing people skip. A
+deployment that forgot `ADMIN_PASSWORD` served its dashboard, logs and config
+API to anyone who had read this repository's README; one that forgot
+`ALLOW_PRIVATE_CALLBACKS` ran the SSRF guard in its permissive mode. Both
+looked like they were working.
+
+So when the platform reports a deployment — `VERCEL=1`, production or preview,
+since a preview URL is as reachable as a production one — those two fail
+closed:
+
+- Without `ADMIN_PASSWORD`, every password is refused, including the default.
+  That locks you out of your own dashboard until you set it, which is
+  recoverable in one redeploy. An admin surface open to everyone is not.
+- Without `ALLOW_PRIVATE_CALLBACKS`, private and loopback targets are refused
+  as though it were `false`. Setting it to `"true"` still works — a deployment
+  that wants private targets says so, rather than getting them by omission.
+
+Neither applies locally, where the defaults are the point: the quick start
+depends on `mockpay` working and on loopback callbacks being allowed, and a
+check that broke those is a check people disable.
+
+The reason is logged once per instance, so a password that suddenly stops
+working has an explanation in the logs rather than a mystery.
 
 Most of these are read per request, so a new instance picks them up immediately. `ADMIN_PASSWORD`
 is the exception — it is captured once when `lib/auth.js` loads, so a rotated password does not

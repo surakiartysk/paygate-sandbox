@@ -1,0 +1,20 @@
+# The leak check, and only the leak check.
+#
+# `husky init` writes `npm test` here by default. That is wrong for this repo:
+# the suite boots a real server against a throwaway data directory and drives
+# it over HTTP, so a full run is tens of seconds — and a hook that slow gets
+# bypassed with --no-verify the first time someone is in a hurry. A hook people
+# routinely skip is worse than no hook. Correctness is CI's job, and CI already
+# runs the whole suite on two Node versions.
+#
+# This one is here because CI *cannot* do its job later. CI runs after the
+# commit has reached a public repository, at which point a leaked word is in
+# the git history, publicly and permanently — reverting does not remove it,
+# because GitHub keeps unreachable objects fetchable and any fork keeps its own
+# copy. A CI failure there is a fire alarm that rings after the building has
+# burned.
+#
+# It is also the only layer where the vocabulary half runs at all. The word
+# list is gitignored and never published, so it exists where someone is
+# writing, not on a runner. See scripts/check-leak.mjs.
+npm run check:leak

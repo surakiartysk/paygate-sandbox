@@ -84,4 +84,47 @@ describe('callback URL guard — local development', () => {
     assert.equal(checkCallbackUrl('http://169.254.169.254/').allowed, false);
     assert.equal(checkCallbackUrl('file:///etc/passwd').allowed, false);
   });
+
+  /*
+   * The same metadata service, spelled differently.
+   *
+   * ALWAYS_BLOCKED_HOSTS says these must be refused "regardless of mode", and
+   * the test above proves it for the dotted form. It was a string-match Set, so
+   * the guarantee only ever held for that one spelling: an IPv4-mapped IPv6
+   * literal reaches the identical address and, in this mode, was allowed.
+   *
+   * Strict mode caught it for a different reason — it refuses everything
+   * private, and link-local is private — which is why the gap only existed on
+   * the default, and why it survived: the deployment that would suffer from it
+   * is a self-hosted one that never set ALLOW_PRIVATE_CALLBACKS=false.
+   *
+   * Node's URL parser normalises the other classic spellings — decimal, hex,
+   * octal, and the 127.1 short form — back to dotted quads before the guard
+   * sees them, so those were never a way through. Checked, rather than assumed.
+   */
+  test('refuses the metadata address however it is spelled', () => {
+    delete process.env.ALLOW_PRIVATE_CALLBACKS;
+
+    for (const url of [
+      'http://[::ffff:a9fe:a9fe]/latest/meta-data/',
+      'http://[::ffff:169.254.169.254]/latest/meta-data/',
+      'http://2852039166/latest/meta-data/',
+      'http://0xa9fea9fe/latest/meta-data/'
+    ]) {
+      assert.equal(checkCallbackUrl(url).allowed, false, `${url} must be refused`);
+    }
+  });
+
+  /*
+   * And the mode still means something: an ordinary private address is the
+   * thing this mode exists to permit. Without this, tightening the rule above
+   * into "block all link-local always" would pass while quietly breaking local
+   * development, which is what the default is for.
+   */
+  test('permits ordinary private targets, which is the point of this mode', () => {
+    delete process.env.ALLOW_PRIVATE_CALLBACKS;
+    assert.equal(checkCallbackUrl('http://10.0.0.5/cb').allowed, true);
+    assert.equal(checkCallbackUrl('http://192.168.1.20:3001/cb').allowed, true);
+    assert.equal(checkCallbackUrl('http://[::ffff:127.0.0.1]/cb').allowed, true);
+  });
 });

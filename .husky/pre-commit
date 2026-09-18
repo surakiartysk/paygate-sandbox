@@ -1,0 +1,8 @@
+# Syntax on the staged JavaScript only — well under a second.
+#
+# Deliberately not `npm test`: the suite boots a real server and drives it over
+# HTTP, and a hook that slow gets bypassed with --no-verify the first time
+# someone is in a hurry. CI runs the full suite on two Node versions.
+for f in $(git diff --cached --name-only --diff-filter=ACMR -- '*.js' '*.mjs'); do
+  node --check "$f" || exit 1
+done

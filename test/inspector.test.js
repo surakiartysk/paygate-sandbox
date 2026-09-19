@@ -179,6 +179,47 @@ describe('guided demo', () => {
     assert.equal(second.body.seeded, false, 'seeding must not duplicate existing data');
   });
 
+  /*
+   * The timeline the dashboard draws from seeded data.
+   *
+   * `lib/demo.js` wrote `{ status, timestamp, note }` while every other writer
+   * of this array wrote `{ status, respCode, respDesc, changedAt, changedBy }`.
+   * The renderer reads the latter, so a seeded payment's timeline sorted on a
+   * missing key (a comparator returning NaN), showed "Invalid Date" and
+   * "unknown", and dropped `note` entirely — on the data a first-time visitor
+   * sees before anything else.
+   *
+   * Asserted on the shape rather than through a browser: the renderer is the
+   * consumer, and what broke was the contract between them.
+   */
+  test('seeded payments carry a timeline the dashboard can render', async () => {
+    await postJson(`${sandbox.baseUrl}/api/demo/seed`, {});
+
+    const response = await fetch(`${sandbox.baseUrl}/api/admin/payments?limit=50`, {
+      headers: adminHeaders()
+    });
+    const { payments } = await response.json();
+    const seeded = payments.filter((p) => p.isDemo);
+
+    assert.ok(seeded.length > 0, 'seeding must have produced demo payments');
+
+    for (const payment of seeded) {
+      for (const entry of payment.statusHistory || []) {
+        assert.ok(entry.changedAt, `${payment.invoiceNo}: a timeline entry has no changedAt`);
+        assert.ok(
+          !Number.isNaN(new Date(entry.changedAt).getTime()),
+          `${payment.invoiceNo}: changedAt does not parse as a date`
+        );
+        assert.ok(entry.changedBy, `${payment.invoiceNo}: a timeline entry has no changedBy`);
+
+        // The pair: writing changedAt while leaving the old keys behind would
+        // pass everything above and leave two shapes in one array.
+        assert.equal(entry.timestamp, undefined, 'the legacy `timestamp` key is still being written');
+        assert.equal(entry.note, undefined, 'the legacy `note` key is still being written');
+      }
+    }
+  });
+
   test('runs a payment end to end and captures its callback', async () => {
     const { status, body } = await postJson(`${sandbox.baseUrl}/api/demo/scenario`, {});
 

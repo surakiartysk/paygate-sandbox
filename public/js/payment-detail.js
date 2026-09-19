@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadPayment() {
   try {
-    const response = await fetch(`/api/admin/payments/${invoiceNo}`, {
+    const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}`, {
       headers: authHeaders()
     });
     
@@ -146,7 +146,7 @@ async function updatePaymentStatus(status, respCode = null) {
       body.respCode = respCode;
     }
     
-    const response = await fetch(`/api/admin/payments/${invoiceNo}/status`, {
+    const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}/status`, {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify(body)
@@ -180,7 +180,7 @@ async function sendCallback() {
   btn.disabled = true;
 
   try {
-    const response = await fetch(`/api/admin/payments/${invoiceNo}/callback`, {
+    const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}/callback`, {
       method: 'POST',
       headers: authHeaders()
     });
@@ -211,7 +211,7 @@ async function deletePaymentAndRedirect() {
   }
 
   try {
-    const response = await fetch(`/api/admin/payments/${invoiceNo}`, {
+    const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}`, {
       method: 'DELETE',
       headers: authHeaders()
     });
@@ -411,7 +411,7 @@ async function saveInquiryConfig() {
   const errorCode = document.getElementById('inquiry-error-code').value;
   
   try {
-    const response = await fetch(`/api/admin/payments/${invoiceNo}/inquiry-config`, {
+    const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}/inquiry-config`, {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify({
@@ -438,7 +438,7 @@ async function saveInquiryConfig() {
 
 async function resetInquiryConfig() {
   try {
-    const response = await fetch(`/api/admin/payments/${invoiceNo}/inquiry-config`, {
+    const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}/inquiry-config`, {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify({
@@ -683,7 +683,7 @@ async function loadCallbackPreview() {
     editor.value = 'Loading preview...';
     if (errorDiv) errorDiv.style.display = 'none';
     
-    const response = await fetch(`/api/admin/payments/${invoiceNo}?preview=callback`, {
+    const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}?preview=callback`, {
       headers: authHeaders()
     });
     
@@ -773,7 +773,7 @@ async function sendCustomCallback() {
   btn.disabled = true;
   
   try {
-    const response = await fetch(`/api/admin/payments/${invoiceNo}/callback`, {
+    const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}/callback`, {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify({ customPayload: payload })
@@ -952,7 +952,7 @@ async function sendCallbackSequence() {
       requestBody.customFields = customFields;
     }
     
-    const response = await fetch(`/api/admin/payments/${invoiceNo}/callback`, {
+    const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}/callback`, {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify(requestBody)

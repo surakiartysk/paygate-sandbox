@@ -290,7 +290,18 @@ async function handleRequest(req, res) {
     // Use index.js for base path (no action), [...slug].js for sub-paths (with action)
     const paymentMatch = pathname.match(/^\/api\/admin\/payments\/([^\/]+)(?:\/(.+))?$/);
     if (paymentMatch) {
-      const invoiceNo = paymentMatch[1];
+      // Decoded here so this matches the platform, which decodes route
+      // parameters before a handler sees them. An invoice number is whatever
+      // the caller sent and may contain a slash, so the dashboard encodes it
+      // into the path; leaving it encoded here made the two disagree and the
+      // lookup miss.
+      let invoiceNo = paymentMatch[1];
+      try {
+        invoiceNo = decodeURIComponent(invoiceNo);
+      } catch {
+        // A malformed escape stays as it is — it will not match a payment
+        // either, and a 404 beats a 500.
+      }
       const action = paymentMatch[2] || null;
       
       // Use index.js for base path (no action), [...slug].js for sub-paths (with action)

@@ -452,7 +452,7 @@ async function saveConfig() {
 
 async function updateStatus(invoiceNo, status) {
   try {
-    const response = await fetch(`/api/admin/payments/${invoiceNo}/status`, {
+    const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}/status`, {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify({ status })
@@ -475,7 +475,7 @@ async function updateStatus(invoiceNo, status) {
 
 async function sendCallbackForPayment(invoiceNo) {
   try {
-    const response = await fetch(`/api/admin/payments/${invoiceNo}/callback`, {
+    const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}/callback`, {
       method: 'POST',
       headers: authHeaders()
     });
@@ -503,7 +503,7 @@ async function deletePayment(invoiceNo) {
   }
 
   try {
-    const response = await fetch(`/api/admin/payments/${invoiceNo}`, {
+    const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}`, {
       method: 'DELETE',
       headers: authHeaders()
     });
@@ -903,13 +903,13 @@ function renderLogs() {
       </td>
       <td style="white-space: nowrap;">
         <span style="font-family: var(--font-mono); font-size: 0.75rem;">
-          ${log.request?.method || '-'}
+          ${escapeHtml(log.request?.method || '-')}
         </span>
       </td>
       <td style="max-width: 250px; min-width: 150px;">
         <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" 
               title="${escapeAttr(log.request?.path || '')}">
-          ${truncatePath(log.request?.path || '-')}
+          ${escapeHtml(truncatePath(log.request?.path || '-'))}
         </span>
       </td>
       <td style="white-space: nowrap;">
@@ -1238,7 +1238,7 @@ async function openStatusModal(invoiceNo, preSelectStatus = null) {
   
   // Load payment data to get provider info
   try {
-    const response = await fetch(`/api/admin/payments/${invoiceNo}`, {
+    const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}`, {
       headers: authHeaders()
     });
     
@@ -1338,7 +1338,7 @@ async function confirmUpdateStatus() {
       body.respCode = respCode;
     }
     
-    const response = await fetch(`/api/admin/payments/${invoiceNo}/status`, {
+    const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}/status`, {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify(body)
@@ -1375,7 +1375,7 @@ async function openCallbackModal(invoiceNo) {
   
   // Load payment data
   try {
-    const response = await fetch(`/api/admin/payments/${invoiceNo}`, {
+    const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}`, {
       headers: authHeaders()
     });
     
@@ -1690,7 +1690,7 @@ async function sendCallbackSequence() {
         requestBody.customFields = customFields;
       }
       
-      const response = await fetch(`/api/admin/payments/${invoiceNo}/callback`, {
+      const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}/callback`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify(requestBody)
@@ -1754,7 +1754,7 @@ async function sendCustomCallback() {
     btn.disabled = true;
     
     try {
-      const response = await fetch(`/api/admin/payments/${invoiceNo}/callback`, {
+      const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}/callback`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ customPayload: payload })

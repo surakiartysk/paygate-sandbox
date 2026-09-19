@@ -25,6 +25,39 @@ Anything else returns `401`.
 
 ---
 
+## Per-request simulation headers
+
+Two headers change how a single request behaves, without touching the shared
+config. They work on any provider endpoint, need no admin password, and
+outrank whatever the dashboard has set — which is the point: one caller can
+test its timeout handling without making every other caller slow.
+
+| Header | Effect |
+| --- | --- |
+| `X-Mock-Delay` | Milliseconds to wait before responding |
+| `X-Mock-Error` | Respond with this error code instead of succeeding |
+
+```bash
+curl http://localhost:3000/api/2c2p/token \
+  -H 'Content-Type: application/json' \
+  -H 'X-Mock-Delay: 2000' \
+  -d '{"invoiceNo":"INV-1","amount":100}'
+```
+
+**`X-Mock-Delay` is capped at 30 seconds.** It takes a number from whoever sent
+the request, and unbounded it was a way to hold a request open for as long as
+you liked — `X-Mock-Delay: 99999999` slept for about 27 hours, burning a
+serverless function's whole budget or, self-hosted, nothing stopping it at all.
+A larger value is clamped rather than refused, because answering `400` to a
+number that used to work would break callers to make a point.
+
+Set `MOCK_MAX_DELAY_MS` to change the ceiling. `globalDelay` in the admin
+config is deliberately left unbounded for a genuinely slower simulation — it
+is behind the admin password, so whoever sets it already has more destructive
+options than sleeping.
+
+---
+
 ## 2C2P
 
 > **Plain JSON, not JWT.** 2C2P's production API wraps request and response payloads in

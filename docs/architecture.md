@@ -135,6 +135,26 @@ change takes effect immediately without a redeploy.
 Per-payment inquiry behaviour (`normal`, `delay`, `error`, `timeout`) lives on the payment record
 itself, so one misbehaving transaction does not disturb the others in a test run.
 
+## The request log
+
+[`lib/logger.js`](../lib/logger.js) records each provider request and its response — method, path,
+headers, bodies — into the same store, with a seven-day TTL. Bodies over 10 KB are kept as a
+truncated preview. The dashboard renders it, which is the point: an integrator wants to see exactly
+what their code sent.
+
+Headers are the part that needs care, because they carry credentials. `sanitizeHeaders` redacts an
+explicit list *and* anything whose name looks like a secret — `password`, `secret`, `token`,
+`api-key`, `auth`, `credential`, `signature`. The list alone was not enough: it named four headers,
+none of them `x-admin-password`, which is the one credential this application actually defines. A
+request carrying both stored `"authorization": "[REDACTED]"` beside `"x-admin-password": "mockpay"`.
+
+The pattern over-matches on purpose. A header genuinely called `x-token-count` is redacted and
+someone loses a number from a log; the other error publishes a secret into a store that renders in a
+browser and survives for a week. Those are not comparable.
+
+Admin routes are deliberately not logged. The log is a record of what an integrator's code did, and
+the dashboard driving it would drown that out.
+
 ## Rate limiting
 
 [`lib/rateLimit.js`](../lib/rateLimit.js) keeps counters in process memory. On serverless that means

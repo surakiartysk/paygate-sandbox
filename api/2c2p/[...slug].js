@@ -188,7 +188,7 @@ async function handleOptionDetails(request, response) {
   try {
     await applyDelay(request);
     
-    const forceError = await checkForceError(request);
+    const forceError = await checkForceError(request, '2c2p');
     if (forceError) {
       return logAndRespond(200, getErrorResponse(forceError), null);
     }
@@ -312,7 +312,7 @@ async function handlePayment(request, response) {
   try {
     await applyDelay(request);
     
-    const forceError = await checkForceError(request);
+    const forceError = await checkForceError(request, '2c2p');
     if (forceError) {
       return logAndRespond(200, getErrorResponse(forceError), null);
     }

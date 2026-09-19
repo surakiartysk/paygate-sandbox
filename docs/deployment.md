@@ -44,6 +44,7 @@ Set these in the Vercel dashboard, or with `vercel env add`:
 | `MOCK_SERVER_URL` | `https://your-app.vercel.app` | Builds correct redirect and inspector URLs |
 | `ALLOW_PRIVATE_CALLBACKS` | `false` | **Required for a public instance** — **enforced**: unset behaves as `false` once deployed |
 | `RATE_LIMIT_MAX` | `60` | Or lower, if the instance is widely shared |
+| `TRUST_PROXY` | `true` | Required behind a proxy, or every client shares one bucket |
 
 Redeploy after changing them; existing warm instances keep the values they started with.
 
@@ -103,6 +104,15 @@ entirely — reasonable locally, not on a public URL.
 Note the limit is per warm instance, not global (see
 [architecture](architecture.md#rate-limiting)). It stops runaway scripts, not a distributed
 attacker. If you need real protection, put Vercel's WAF or Cloudflare in front.
+
+**Behind a proxy, set `TRUST_PROXY=true`.** The limit counts per client, and by default that
+means the socket address, because `X-Forwarded-For` is a header the caller sends — keying on it
+let one client hand itself a fresh allowance every request by changing one string, which is the
+runaway script the limit exists to stop rather than the distributed attacker it does not.
+
+Leaving it unset behind a proxy is safe but blunt: every client arrives from the proxy's address,
+so they share one bucket and the cap becomes per-instance rather than per-client. Setting it is a
+statement that you know what sits in front and that it controls the header.
 
 ### 3. Use a real admin password
 

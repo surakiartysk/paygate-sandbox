@@ -84,3 +84,58 @@ describe('admin API', () => {
     assert.equal(status, 400, 'failureRate above 100 is rejected');
   });
 });
+
+/**
+ * An invoice number is whatever the caller sent.
+ *
+ * Nothing validates its character set — `POST /api/2c2p/token` stores what it
+ * is given — so `AB/CD` is a perfectly ordinary invoice number to end up with,
+ * and the admin API addresses payments by putting that string in a URL path.
+ *
+ * Both halves have to agree about encoding. The dashboard built the URL by
+ * interpolating the raw value, so a slash split the path and the request
+ * reached a different route entirely (405, not 404). Encoding it on the way
+ * out is only half: the handler matched the path segment with a regex and
+ * used it raw, so `AB%2FCD` was looked up literally and found nothing.
+ *
+ * The effect was that a payment with a slash in its number could be created by
+ * anyone through the public API and then not be managed at all — status,
+ * callback and delete all missed it.
+ */
+describe('invoice numbers that need encoding', () => {
+  let sandbox;
+
+  before(async () => {
+    sandbox = await startSandbox();
+  });
+
+  after(async () => {
+    await sandbox?.stop();
+  });
+
+  test('a payment whose number contains a slash can still be read and changed', async () => {
+    const invoiceNo = 'AB/CD-' + Date.now();
+
+    const created = await postJson(`${sandbox.baseUrl}/api/2c2p/token`, {
+      merchantID: 'M', invoiceNo, description: 'slash test', amount: 100, currencyCode: 'THB'
+    });
+    assert.equal(created.body.respCode, '0000');
+
+    const encoded = encodeURIComponent(invoiceNo);
+
+    // Read it back.
+    const read = await fetch(`${sandbox.baseUrl}/api/admin/payments/${encoded}`, {
+      headers: adminHeaders()
+    });
+    assert.equal(read.status, 200, 'the payment should be reachable by its encoded number');
+
+    // And act on it.
+    const changed = await postJson(
+      `${sandbox.baseUrl}/api/admin/payments/${encoded}/status`,
+      { status: 'success' },
+      adminHeaders()
+    );
+    assert.equal(changed.status, 200, 'its status should be changeable');
+  });
+});
+

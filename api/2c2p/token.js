@@ -143,7 +143,7 @@ export default async function handler(request, response) {
     await applyDelay(request);
     
     // Check for forced errors
-    const forceError = await checkForceError(request);
+    const forceError = await checkForceError(request, '2c2p');
     if (forceError) {
       const errorResp = getErrorResponse(forceError);
       return logAndRespond(200, errorResp, body?.invoiceNo);

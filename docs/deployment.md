@@ -120,7 +120,8 @@ statement that you know what sits in front and that it controls the header.
 
 ## Data lifetime
 
-Inspector sessions expire after 24 hours via KV's TTL. Request logs expire after `logTTLDays`
+Inspector sessions expire 24 hours after they are created — absolutely, not sliding, so an active
+session expires on schedule too. Each holds at most fifty captures of at most 64 KB. Request logs expire after `logTTLDays`
 (7 by default). Payments persist until deleted — through the dashboard, `DELETE
 /api/admin/payments/:invoiceNo`, or `POST /api/admin/payments/clear`.
 

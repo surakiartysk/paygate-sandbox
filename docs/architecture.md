@@ -94,6 +94,19 @@ Every callback the sandbox sends passes through `executeCallback` in
 3. **Send** — POST with a 30-second timeout, recording status, latency and any error.
 4. **Log** — write to the request log and the payment's callback history.
 
+Step 4 goes through `appendCallbackHistory` in [`lib/storage.js`](../lib/storage.js) rather than
+composing the new history at the call site. The caller holds a payment record read *before* step 3
+went out over the network, so appending to it would write a snapshot one full HTTP round trip old:
+two concurrent callbacks on one invoice each overwrote the other's entry, and the API answered
+success to both. Measured, six concurrent callbacks were delivered and three were recorded.
+
+On the local store the append is atomic — `readLocalPayments` and `writeLocalPayments` are
+synchronous, and with no `await` between them nothing else runs in the interval. Inserting a single
+`setTimeout(0)` there puts thirty recorded back down to twenty-four, which is how that claim is
+tested rather than asserted. On KV it is not atomic and cannot be made so here: the client has no
+compare-and-set, and two serverless instances share nothing but the store. The window is two
+adjacent calls instead of a network round trip, which is the whole of the improvement.
+
 ### The guard, and why it exists
 
 The sandbox POSTs to a URL supplied by whoever created the payment. On a public deployment that is a

@@ -149,3 +149,65 @@ describe('the provider a caller states', () => {
   });
 });
 
+/*
+ * The delay header, and why it has a ceiling.
+ *
+ * `x-mock-delay` takes a number from whoever sends the request. Unbounded,
+ * `x-mock-delay: 99999999` held a request open for about 27 hours — measured
+ * against a running sandbox, not reasoned about. That is the same shape as a
+ * rate limit keyed on a header the caller controls: a value nobody validated,
+ * doing exactly what it was told.
+ */
+describe('the delay header has a ceiling', () => {
+  let sandbox;
+
+  // A one-second ceiling, so the test proves the clamp instead of waiting out
+  // the real one. Thirty seconds of sleeping per run would be a cost the suite
+  // pays forever to assert something a lower bound shows just as well.
+  const CEILING_MS = 1000;
+
+  before(async () => {
+    sandbox = await startSandbox({ MOCK_MAX_DELAY_MS: String(CEILING_MS) });
+  });
+
+  after(async () => {
+    await sandbox?.stop();
+  });
+
+  const timedToken = async (delayHeader) => {
+    const started = Date.now();
+    await postJson(
+      `${sandbox.baseUrl}/api/2c2p/token`,
+      { invoiceNo: uniqueInvoice(), amount: 100 },
+      { 'Content-Type': 'application/json', 'x-mock-delay': String(delayHeader) }
+    );
+    return Date.now() - started;
+  };
+
+  test('honours a delay below the ceiling', async () => {
+    const elapsed = await timedToken(400);
+
+    // The pair matters: a cap that ignored the header entirely would pass the
+    // test below on its own.
+    assert.ok(elapsed >= 350, `expected roughly 400ms, took ${elapsed}ms`);
+    assert.ok(elapsed < CEILING_MS + 4000, `expected roughly 400ms, took ${elapsed}ms`);
+  });
+
+  /*
+   * The explicit timeout is the point, not decoration.
+   *
+   * Without it, removing the cap does not fail this test — it hangs it, for
+   * the 27 hours the header asked for, because the assertion is only reached
+   * once the request returns. A suite that hangs in CI is worse than one that
+   * goes red: nobody gets a failure to read.
+   */
+  test('refuses to sleep for a day because a header said so', { timeout: 15000 }, async () => {
+    const elapsed = await timedToken(99999999);
+
+    assert.ok(
+      elapsed < CEILING_MS + 4000,
+      `a 27-hour delay was not clamped to the ${CEILING_MS}ms ceiling — took ${elapsed}ms`
+    );
+  });
+});
+

@@ -65,7 +65,22 @@ the test suite runs against — each test process gets its own `DATA_DIR`, so ru
 nothing has to be cleaned up between them.
 
 Inspector sessions use KV's native TTL (`{ ex: seconds }`) where available, and a timestamp sweep on
-read locally. Both expire after 24 hours, so a shared deployment does not accumulate.
+read locally. Both expire 24 hours after the session was created, so a shared deployment does not
+accumulate.
+
+The word doing the work there is *created*. Each KV write used to set a fresh 24-hour `ex`, which is
+a sliding TTL — a session receiving one callback a day would have lived indefinitely on the deployed
+path while expiring on the dev one, and the "does not accumulate" sentence would have been true only
+of the backend nobody deploys. `inspectorTTLRemaining` now hands KV what is left of the original
+window, and has its own tests, because a TTL that is wrong in this direction shows no symptom: a
+session that outlives its window looks exactly like one that has not reached it yet.
+
+A session holds at most fifty captures, each at most 64 KB once serialised. Both caps are needed —
+counting alone bounds nothing, since one capture carries whatever body was posted. Oversized bodies
+are truncated to a readable excerpt rather than refused, because this endpoint answers a gateway and
+exists to show that a callback arrived. Nothing caps the *number* of sessions: the rate limit bounds
+how fast they can be minted and the TTL reclaims them, which is the right size of limit for a
+sandbox and would not be for anything holding something valuable.
 
 ## Outbound callbacks
 

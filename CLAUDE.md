@@ -14,6 +14,7 @@ data is fake.
 | Document | Contents |
 | --- | --- |
 | [architecture.md](docs/architecture.md) | How it fits together, the storage split, the callback pipeline |
+| [decisions.md](docs/decisions.md) | Why each choice was made, what it cost, and the bug that taught it |
 | [api.md](docs/api.md) | Every endpoint, and the per-request simulation headers |
 | [deployment.md](docs/deployment.md) | What a public instance must set, and what it costs if you do not |
 | [how-it-was-built.md](docs/how-it-was-built.md) | The subject, and how AI was used |

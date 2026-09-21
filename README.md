@@ -115,6 +115,7 @@ the ordering and the timeouts.
 | [docs/api.md](docs/api.md) | Every endpoint, with request and response examples |
 | [docs/scenarios.md](docs/scenarios.md) | Recipes for the cases worth testing, as runnable curl |
 | [docs/architecture.md](docs/architecture.md) | How it is put together, and why |
+| [docs/decisions.md](docs/decisions.md) | Why it is shaped this way, and what each choice cost |
 | [docs/deployment.md](docs/deployment.md) | Deploying to Vercel, and hardening a public instance |
 | [openapi.yaml](openapi.yaml) | Machine-readable spec — import straight into Postman or Insomnia |
 

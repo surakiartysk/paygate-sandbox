@@ -40,6 +40,19 @@
       margin-bottom: 0.5rem;
     }
     
+    .login-demo {
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .login-demo p {
+      margin: 0 0 0.75rem;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+
     .login-subtitle {
       text-align: center;
       color: var(--text-secondary);
@@ -145,14 +158,37 @@
           Login
         </button>
       </form>
+
+      <div class="login-demo">
+        <p>Just looking? The password <code>demo</code> gives you ten sample payments of your own for a day.
+          Change their status and send their callbacks; settings and logs stay with the owner.</p>
+        <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="signInAsDemo()">Try the demo</button>
+      </div>
       
     </div>
   </div>
 
   <script>
     // Check if already logged in
-    if (localStorage.getItem('admin_password')) {
+    if (localStorage.getItem('admin_password') || localStorage.getItem('demo_token')) {
       window.location.href = '/dashboard';
+    }
+
+    function signInAsDemo() {
+      document.getElementById('password').value = 'demo';
+      document.getElementById('login-form').requestSubmit();
+    }
+
+    /**
+     * Show a message the server wrote, for answers that are not about the
+     * password: the demo being full (503) or too many attempts (429).
+     */
+    function showServerMessage(message) {
+      const errorIcon = document.getElementById('login-error-icon');
+      const errorText = document.getElementById('login-error-text');
+      if (errorIcon) errorIcon.innerHTML = '<span style="font-size: 1.5rem;">⏳</span>';
+      if (errorText) errorText.textContent = message;
+      document.getElementById('login-error').classList.add('show');
     }
     
     function togglePasswordVisibility() {
@@ -191,6 +227,11 @@
         let data;
         try {
           if (!response.ok) {
+            if (response.status === 503 || response.status === 429) {
+              const body = await response.json().catch(() => ({}));
+              showServerMessage(body.error || body.message || 'Try again in a minute.');
+              return;
+            }
             // For 401 (invalid password), show funny message with shoo GIF
             if (response.status === 401) {
               const errorIcon = document.getElementById('login-error-icon');
@@ -235,7 +276,19 @@
           return;
         }
         
-        if (data && data.success) {
+        if (data && data.success && data.role === 'demo') {
+          // A demo visitor's credential is the token they were issued, never
+          // the password: the password is the same for everyone, the token
+          // is what makes the payments theirs.
+          localStorage.removeItem('admin_password');
+          document.cookie = 'admin_password=; path=/; max-age=0';
+          localStorage.setItem('demo_token', data.token);
+          localStorage.setItem('demo_inspector', data.inspectorSessionId);
+          window.location.href = '/dashboard';
+        } else if (data && data.success) {
+          localStorage.removeItem('demo_token');
+          localStorage.removeItem('demo_inspector');
+
           // Store password in localStorage
           localStorage.setItem('admin_password', password);
           

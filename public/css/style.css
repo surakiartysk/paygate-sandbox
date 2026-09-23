@@ -2305,3 +2305,24 @@ a:hover {
     padding: 0 0.5rem;
   }
 }
+
+/* Demo visitors: controls that only the admin may use are hidden, and a
+   banner says whose payments these are. The server refuses the same actions
+   regardless; this is so a visitor is not offered them. */
+.is-demo [data-admin-only] {
+  display: none !important;
+}
+
+.demo-banner {
+  padding: 0.625rem 1rem;
+  background: var(--accent-dim);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.demo-banner a {
+  color: var(--accent);
+}

@@ -23,22 +23,62 @@ function getAdminPassword() {
 
 // Check if logged in
 function isLoggedIn() {
-  return !!getAdminPassword();
+  return !!getAdminPassword() || !!localStorage.getItem('demo_token');
 }
 
 // Logout
 function logout() {
   localStorage.removeItem('admin_password');
+  localStorage.removeItem('demo_token');
+  localStorage.removeItem('demo_inspector');
   document.cookie = 'admin_password=; path=/; max-age=0';
   window.location.href = '/login';
 }
 
+// A demo visitor's token, when this browser signed in with the demo password.
+// It replaces the password as the credential: see lib/demoAccess.js.
+function getDemoToken() {
+  return localStorage.getItem('demo_token') || '';
+}
+
+function isDemo() {
+  return !getAdminPassword() && !!getDemoToken();
+}
+
 // Add auth header to fetch options
 function authHeaders() {
+  if (isDemo()) {
+    return {
+      'Content-Type': 'application/json',
+      'X-Demo-Token': getDemoToken()
+    };
+  }
   return {
     'Content-Type': 'application/json',
     'X-Admin-Password': getAdminPassword()
   };
+}
+
+/**
+ * Mark the page as a demo visitor's and say so at the top.
+ *
+ * Hiding the admin-only controls is for the visitor's sake, not the server's:
+ * the routes behind them refuse a demo token whatever the page shows.
+ */
+function applyDemoMode() {
+  if (!isDemo()) return;
+  document.body.classList.add('is-demo');
+
+  const banner = document.createElement('div');
+  banner.className = 'demo-banner';
+  const inspector = localStorage.getItem('demo_inspector');
+  banner.innerHTML = 'Demo: these ten payments are yours alone for a day. Change a status, send a callback, '
+    + 'then see what arrived in <a class="demo-inspector-link">your inspector</a>. '
+    + 'Settings and logs stay with the owner.';
+  const link = banner.querySelector('.demo-inspector-link');
+  if (inspector) link.href = `/inspector?session=${encodeURIComponent(inspector)}`;
+  else link.replaceWith(document.createTextNode('your inspector'));
+  document.body.prepend(banner);
 }
 
 // Handle 401 errors
@@ -90,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Show page after auth confirmed
   document.body.classList.add('authenticated');
+  applyDemoMode();
   
   loadPayment();
   loadResponseCodes();

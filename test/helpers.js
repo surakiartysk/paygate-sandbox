@@ -8,6 +8,7 @@
 
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
+import { createServer as createNetServer } from 'node:net';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
@@ -21,7 +22,7 @@ const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
  * @returns {Promise<{ baseUrl: string, stop: () => Promise<void> }>}
  */
 export async function startSandbox(env = {}) {
-  const port = 3100 + Math.floor(Math.random() * 800);
+  const port = await freePort();
   const dataDir = mkdtempSync(join(tmpdir(), 'paygate-test-'));
 
   const child = spawn(process.execPath, ['dev-server.js'], {
@@ -57,6 +58,31 @@ export async function startSandbox(env = {}) {
       rmSync(dataDir, { recursive: true, force: true });
     }
   };
+}
+
+/**
+ * A port nothing is listening on, chosen by the OS.
+ *
+ * This used to be a random pick from 3100–3899. With sixteen sandboxes in a
+ * run, that is about a one-in-seven chance per run that two land on the same
+ * port — and the loser fails quietly: its dev server cannot bind, while
+ * `waitForServer` gets an answer from the *other* test's sandbox and carries
+ * on against it, with that sandbox's environment. It showed up as timing tests
+ * failing under the wrong ceiling, and as "did not start within 15000ms".
+ *
+ * Closing the probe before the child binds leaves a moment in which something
+ * else could be given the same port. Linux hands out these ports from the
+ * whole ephemeral range at random, so that is a far smaller chance than the
+ * one it replaces — smaller, not zero.
+ *
+ * @returns {Promise<number>} Port number
+ */
+async function freePort() {
+  const probe = createNetServer();
+  await new Promise(resolve => probe.listen(0, '127.0.0.1', resolve));
+  const { port } = probe.address();
+  await new Promise(resolve => probe.close(resolve));
+  return port;
 }
 
 /**

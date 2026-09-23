@@ -28,6 +28,7 @@ one that was obvious.
 14. [Constant time, and what it does not buy](#14-constant-time-and-what-it-does-not-buy)
 15. [What is stated outranks what is inferred](#15-what-is-stated-outranks-what-is-inferred)
 16. [The pattern all of this keeps producing](#16-the-pattern-all-of-this-keeps-producing)
+17. [A demo password that can be published, because of what it opens](#17-a-demo-password-that-can-be-published-because-of-what-it-opens)
 
 ---
 
@@ -426,6 +427,65 @@ messages are measurements rather than estimates.
 **Trade-off.** Probing costs more than reading and does not scale: it finds what you thought to
 ask about, and the audit is only as good as the questions. Three of the eight were found while
 looking for something else.
+
+## 17. A demo password that can be published, because of what it opens
+
+**Context.** The landing page offered "Open the dashboard", and on a public deployment that led to a
+login nobody but the owner could pass: [decision 7](#7-a-requirement-in-a-table-is-not-a-requirement)
+made the admin password mandatory, correctly, because it opens everything — the shared config,
+every caller's request log, deleting every payment, and callbacks to any address. A visitor could
+use the provider APIs with `curl`, but never see the part that shows what a sandbox is for.
+
+The companion dashboard solved the same problem with a role whose password is printed on the
+sign-in screen, and which can never dispatch a real run. The lesson carried over: publishing a
+password is safe exactly when what it grants is narrow enough to hand to anyone.
+
+**Decision.** `demo` signs in a *visitor*, not an admin. Each sign-in mints a random token of its
+own, ten sample payments owned by it, and an inspector session for their callbacks, all expiring
+after a day. The token, never the shared password, is the credential after that.
+
+- **Refused unless allowed.** `isAuthenticated` still means the admin and nothing else, so every
+  admin route that has not been written with visitors in mind turns them away. The ones that
+  have opted in: the payment list, one payment's routes (status, callback, inquiry config,
+  delete) and reading the config. Clearing all payments, writing the config and reading the
+  request log answer `403`.
+- **Ownership is checked where the payment is read.** Each payment route reads through one
+  `loadPayment`, which answers "not found" for a payment that is not the visitor's, so the routes
+  cannot be used to learn which invoice numbers exist.
+- **Nothing a visitor sends decides where a request goes.** Their callbacks go to the inspector
+  session fixed at sign-in; naming another address is refused. A visitor's payment also gets the
+  30-second ceiling [decision 9](#9-simulation-lives-in-headers-and-a-caller-chosen-number-gets-a-ceiling)
+  gave the delay header, on its inquiry delay and its simulated timeout, because it is exactly the
+  stranger that decision was written for.
+- **Each side sees only its own.** The admin's list leaves visitors' payments out: strings a
+  stranger chose do not belong on the admin's screen, and two hundred copies of the same ten
+  samples are no use there.
+- **Bounded.** Sign-in has its own rate-limit bucket of ten a minute, a visitor on the admin
+  routes is held to the provider APIs' limit, and the instance refuses new visitors past 2,000
+  live visitor payments. Each seeded payment measured 0.83–1.06 KB serialised, about 9.2 KB a
+  visitor, so the ceiling is about 1.8 MB before any callback history. Expired visitors' payments
+  are swept on the next demo sign-in, the one event that adds more.
+- **The admin password can never be `demo`.** Refused everywhere, not only when deployed: nothing
+  depends on it locally, and the failure it prevents is the published password opening the admin
+  surface.
+
+Building it found a bug that had nothing to do with visitors: the inquiry `timeout` simulation
+answered `200 {"_timeout":true}` in 8ms and only then hung, so the client timeout it exists to
+exercise never fired. It now sends nothing.
+
+**Trade-off.** The admin surface now has two principals, and every new admin route has to decide
+which it serves. Refusing by default makes forgetting safe, not free: a route that opts in has to
+check ownership itself, and that rule lives in three handlers rather than one place.
+
+The ceiling on visitor payments refuses rather than evicts, so someone signing in from many
+addresses can fill the demo for a day and turn everyone else away. Evicting the oldest instead
+would let them delete other visitors' sandboxes, which is worse. On KV the count and the seeding
+are not atomic, so simultaneous sign-ins can overshoot the ceiling by a few visitors.
+
+Visitors share the admin's global config — a global delay or a forced error the owner sets
+applies to their payments too, and they can see it but not change it. The ten-a-minute sign-in
+limit covers admin attempts as well, so an owner who mistypes ten times waits a minute. And the
+admin can no longer see what visitors did, except by opening a visitor invoice number directly.
 
 ---
 

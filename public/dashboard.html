@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="/css/style.css">
   <script>
     // Immediate auth check - redirect before page renders
-    if (!localStorage.getItem('admin_password')) {
+    if (!(localStorage.getItem('admin_password') || localStorage.getItem('demo_token'))) {
       window.location.replace('/login');
     }
     
@@ -84,7 +84,7 @@
             <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
           </svg>
         </button>
-        <button class="btn btn-secondary" onclick="openConfigModal()" title="Global Configuration" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+        <button data-admin-only class="btn btn-secondary" onclick="openConfigModal()" title="Global Configuration" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -112,7 +112,7 @@
         </svg>
         Payments
       </button>
-      <button class="tab-btn" data-tab="logs" onclick="switchTab('logs')">
+      <button data-admin-only class="tab-btn" data-tab="logs" onclick="switchTab('logs')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14 2 14 8 20 8"></polyline>
@@ -159,7 +159,7 @@
             </svg>
             <span id="refresh-payments-text">Refresh</span>
           </button>
-          <button class="btn btn-danger btn-sm" onclick="openClearPaymentsModal()" title="Clear all payments" style="gap: 0.25rem;">
+          <button data-admin-only class="btn btn-danger btn-sm" onclick="openClearPaymentsModal()" title="Clear all payments" style="gap: 0.25rem;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -253,7 +253,7 @@
     </div><!-- End Payments Tab -->
 
     <!-- Logs Tab -->
-    <div class="tab-content" id="tab-logs">
+    <div data-admin-only class="tab-content" id="tab-logs">
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">Request/Response Logs</h2>

@@ -169,7 +169,7 @@ paths:
       tags: [Admin]
       summary: List payments
       operationId: listPayments
-      security: [{ adminPassword: [] }]
+      security: [{ adminPassword: [] }, { demoToken: [] }]
       parameters:
         - { name: page, in: query, schema: { type: integer, default: 1 } }
         - { name: limit, in: query, schema: { type: integer, default: 20 } }
@@ -202,7 +202,7 @@ paths:
       tags: [Admin]
       summary: Get one payment
       operationId: getPayment
-      security: [{ adminPassword: [] }]
+      security: [{ adminPassword: [] }, { demoToken: [] }]
       parameters:
         - $ref: '#/components/parameters/InvoiceNo'
         - name: preview
@@ -225,7 +225,7 @@ paths:
       tags: [Admin]
       summary: Delete a payment
       operationId: deletePayment
-      security: [{ adminPassword: [] }]
+      security: [{ adminPassword: [] }, { demoToken: [] }]
       parameters:
         - $ref: '#/components/parameters/InvoiceNo'
       responses:
@@ -241,7 +241,7 @@ paths:
         Moving a payment to `success` generates an approval code and reference number when it does
         not already have them. No callback is sent — use the callback endpoint for that.
       operationId: updatePaymentStatus
-      security: [{ adminPassword: [] }]
+      security: [{ adminPassword: [] }, { demoToken: [] }]
       parameters:
         - $ref: '#/components/parameters/InvoiceNo'
       requestBody:
@@ -283,7 +283,7 @@ paths:
         (invoiceNo, amount, currencyCode, merchantID, respCode, respDesc, tranRef, referenceNo,
         approvalCode); those keys are ignored. Use `customPayload` for full control.
       operationId: sendCallback
-      security: [{ adminPassword: [] }]
+      security: [{ adminPassword: [] }, { demoToken: [] }]
       parameters:
         - $ref: '#/components/parameters/InvoiceNo'
       requestBody:
@@ -347,7 +347,7 @@ paths:
       tags: [Admin]
       summary: Make inquiries on this payment misbehave
       operationId: setInquiryBehavior
-      security: [{ adminPassword: [] }]
+      security: [{ adminPassword: [] }, { demoToken: [] }]
       parameters:
         - $ref: '#/components/parameters/InvoiceNo'
       requestBody:
@@ -376,7 +376,7 @@ paths:
       tags: [Admin]
       summary: Read simulation settings
       operationId: getConfig
-      security: [{ adminPassword: [] }]
+      security: [{ adminPassword: [] }, { demoToken: [] }]
       responses:
         '200':
           description: Current settings
@@ -559,6 +559,13 @@ components:
       in: header
       name: X-Admin-Password
       description: Set by `ADMIN_PASSWORD`; defaults to `mockpay`.
+    demoToken:
+      type: apiKey
+      in: header
+      name: X-Demo-Token
+      description: >-
+        Issued by `POST /api/admin/login` for the published password `demo`. Scoped to the
+        visitor's own sample payments; see docs/api.md, "Demo visitors".
 
   parameters:
     InvoiceNo:

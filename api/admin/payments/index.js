@@ -4,22 +4,28 @@
  */
 
 import { getAllPayments, clearAllPayments } from '../../../lib/storage.js';
-import { isAuthenticated, unauthorized } from '../../../lib/auth.js';
+import { unauthorized } from '../../../lib/auth.js';
+import { ownsPayment, refuseDemo, resolvePrincipal } from '../../../lib/demoAccess.js';
+import { enforceRateLimit } from '../../../lib/rateLimit.js';
 
 export default async function handler(request, response) {
   // Set CORS headers
   response.setHeader('Access-Control-Allow-Origin', '*');
   response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Password');
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Password, X-Demo-Token');
   
   if (request.method === 'OPTIONS') {
     return response.status(200).end();
   }
   
-  // Check authentication
-  if (!isAuthenticated(request)) {
+  // The admin, or a demo visitor scoped to their own payments.
+  const principal = await resolvePrincipal(request);
+  if (!principal) {
     return unauthorized(response);
   }
+  // A demo visitor is anyone on the internet; the admin routes had no limit
+  // because only the password holder could reach them.
+  if (principal.role === 'demo' && enforceRateLimit(request, response)) return;
   
   try {
     // Check if this is the clear endpoint (handles both direct and rewritten routes)
@@ -28,6 +34,7 @@ export default async function handler(request, response) {
     // Check if this is a clear request (either direct or rewritten via vercel.json)
     if (urlPath.endsWith('/clear') || urlPath.includes('/clear') || request.query?.action === 'clear' || request.headers['x-rewrite-target']?.includes('/clear')) {
       if (request.method === 'POST') {
+        if (principal.role !== 'admin') return refuseDemo(response);
         await clearAllPayments();
         return response.status(200).json({
           success: true,
@@ -39,7 +46,13 @@ export default async function handler(request, response) {
     
     // Handle list payments (default - GET /api/admin/payments)
     if (request.method === 'GET') {
-      const payments = await getAllPayments();
+      // Each side sees only its own: a visitor their sample payments, and the
+      // admin everything except visitors' payments — strings a stranger chose
+      // have no business on the admin's screen, and the admin has no use for
+      // two hundred copies of the same ten samples.
+      const payments = (await getAllPayments()).filter(p => principal.role === 'admin'
+        ? !p.demoOwner
+        : ownsPayment(principal.visitor, p));
       
       // Apply filters if provided
       const { status, search, provider, method } = request.query;

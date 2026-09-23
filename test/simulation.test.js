@@ -211,3 +211,66 @@ describe('the delay header has a ceiling', () => {
   });
 });
 
+
+/**
+ * The inquiry "timeout" behaviour has to not answer.
+ *
+ * It answered. It logged through the same helper as every other branch, and
+ * that helper also writes the response — so a caller got `200 { _timeout: true }`
+ * in about 8ms, measured, and the client timeout docs/scenarios.md tells you
+ * to assert on never fired. The hang that followed held the function open with
+ * nothing left to send.
+ */
+describe('inquiry timeout simulation', () => {
+  let sandbox;
+
+  before(async () => {
+    sandbox = await startSandbox();
+  });
+
+  after(async () => {
+    await sandbox?.stop();
+  });
+
+  const paymentWithBehavior = async (behavior) => {
+    const invoiceNo = uniqueInvoice();
+    await postJson(`${sandbox.baseUrl}/api/2c2p/token`, { invoiceNo, amount: 100 });
+    const set = await postJson(
+      `${sandbox.baseUrl}/api/admin/payments/${invoiceNo}/inquiry-config`,
+      { behavior },
+      adminHeaders()
+    );
+    assert.equal(set.status, 200);
+    return invoiceNo;
+  };
+
+  const inquire = (invoiceNo, ms) => fetch(`${sandbox.baseUrl}/api/2c2p/inquiry`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ invoiceNo }),
+    signal: AbortSignal.timeout(ms)
+  });
+
+  // The pair: without it, a server that never answered anything would pass.
+  test('a normal inquiry answers inside the same client timeout', async () => {
+    const response = await inquire(await paymentWithBehavior('normal'), 1500);
+    assert.equal(response.status, 200);
+  });
+
+  test('a timeout inquiry sends nothing, so the client timeout fires', async () => {
+    const invoiceNo = await paymentWithBehavior('timeout');
+
+    const outcome = await inquire(invoiceNo, 1500).then(
+      async (response) => `answered ${response.status} ${await response.text()}`,
+      (error) => error.name
+    );
+    assert.equal(outcome, 'TimeoutError', `the timeout simulation ${outcome}`);
+
+    // Still recorded, as a request with no response.
+    const logs = await fetch(`${sandbox.baseUrl}/api/admin/logs?limit=100`, { headers: adminHeaders() })
+      .then(r => r.json());
+    const entry = logs.logs.find(l => l.invoiceNo === invoiceNo);
+    assert.ok(entry, 'the unanswered inquiry was not logged');
+    assert.equal(entry.response.status, 0);
+  });
+});

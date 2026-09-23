@@ -270,7 +270,7 @@ Makes inquiries on one payment misbehave.
 
 | Field | Values | Notes |
 | --- | --- | --- |
-| `behavior` | `normal`, `delay`, `error`, `timeout` | |
+| `behavior` | `normal`, `delay`, `error`, `timeout` | `timeout` sends no answer at all: the inquiry is logged with status 0 and left open until your client gives up |
 | `delay` | milliseconds | Used when `behavior` is `delay` |
 | `errorCode` | response code | Used when `behavior` is `error` |
 

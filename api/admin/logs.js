@@ -7,6 +7,7 @@
 
 import { getLogs, clearAllLogs, cleanupOldLogs, getConfig, updateConfig } from '../../lib/storage.js';
 import { isAuthenticated, unauthorized } from '../../lib/auth.js';
+import { refuseDemo, resolveDemoVisitor } from '../../lib/demoAccess.js';
 
 export default async function handler(request, response) {
   // Set CORS headers
@@ -18,8 +19,11 @@ export default async function handler(request, response) {
     return response.status(200).end();
   }
   
-  // Check authentication
+  // Admin only. The request log holds every caller's traffic, including the
+  // callback addresses other people's integrations registered. A demo visitor
+  // is told so rather than answered 401, which would sign them out.
   if (!isAuthenticated(request)) {
+    if (await resolveDemoVisitor(request)) return refuseDemo(response);
     return unauthorized(response);
   }
   

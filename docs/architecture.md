@@ -8,12 +8,12 @@ Serverless functions plus static pages, with no build step:
 Browser / your backend
         │
         ├── /                     Landing page          (public)
-        ├── /dashboard            Payment dashboard     (password)
+        ├── /dashboard            Payment dashboard     (password, or demo)
         ├── /inspector            Callback inspector    (public)
         │
         ├── /api/2c2p/*           Provider API          (public)
         ├── /api/omise/*          Provider API          (public)
-        ├── /api/admin/*          Control API           (password)
+        ├── /api/admin/*          Control API           (password; demo scoped)
         ├── /api/inspect/*        Callback receiver     (public)
         └── /api/demo/*           Seed + guided demo    (public)
                 │

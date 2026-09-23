@@ -5,7 +5,9 @@
  */
 
 import { getConfig, updateConfig } from '../../lib/storage.js';
-import { isAuthenticated, unauthorized } from '../../lib/auth.js';
+import { unauthorized } from '../../lib/auth.js';
+import { refuseDemo, resolvePrincipal } from '../../lib/demoAccess.js';
+import { enforceRateLimit } from '../../lib/rateLimit.js';
 
 // Response codes organized by provider
 // Reference: https://developer.2c2p.com/docs/response-code-payment (2C2P)
@@ -128,15 +130,22 @@ export default async function handler(request, response) {
   // Set CORS headers
   response.setHeader('Access-Control-Allow-Origin', '*');
   response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Password');
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Password, X-Demo-Token');
   
   if (request.method === 'OPTIONS') {
     return response.status(200).end();
   }
   
-  // Check authentication
-  if (!isAuthenticated(request)) {
+  // A demo visitor may read the config and the response codes, so the
+  // dashboard can render them; only the admin may change anything, because
+  // the config applies to every caller of the instance.
+  const principal = await resolvePrincipal(request);
+  if (!principal) {
     return unauthorized(response);
+  }
+  if (principal.role === 'demo') {
+    if (enforceRateLimit(request, response)) return;
+    if (request.method !== 'GET') return refuseDemo(response);
   }
   
   try {

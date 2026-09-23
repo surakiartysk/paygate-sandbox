@@ -7,7 +7,9 @@
  */
 
 import { getPayment, deletePayment } from '../../../../lib/storage.js';
-import { isAuthenticated, unauthorized } from '../../../../lib/auth.js';
+import { unauthorized } from '../../../../lib/auth.js';
+import { ownsPayment, resolvePrincipal } from '../../../../lib/demoAccess.js';
+import { enforceRateLimit } from '../../../../lib/rateLimit.js';
 import { buildCallbackPayload } from '../../../../lib/callback.js';
 
 /**
@@ -44,16 +46,18 @@ export default async function handler(request, response) {
   // Set CORS headers
   response.setHeader('Access-Control-Allow-Origin', '*');
   response.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Password');
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Password, X-Demo-Token');
   
   if (request.method === 'OPTIONS') {
     return response.status(200).end();
   }
   
-  // Check authentication
-  if (!isAuthenticated(request)) {
+  // The admin, or a demo visitor scoped to their own payments.
+  const principal = await resolvePrincipal(request);
+  if (!principal) {
     return unauthorized(response);
   }
+  if (principal.role === 'demo' && enforceRateLimit(request, response)) return;
   
   // Helper to respond
   const respondWithJson = (statusCode, responseBody) => {
@@ -68,11 +72,24 @@ export default async function handler(request, response) {
   if (!invoiceNo) {
     return respondWithJson(400, { success: false, error: 'Invoice number is required' });
   }
+
+  /**
+   * Every action below reads the payment through this, and only this.
+   *
+   * For a demo visitor, a payment that is not theirs is the same answer as one
+   * that does not exist — a 404 either way, so the routes cannot be used to
+   * find out which invoice numbers the admin's callers have made.
+   */
+  const loadPayment = async () => {
+    const payment = await getPayment(invoiceNo);
+    if (principal.role === 'demo' && !ownsPayment(principal.visitor, payment)) return null;
+    return payment;
+  };
   
   try {
     // GET - Get payment details or preview callback payload
     if (request.method === 'GET') {
-      const payment = await getPayment(invoiceNo);
+      const payment = await loadPayment();
       if (!payment) {
         return respondWithJson(404, { success: false, error: 'Payment not found' });
       }
@@ -93,7 +110,7 @@ export default async function handler(request, response) {
     
     // DELETE - Delete payment
     if (request.method === 'DELETE') {
-      const payment = await getPayment(invoiceNo);
+      const payment = await loadPayment();
       if (!payment) {
         return respondWithJson(404, { success: false, error: 'Payment not found' });
       }

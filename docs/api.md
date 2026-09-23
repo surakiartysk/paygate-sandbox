@@ -4,7 +4,8 @@ Three groups of endpoints:
 
 - **Provider APIs** (`/api/2c2p/*`, `/api/omise/*`) — what your integration calls. Unauthenticated,
   because that is what makes the sandbox a drop-in replacement for the real gateway.
-- **Admin API** (`/api/admin/*`) — drives the sandbox itself. Requires the admin password.
+- **Admin API** (`/api/admin/*`) — drives the sandbox itself. Requires the admin password, or a
+  demo token for the routes that accept one.
 - **Sandbox APIs** (`/api/inspect/*`, `/api/demo/*`) — the callback receiver and the guided demo.
 
 All requests and responses are JSON. Provider and sandbox APIs are rate limited per client IP
@@ -22,6 +23,33 @@ curl http://localhost:3000/api/admin/payments \
 ```
 
 Anything else returns `401`.
+
+### Demo visitors
+
+`POST /api/admin/login` with the published password `demo` signs in a visitor instead of the admin:
+
+```bash
+curl -X POST http://localhost:3000/api/admin/login \
+  -H 'Content-Type: application/json' -d '{"password":"demo"}'
+# {"success":true,"role":"demo","token":"demo_…","expiresAt":"…","inspectorSessionId":"s_demo_…"}
+```
+
+The visitor gets ten sample payments of their own and an inspector session for their callbacks,
+for 24 hours. Send the token as `X-Demo-Token`. What it can reach:
+
+| Route | Demo visitor |
+| --- | --- |
+| `GET /api/admin/payments` | Their own payments only |
+| `GET`, `DELETE /api/admin/payments/:invoiceNo` | Their own; anyone else's is `404` |
+| `POST /api/admin/payments/:invoiceNo/status` | Their own |
+| `POST /api/admin/payments/:invoiceNo/callback` | Their own, delivered to their inspector session; naming a `callbackUrl` is `403` |
+| `GET`, `POST /api/admin/payments/:invoiceNo/inquiry-config` | Their own; delays and timeouts stop at the `MOCK_MAX_DELAY_MS` ceiling |
+| `GET /api/admin/config`, `GET /api/admin/response-codes` | Read only |
+| `POST /api/admin/config`, `POST /api/admin/payments/clear`, `/api/admin/logs` | `403` |
+
+A visitor is held to `RATE_LIMIT_MAX` on these routes. Sign-in, admin or demo, allows ten attempts
+a minute per client in a bucket of its own. Past 2,000 live visitor payments, sign-in answers `503`
+until older visitors expire. Why it is shaped this way: [decisions.md](decisions.md), decision 17.
 
 ---
 

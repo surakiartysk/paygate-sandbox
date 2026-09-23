@@ -35,7 +35,7 @@ npm run dev
 ```
 
 The landing page is at `http://localhost:3000`, the dashboard at `/dashboard` (default password
-`mockpay`). No build step and no database — storage falls back to JSON files under `data/` when no
+`mockpay`, or `demo` for a visitor's view with sample payments of its own). No build step and no database — storage falls back to JSON files under `data/` when no
 KV store is configured.
 
 Create a payment the way your backend would, and watch the callback arrive:
@@ -131,6 +131,8 @@ Everything is optional; the defaults give a working local instance.
 | `URL_REWRITE_RULES` | — | Rewrite callback hosts, e.g. `api.example.com=>staging-api.example.com` |
 | `ALLOW_PRIVATE_CALLBACKS` | `true` | Set `false` on a public deployment to refuse private/loopback targets |
 | `RATE_LIMIT_MAX` | `60` | Requests per IP per minute; `0` disables |
+| `DEMO_TTL_SECONDS` | `86400` | How long a demo visitor and their sample payments last |
+| `DEMO_MAX_LIVE_PAYMENTS` | `2000` | Live visitor payments before demo sign-in answers `503` |
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | — | Use Vercel KV instead of local JSON files |
 
 See [.env.example](.env.example) for the annotated version.

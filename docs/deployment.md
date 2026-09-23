@@ -40,7 +40,7 @@ Set these in the Vercel dashboard, or with `vercel env add`:
 
 | Variable | Value | Why |
 | --- | --- | --- |
-| `ADMIN_PASSWORD` | something long and random | The default is public knowledge — **enforced**: admin routes are refused without it |
+| `ADMIN_PASSWORD` | something long and random | The default is public knowledge — **enforced**: admin routes are refused without it. It may not be `demo`, the published visitor password — **enforced** everywhere |
 | `MOCK_SERVER_URL` | `https://your-app.vercel.app` | Builds correct redirect and inspector URLs |
 | `ALLOW_PRIVATE_CALLBACKS` | `false` | **Required for a public instance** — **enforced**: unset behaves as `false` once deployed |
 | `RATE_LIMIT_MAX` | `60` | Or lower, if the instance is widely shared |
@@ -118,12 +118,20 @@ statement that you know what sits in front and that it controls the header.
 
 `/api/admin/*` can delete every payment in the instance. The default password is in this repository.
 
+Visitors do not need it. `demo` signs them into a view scoped to sample payments of their own, and
+is safe to publish for that reason — see decision 17.
+
 ## Data lifetime
 
 Inspector sessions expire 24 hours after they are created — absolutely, not sliding, so an active
 session expires on schedule too. Each holds at most fifty captures of at most 64 KB. Request logs expire after `logTTLDays`
 (7 by default). Payments persist until deleted — through the dashboard, `DELETE
 /api/admin/payments/:invoiceNo`, or `POST /api/admin/payments/clear`.
+
+Demo visitors and their sample payments are the exception: they expire after `DEMO_TTL_SECONDS`
+(a day by default). The visitor record expires on its own; its payments are deleted by the next
+demo sign-in, so they can outlive their visitor until someone else signs in, invisible to both the
+admin's list and every visitor's.
 
 For a public demo, clearing payments periodically keeps the dashboard readable. An empty instance
 re-seeds itself with sample data on the next `POST /api/demo/seed`.

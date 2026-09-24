@@ -2345,3 +2345,76 @@ a:hover {
 .demo-banner a {
   color: var(--accent);
 }
+
+/* Payments as cards on a phone.
+ *
+ * At 390px the table showed the invoice number, the provider and the method,
+ * and put status, amount and every action behind a sideways scroll nothing
+ * pointed to — the column a visitor opens the page to read was the one they
+ * could not see. Hiding columns would lose information and still leave the
+ * actions wider than the screen, so each row becomes a card instead: invoice
+ * across the top, status and amount beneath it, the details on one small
+ * line, the actions last. Only rows marked .payment-row change; the loading
+ * and empty rows keep their full-width cell. */
+@media (max-width: 640px) {
+  .payments-table thead {
+    display: none;
+  }
+
+  .payments-table tbody tr.payment-row {
+    display: grid;
+    grid-template-columns: auto auto 1fr auto;
+    grid-template-areas:
+      "invoice invoice invoice invoice"
+      "status callbacks . amount"
+      "provider method . meta"
+      "actions actions actions actions";
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .payments-table tr.payment-row td {
+    padding: 0;
+    border: none;
+    width: auto;
+    min-width: 0;
+    /* The table's hover tint is per cell; in a grid it lands as patches
+       between the gaps, so the card takes it as a whole instead. */
+    background: transparent;
+  }
+
+  .payments-table tr.payment-row:hover {
+    background: var(--bg-hover);
+  }
+
+  .payments-table .pc-invoice { grid-area: invoice; }
+  .payments-table .pc-status { grid-area: status; }
+  .payments-table .pc-amount { grid-area: amount; justify-self: end; white-space: nowrap; }
+  .payments-table .pc-provider { grid-area: provider; }
+  .payments-table .pc-method { grid-area: method; }
+  .payments-table .pc-created { grid-area: meta; justify-self: end; font-size: 0.8rem; white-space: nowrap; }
+  .payments-table .pc-callbacks { grid-area: callbacks; font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; }
+  /* The header that named this number is hidden, so the cell names it. */
+  .payments-table .pc-callbacks .cell-count::before { content: "Callbacks "; }
+  .payments-table .pc-actions { grid-area: actions; }
+
+  .payments-table .pc-actions .action-buttons {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  /* Labels come back: the 900px rule hides them to stop the table scrolling,
+     but a card has the whole width, and a lone coloured dot does not say
+     "change status". */
+  .payments-table .pc-actions .row-action-status span:last-child,
+  .payments-table .pc-actions .row-action-primary span:last-child {
+    display: inline;
+  }
+  .payments-table .pc-actions .row-action-status,
+  .payments-table .pc-actions .row-action-primary {
+    padding: 0 0.75rem;
+  }
+}
+

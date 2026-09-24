@@ -795,8 +795,8 @@ function renderPayments() {
     const isTruncated = payment.invoiceNo && payment.invoiceNo.length > 25;
     const invoiceDisplay = truncateInvoiceNo(payment.invoiceNo);
     return `
-    <tr>
-      <td>
+    <tr class="payment-row">
+      <td class="pc-invoice">
         <div style="display: flex; align-items: center; gap: 0.5rem; max-width: 100%;">
           <a href="/payment/${encodeURIComponent(payment.invoiceNo)}" style="font-family: var(--font-mono); font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttr(payment.invoiceNo)}">
             ${escapeHtml(invoiceDisplay)}
@@ -811,23 +811,23 @@ function renderPayments() {
           ` : ''}
         </div>
       </td>
-      <td>${providerBadge}</td>
-      <td>${methodBadge}</td>
-      <td>
+      <td class="pc-provider">${providerBadge}</td>
+      <td class="pc-method">${methodBadge}</td>
+      <td class="pc-amount">
         <span class="cell-amount">${formatAmount(payment.amount)}<span class="cell-currency">${escapeHtml(payment.currencyCode)}</span></span>
       </td>
-      <td>
+      <td class="pc-status">
         <span class="badge badge-${payment.status}">
           ${payment.status.toUpperCase()}
         </span>
       </td>
-      <td>
+      <td class="pc-callbacks">
         <span class="cell-count">${payment.callbackCount || 0}</span>
       </td>
-      <td>
+      <td class="pc-created">
         <span class="cell-date">${formatDate(payment.createdAt)}</span>
       </td>
-      <td>
+      <td class="pc-actions">
         <div class="action-buttons">
           <button class="row-action row-action-status"
                   onclick="openStatusModal(${jsArg(payment.invoiceNo)})"

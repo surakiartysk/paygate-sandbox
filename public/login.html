@@ -117,10 +117,8 @@
       text-align: center;
     }
     
-    .login-error-icon img {
-      width: 120px;
-      height: 120px;
-      object-fit: contain;
+    .login-error-icon:empty {
+      display: none;
     }
   </style>
 </head>
@@ -137,7 +135,7 @@
       
       <div class="login-error" id="login-error">
         <div class="login-error-icon" id="login-error-icon"></div>
-        <span id="login-error-text">Wrong password! Shoo shoo, try again!</span>
+        <span id="login-error-text"></span>
       </div>
       
       <form id="login-form" onsubmit="handleLogin(event)">
@@ -170,8 +168,12 @@
   </div>
 
   <script>
+    // Older dashboards stored the admin password itself here. Nothing reads it
+    // now; this removes it from any browser that still holds it.
+    localStorage.removeItem('admin_password');
+
     // Check if already logged in
-    if (localStorage.getItem('admin_password') || localStorage.getItem('demo_token')) {
+    if (localStorage.getItem('admin_signed_in') === '1' || localStorage.getItem('demo_token')) {
       window.location.href = '/dashboard';
     }
 
@@ -233,14 +235,14 @@
               showServerMessage(body.error || body.message || 'Try again in a minute.');
               return;
             }
-            // For 401 (invalid password), show funny message with shoo GIF
+            // A wrong password. This used to show a GIF hotlinked from
+            // giphy.com, which sent every failed sign-in's IP address to a
+            // third party and drew a broken image wherever it was blocked.
             if (response.status === 401) {
               const errorIcon = document.getElementById('login-error-icon');
               const errorText = document.getElementById('login-error-text');
-              if (errorIcon) {
-                errorIcon.innerHTML = '<img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbHE4cHNndGhub29tb2ExZjJzMWt4dDZxNXhwZHp4ZmhocnY0ZHF3eCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l1J9u3TZfpmeDLkD6/giphy.gif" alt="Shoo away">';
-              }
-              if (errorText) errorText.textContent = 'Wrong password! Shoo shoo, try again!';
+              if (errorIcon) errorIcon.innerHTML = '';
+              if (errorText) errorText.textContent = 'Wrong password. Check it and try again, or try the demo below.';
               errorEl.classList.add('show');
               document.getElementById('password').select();
               return;
@@ -281,8 +283,8 @@
           // A demo visitor's credential is the token they were issued, never
           // the password: the password is the same for everyone, the token
           // is what makes the payments theirs.
-          localStorage.removeItem('admin_password');
-          document.cookie = 'admin_password=; path=/; max-age=0';
+          // The server ended any admin session in this browser as it answered.
+          localStorage.removeItem('admin_signed_in');
           localStorage.setItem('demo_token', data.token);
           localStorage.setItem('demo_inspector', data.inspectorSessionId);
           window.location.href = '/dashboard';
@@ -290,22 +292,20 @@
           localStorage.removeItem('demo_token');
           localStorage.removeItem('demo_inspector');
 
-          // Store password in localStorage
-          localStorage.setItem('admin_password', password);
-          
-          // Also set as cookie for server-side requests
-          document.cookie = `admin_password=${encodeURIComponent(password)}; path=/; max-age=${60*60*24*30}`; // 30 days
-          
+          // The credential is the HttpOnly session cookie the server just set;
+          // the page keeps only a marker that it is signed in. It used to keep
+          // the password itself, here and in a 30-day cookie any script on the
+          // page could read.
+          localStorage.setItem('admin_signed_in', '1');
+
           // Redirect to dashboard
           window.location.href = '/dashboard';
         } else {
-          // Invalid password - show funny message with shoo GIF
+          // A 2xx that is not a success: treated as a refused sign-in.
           const errorIcon = document.getElementById('login-error-icon');
           const errorText = document.getElementById('login-error-text');
-          if (errorIcon) {
-            errorIcon.innerHTML = '<img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbHE4cHNndGhub29tb2ExZjJzMWt4dDZxNXhwZHp4ZmhocnY0ZHF3eCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l1J9u3TZfpmeDLkD6/giphy.gif" alt="Shoo away">';
-          }
-          if (errorText) errorText.textContent = 'Wrong password! Shoo shoo, try again!';
+          if (errorIcon) errorIcon.innerHTML = '';
+          if (errorText) errorText.textContent = 'Wrong password. Check it and try again, or try the demo below.';
           errorEl.classList.add('show');
           document.getElementById('password').select();
         }

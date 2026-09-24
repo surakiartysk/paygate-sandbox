@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { checkCallbackUrl, assertCallbackUrlAllowed, BlockedCallbackUrlError } from '../lib/urlGuard.js';
 import { executeCallback } from '../lib/callback.js';
-import { isAuthenticated, verifyPassword } from '../lib/auth.js';
+import { isAuthenticated, verifyPassword, issueAdminSession } from '../lib/auth.js';
 import { deploymentProblems } from '../lib/deployment.js';
 
 describe('callback URL guard — strict mode', () => {
@@ -249,6 +249,20 @@ describe('deployment configuration', () => {
       isAuthenticated({ headers: { 'x-admin-password': 'mockpay' } }),
       false
     );
+  });
+
+  /*
+   * A session is not a way around that. One minted while the default was
+   * accepted — a local run, or before this check existed — is refused as
+   * soon as the same password stops being usable.
+   */
+  test('refuses a session signed with the published default once deployed', () => {
+    delete process.env.VERCEL;
+    const cookie = issueAdminSession({ headers: {} }).split(';')[0];
+    assert.equal(isAuthenticated({ headers: { cookie } }), true);
+
+    process.env.VERCEL = '1';
+    assert.equal(isAuthenticated({ headers: { cookie } }), false);
   });
 
   test('accepts it locally, where the default is the point', () => {

@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="/css/style.css">
   <script src="/js/theme.js"></script>
   <script>
-    if (!(localStorage.getItem('admin_password') || localStorage.getItem('demo_token'))) {
+    if (!(localStorage.getItem('admin_signed_in') === '1' || localStorage.getItem('demo_token'))) {
       window.location.replace('/login');
     }
     

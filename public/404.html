@@ -9,7 +9,7 @@
   <script src="/js/theme.js"></script>
   <script>
     // If logged in, redirect to dashboard
-    if (localStorage.getItem('admin_password') || localStorage.getItem('demo_token')) {
+    if (localStorage.getItem('admin_signed_in') === '1' || localStorage.getItem('demo_token')) {
       window.location.href = '/';
     }
   </script>

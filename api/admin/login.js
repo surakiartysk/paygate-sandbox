@@ -1,13 +1,14 @@
 /**
  * POST /api/admin/login
  *
- * The admin password answers `{ role: 'admin' }`, and the dashboard keeps the
- * password as its credential. The published demo password answers
+ * The admin password answers `{ role: 'admin' }` and sets an HttpOnly session
+ * cookie — the dashboard keeps nothing secret, see "Browser sessions" in
+ * lib/auth.js. The published demo password answers
  * `{ role: 'demo', token }` instead: a new visitor with sample payments of
  * their own, and the token is their credential — see lib/demoAccess.js.
  */
 
-import { DEMO_PASSWORD, verifyPassword } from '../../lib/auth.js';
+import { clearAdminSession, DEMO_PASSWORD, issueAdminSession, verifyPassword } from '../../lib/auth.js';
 import { createDemoVisitor } from '../../lib/demoAccess.js';
 import { enforceRateLimit } from '../../lib/rateLimit.js';
 
@@ -46,6 +47,7 @@ export default async function handler(request, response) {
     }
     
     if (verifyPassword(password)) {
+      response.setHeader('Set-Cookie', issueAdminSession(request));
       return response.status(200).json({
         success: true,
         role: 'admin',
@@ -59,6 +61,11 @@ export default async function handler(request, response) {
           error: 'The demo is full right now. Sample payments expire after a day; try again later.'
         });
       }
+      // Signing in as demo ends an admin session in the same browser. The admin
+      // wins when a request carries both, so leaving it would show the demo
+      // visitor the admin's view — and only the server can clear an HttpOnly
+      // cookie.
+      response.setHeader('Set-Cookie', clearAdminSession(request));
       return response.status(200).json({
         success: true,
         role: 'demo',

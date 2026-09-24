@@ -62,6 +62,7 @@ async function loadHandlers() {
   handlers['/api/2c2p/token'] = (await import('./api/2c2p/token.js')).default;
   handlers['/api/2c2p/inquiry'] = (await import('./lib/inquiryHandler.js')).default;
   handlers['/api/admin/login'] = (await import('./api/admin/login.js')).default;
+  handlers['/api/admin/logout'] = handlers['/api/admin/login'];
   handlers['/api/admin/payments'] = (await import('./api/admin/payments/index.js')).default;
   handlers['/api/admin/config'] = (await import('./api/admin/config.js')).default;
   handlers['/api/admin/logs'] = (await import('./api/admin/logs.js')).default;

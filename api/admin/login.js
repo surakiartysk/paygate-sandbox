@@ -1,13 +1,18 @@
 /**
  * POST /api/admin/login
  *
- * The admin password answers `{ role: 'admin' }`, and the dashboard keeps the
- * password as its credential. The published demo password answers
+ * The admin password answers `{ role: 'admin' }` and sets an HttpOnly session
+ * cookie — the dashboard keeps nothing secret, see "Browser sessions" in
+ * lib/auth.js.
+ *
+ * POST /api/admin/logout is handled here too, by path, the way
+ * /api/admin/payments/clear is: each file under api/ is its own Vercel
+ * function, and the free plan allows twelve. A thirteenth failed the deploy. The published demo password answers
  * `{ role: 'demo', token }` instead: a new visitor with sample payments of
  * their own, and the token is their credential — see lib/demoAccess.js.
  */
 
-import { DEMO_PASSWORD, verifyPassword } from '../../lib/auth.js';
+import { clearAdminSession, DEMO_PASSWORD, issueAdminSession, verifyPassword } from '../../lib/auth.js';
 import { createDemoVisitor } from '../../lib/demoAccess.js';
 import { enforceRateLimit } from '../../lib/rateLimit.js';
 
@@ -33,6 +38,15 @@ export default async function handler(request, response) {
     return response.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Ends the admin session in this browser. It has to be a route: the cookie
+  // is HttpOnly, so the page cannot clear it. Always 200, signed in or not,
+  // and ahead of the rate limit, so signing out never spends a sign-in
+  // attempt. It also expires the admin_password cookie older dashboards set.
+  if ((request.url?.split('?')[0] || '').endsWith('/logout')) {
+    response.setHeader('Set-Cookie', clearAdminSession(request));
+    return response.status(200).json({ success: true });
+  }
+
   if (enforceRateLimit(request, response, LOGIN_ATTEMPTS_PER_MINUTE, 'login')) return;
   
   try {
@@ -46,6 +60,7 @@ export default async function handler(request, response) {
     }
     
     if (verifyPassword(password)) {
+      response.setHeader('Set-Cookie', issueAdminSession(request));
       return response.status(200).json({
         success: true,
         role: 'admin',
@@ -59,6 +74,11 @@ export default async function handler(request, response) {
           error: 'The demo is full right now. Sample payments expire after a day; try again later.'
         });
       }
+      // Signing in as demo ends an admin session in the same browser. The admin
+      // wins when a request carries both, so leaving it would show the demo
+      // visitor the admin's view — and only the server can clear an HttpOnly
+      // cookie.
+      response.setHeader('Set-Cookie', clearAdminSession(request));
       return response.status(200).json({
         success: true,
         role: 'demo',

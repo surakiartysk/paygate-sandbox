@@ -29,6 +29,7 @@ one that was obvious.
 15. [What is stated outranks what is inferred](#15-what-is-stated-outranks-what-is-inferred)
 16. [The pattern all of this keeps producing](#16-the-pattern-all-of-this-keeps-producing)
 17. [A demo password that can be published, because of what it opens](#17-a-demo-password-that-can-be-published-because-of-what-it-opens)
+18. [The browser holds a session, not the password](#18-the-browser-holds-a-session-not-the-password)
 
 ---
 
@@ -486,6 +487,52 @@ Visitors share the admin's global config — a global delay or a forced error th
 applies to their payments too, and they can see it but not change it. The ten-a-minute sign-in
 limit covers admin attempts as well, so an owner who mistypes ten times waits a minute. And the
 admin can no longer see what visitors did, except by opening a visitor invoice number directly.
+
+---
+
+## 18. The browser holds a session, not the password
+
+**Context.** Signing in on the dashboard stored the admin password in `localStorage`, and in a
+cookie readable by script for thirty days, and sent it on every request. The dashboard renders
+strings chosen by anyone who can call the provider APIs — invoice numbers, descriptions, request
+headers — so every one of its sixty `innerHTML` writes was one missed `escapeHtml` away from
+handing the password to whoever planted the string. A probe putting markup in every
+caller-controlled field of `POST /api/2c2p/token` found the escaping holds today. The design still
+made a single future slip cost the password itself, which does not expire and opens everything
+[decision 17](#17-a-demo-password-that-can-be-published-because-of-what-it-opens) lists.
+
+**Decision.** A browser signs in once and receives an `HttpOnly; SameSite=Strict` session cookie,
+`Secure` behind HTTPS. The page keeps a marker that it is signed in and nothing secret.
+
+- **Signed, not stored.** The cookie holds an expiry, a nonce and an HMAC keyed by a hash of
+  `ADMIN_PASSWORD`. Nothing is written server-side, so `isAuthenticated` stays synchronous for
+  every route that calls it, and changing the password ends every session.
+- **Twelve hours**, down from the thirty days the password cookie lasted.
+- **The password cookie is refused**, not merely no longer set, so a browser still carrying one
+  from before signs in again rather than riding it. Its `localStorage` copy is deleted the next
+  time any page loads the sign-in or dashboard scripts.
+- **Scripts keep the header.** `X-Admin-Password` is unchanged: a script holds the password
+  anyway, and has no page to steal it from.
+- **Signing in as demo ends an admin session** in the same browser. The admin wins when a request
+  carries both, and only the server can clear an `HttpOnly` cookie.
+
+**Trade-off.** Signing out clears the cookie in that browser, but a copy taken before then stays
+valid until it expires; the only early revocation is rotating the password, which signs out every
+browser at once. A stored session could be revoked one at a time, at the price of a storage read
+on every admin request and an `async` `isAuthenticated` threaded through every route.
+
+`HttpOnly` does not make a script on the page harmless: while the page is open, injected script
+can still call the admin API as the admin. What it removes is carrying the credential away, and
+what the lifetime bounds is how long a stolen one is worth.
+
+A cookie is sent on requests the page did not make, the reason
+[decision 17](#17-a-demo-password-that-can-be-published-because-of-what-it-opens) keeps demo
+tokens in a header. `SameSite=Strict` is what answers that here: probed in Chromium from another
+site, a credentialed `POST` to the clear route arrived without the cookie and every payment
+survived. That protection is only as good as the browser's — an old one that ignores `SameSite`
+sends the cookie, where a header would never have been sent. The usual cost of `Strict`, a link
+from another site landing signed out, does not apply: the dashboard's HTML is public and its data
+comes from its own same-site requests, which carry the cookie — also probed.
 
 ---
 

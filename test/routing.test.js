@@ -109,3 +109,35 @@ describe('inspector catch-all dispatch', () => {
     assert.equal(response.statusCode, 400);
   });
 });
+
+/**
+ * Vercel's free plan deploys at most twelve functions, one per file under
+ * api/. The thirteenth — a separate logout route — passed every local test and
+ * failed the deploy, which is the only place the limit exists. So routes that
+ * need no function of their own share one, by path, through a rewrite.
+ */
+describe('Vercel function budget', () => {
+  const root = new URL('../', import.meta.url);
+
+  test('stays within twelve functions', async () => {
+    const { readdirSync } = await import('node:fs');
+    const files = readdirSync(new URL('api/', root), { recursive: true })
+      .filter(name => String(name).endsWith('.js'));
+    assert.ok(files.length <= 12, `${files.length} functions under api/: ${files.join(', ')}`);
+  });
+
+  test('logout is rewritten to the login function, which answers it by path', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { rewrites } = JSON.parse(readFileSync(new URL('vercel.json', root), 'utf8'));
+    assert.deepEqual(
+      rewrites.find(r => r.source === '/api/admin/logout'),
+      { source: '/api/admin/logout', destination: '/api/admin/login' }
+    );
+
+    const { default: handler } = await import('../api/admin/login.js');
+    const res = mockResponse();
+    await handler({ method: 'POST', url: '/api/admin/logout', headers: {}, body: {} }, res);
+    assert.equal(res.statusCode, 200);
+    assert.match(String(res.headers['Set-Cookie']), /paygate_admin=;.*Max-Age=0/);
+  });
+});

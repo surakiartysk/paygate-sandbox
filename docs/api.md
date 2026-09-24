@@ -15,13 +15,16 @@ All requests and responses are JSON. Provider and sandbox APIs are rate limited 
 
 ## Authentication
 
-Admin endpoints accept the password as a header or a cookie:
+A script sends the admin password in a header:
 
 ```bash
 curl http://localhost:3000/api/admin/payments \
   -H 'X-Admin-Password: mockpay'
 ```
 
+A browser signs in with `POST /api/admin/login` instead, which answers with an `HttpOnly` session
+cookie lasting twelve hours; `POST /api/admin/logout` ends it. The password itself is not accepted
+from a cookie — see [decision 18](decisions.md#18-the-browser-holds-a-session-not-the-password).
 Anything else returns `401`.
 
 ### Demo visitors

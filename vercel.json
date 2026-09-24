@@ -29,6 +29,10 @@
       "destination": "/api/admin/config"
     },
     {
+      "source": "/api/admin/logout",
+      "destination": "/api/admin/login"
+    },
+    {
       "source": "/api/admin/payments/clear",
       "destination": "/api/admin/payments"
     },

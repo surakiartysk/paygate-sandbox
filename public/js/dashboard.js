@@ -41,24 +41,31 @@ let logsPagination = {
   hasPrev: false
 };
 
-// Get admin password from localStorage
-function getAdminPassword() {
-  return localStorage.getItem('admin_password') || '';
+// Whether this browser signed in as the admin. A marker, not a credential: the
+// credential is an HttpOnly session cookie the page cannot read, and the
+// server decides — a stale marker only earns a 401 and a trip to /login.
+function isAdmin() {
+  return localStorage.getItem('admin_signed_in') === '1';
 }
 
 // Check if logged in
 function isLoggedIn() {
-  return !!getAdminPassword() || !!localStorage.getItem('demo_token');
+  return isAdmin() || !!localStorage.getItem('demo_token');
 }
 
-// Logout
+// Older dashboards stored the admin password itself here. Nothing reads it
+// now; this removes it from any browser that still holds it.
+localStorage.removeItem('admin_password');
+
+// Logout. The session cookie is HttpOnly, so ending it takes the server.
 function logout() {
   stopAutoRefresh();
-  localStorage.removeItem('admin_password');
+  localStorage.removeItem('admin_signed_in');
   localStorage.removeItem('demo_token');
   localStorage.removeItem('demo_inspector');
-  document.cookie = 'admin_password=; path=/; max-age=0';
-  window.location.href = '/login';
+  fetch('/api/admin/logout', { method: 'POST' })
+    .catch(() => {})
+    .finally(() => { window.location.href = '/login'; });
 }
 
 // A demo visitor's token, when this browser signed in with the demo password.
@@ -68,7 +75,7 @@ function getDemoToken() {
 }
 
 function isDemo() {
-  return !getAdminPassword() && !!getDemoToken();
+  return !isAdmin() && !!getDemoToken();
 }
 
 // Add auth header to fetch options
@@ -79,10 +86,8 @@ function authHeaders() {
       'X-Demo-Token': getDemoToken()
     };
   }
-  return {
-    'Content-Type': 'application/json',
-    'X-Admin-Password': getAdminPassword()
-  };
+  // The admin's session cookie goes with every same-origin request by itself.
+  return { 'Content-Type': 'application/json' };
 }
 
 /**

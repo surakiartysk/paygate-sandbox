@@ -9,15 +9,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme.js"></script>
   <script>
     if (!(localStorage.getItem('admin_password') || localStorage.getItem('demo_token'))) {
       window.location.replace('/login');
     }
     
-    // Theme management - load saved theme immediately
+    // Theme toggle. The theme itself is set by /js/theme.js before paint.
     (function() {
-      const savedTheme = localStorage.getItem('theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', savedTheme);
       
       // Function to update theme toggle icon
       function updateThemeIcon() {

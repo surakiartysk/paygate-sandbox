@@ -9,16 +9,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme.js"></script>
   <script>
     // Immediate auth check - redirect before page renders
     if (!(localStorage.getItem('admin_password') || localStorage.getItem('demo_token'))) {
       window.location.replace('/login');
     }
     
-    // Theme management - load saved theme immediately
+    // Theme toggle. The theme itself is set by /js/theme.js before paint.
     (function() {
-      const savedTheme = localStorage.getItem('theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', savedTheme);
       
       // Function to update theme toggle icon
       function updateThemeIcon() {
@@ -172,12 +171,12 @@
       <!-- Filters -->
       <div class="card-body" style="border-bottom: 1px solid var(--border);">
         <div class="filters">
-          <div class="filter-group" style="flex: 1; min-width: 280px;">
+          <div class="filter-group filter-group-grow">
             <label for="search-input">Search</label>
             <input type="text" id="search-input" class="form-input search-input" 
                    placeholder="Invoice number..." onkeyup="handleSearch(event)">
           </div>
-          <div class="filter-group" style="width: 160px;">
+          <div class="filter-group filter-group-fixed">
             <label for="provider-filter">Provider</label>
             <div class="form-select-wrapper">
               <select id="provider-filter" class="form-select" onchange="handleProviderFilterChange()">
@@ -187,7 +186,7 @@
               </select>
             </div>
           </div>
-          <div class="filter-group" style="width: 160px;">
+          <div class="filter-group filter-group-fixed">
             <label for="method-filter">Method</label>
             <div class="form-select-wrapper">
               <select id="method-filter" class="form-select" onchange="handleMethodFilterChange()">
@@ -202,7 +201,7 @@
               </select>
             </div>
           </div>
-          <div class="filter-group" style="width: 160px;">
+          <div class="filter-group filter-group-fixed">
             <label for="status-filter">Status</label>
             <div class="form-select-wrapper">
               <select id="status-filter" class="form-select" onchange="handleStatusFilterChange()">
@@ -279,7 +278,7 @@
         <!-- Filters -->
         <div class="card-body" style="border-bottom: 1px solid var(--border);">
           <div class="filters">
-            <div class="filter-group" style="width: 160px;">
+            <div class="filter-group filter-group-fixed">
               <label for="log-type-filter">Type</label>
               <div class="form-select-wrapper">
                 <select id="log-type-filter" class="form-select" onchange="handleLogTypeFilterChange()">

@@ -767,6 +767,15 @@ a:hover {
   flex-shrink: 0;
 }
 
+.filter-group-grow {
+  flex: 1;
+  min-width: 280px;
+}
+
+.filter-group-fixed {
+  width: 160px;
+}
+
 .filter-group label {
   font-size: 0.75rem;
   font-weight: 600;
@@ -1415,8 +1424,18 @@ a:hover {
     padding: 1rem;
   }
   
+  /* Stacked, every control full width. These sizes used to be inline styles,
+     which this query could not reach: the column kept flex-end alignment and
+     the fixed 160px, so the selects sat in the right half of a phone. */
   .filters {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-group-grow,
+  .filter-group-fixed {
+    width: auto;
+    min-width: 0;
   }
   
   .search-input {

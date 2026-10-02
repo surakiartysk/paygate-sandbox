@@ -23,8 +23,8 @@ As a drafting tool, under review. The architecture, the decisions and the
 trade-offs are mine; the typing largely was not.
 
 The discipline that makes that division honest here: **the sandbox is driven
-over HTTP by its own tests, not asserted against its internals.** The suite
-boots a real server against a throwaway data directory and exercises both
+over HTTP by its own tests, not asserted against its internals** — apart from a
+few helpers no request can reach. The suite boots a real server against a throwaway data directory and exercises both
 providers' flows, the callback inspector, the admin API and the SSRF guard — so
 what is claimed in the README is what a caller can actually get, rather than
 what the code appears to do when read.

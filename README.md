@@ -97,10 +97,9 @@ limit, not an oversight: reproducing the crypto would mean shipping a key exchan
 would make the sandbox harder to point at than the thing it replaces, while testing
 almost nothing about your own integration.
 
-The consequence is worth stating plainly, because it contradicts a claim this README
-would otherwise make. If your integration builds a signed payload before sending, that
-signing step is **not** exercised here, and pointing it at this sandbox needs the
-encryption layer disabled in test configuration. Two ways round it:
+The consequence is worth stating plainly. If your integration builds a signed payload
+before sending, that signing step is **not** exercised here, and pointing it at this
+sandbox needs the encryption layer disabled in test configuration. Two ways round it:
 
 - Keep the signing code in the path and let it wrap a payload this sandbox ignores.
   Your code runs; only the sandbox's verification is missing.

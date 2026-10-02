@@ -170,6 +170,7 @@ Node's built-in runner, no framework. [`test/helpers.js`](../test/helpers.js) bo
 a child process on a random port with a throwaway `DATA_DIR`, and starts a local HTTP receiver that
 records what it is sent.
 
-Tests drive the sandbox over HTTP exactly as a merchant backend would, then assert on delivered
-callbacks. Nothing reaches into internals, so the tests keep passing across refactors and are
-themselves a worked example of using the sandbox from a test suite.
+Most tests drive the sandbox over HTTP exactly as a merchant backend would, then assert on
+delivered callbacks, so they keep passing across refactors and are themselves a worked example of
+using the sandbox from a test suite. A few call a helper in `lib/` directly, where the behaviour
+cannot be reached from outside, such as rate-limit keys, log redaction and URL rewriting.

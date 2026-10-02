@@ -439,9 +439,9 @@ made the admin password mandatory, correctly, because it opens everything — th
 every caller's request log, deleting every payment, and callbacks to any address. A visitor could
 use the provider APIs with `curl`, but never see the part that shows what a sandbox is for.
 
-The companion dashboard solved the same problem with a role whose password is printed on the
-sign-in screen, and which can never dispatch a real run. The lesson carried over: publishing a
-password is safe exactly when what it grants is narrow enough to hand to anyone.
+The companion dashboard solved the same problem with a role whose password is public, one click
+away on its sign-in screen, and which can never dispatch a real run. The lesson carried over:
+publishing a password is safe exactly when what it grants is narrow enough to hand to anyone.
 
 **Decision.** `demo` signs in a *visitor*, not an admin. Each sign-in mints a random token of its
 own, ten sample payments owned by it, and an inspector session for their callbacks, all expiring

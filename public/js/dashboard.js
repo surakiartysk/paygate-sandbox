@@ -761,7 +761,7 @@ function renderPayments() {
    * `invoiceNo` was the proven case: the `title` attribute one line down was
    * escaped with `escapeAttr` and the text node directly beneath it was not,
    * so `<img src=x onerror=…>` as an invoice number ran in the admin's
-   * session — where the admin password sits in localStorage. Confirmed by
+   * session — which then kept the admin password in localStorage. Confirmed by
    * POSTing it to /api/2c2p/token, which accepted it (respCode 0000) and
    * stored it verbatim.
    *

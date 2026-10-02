@@ -5,7 +5,8 @@ node_modules/
 .DS_Store
 *.log
 
-# Local data files (Vercel KV is used in production)
+# Local data files (Vercel KV is used when deployed)
 data/
 .vercel
 .env*
+!.env.example

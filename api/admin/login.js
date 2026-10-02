@@ -3,13 +3,13 @@
  *
  * The admin password answers `{ role: 'admin' }` and sets an HttpOnly session
  * cookie — the dashboard keeps nothing secret, see "Browser sessions" in
- * lib/auth.js.
+ * lib/auth.js. The published demo password answers `{ role: 'demo', token }`
+ * instead: a new visitor with sample payments of their own, and the token is
+ * their credential — see lib/demoAccess.js.
  *
  * POST /api/admin/logout is handled here too, by path, the way
  * /api/admin/payments/clear is: each file under api/ is its own Vercel
- * function, and the free plan allows twelve. A thirteenth failed the deploy. The published demo password answers
- * `{ role: 'demo', token }` instead: a new visitor with sample payments of
- * their own, and the token is their credential — see lib/demoAccess.js.
+ * function, and the free plan allows twelve. A thirteenth failed the deploy.
  */
 
 import { clearAdminSession, DEMO_PASSWORD, issueAdminSession, verifyPassword } from '../../lib/auth.js';

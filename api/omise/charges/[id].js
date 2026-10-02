@@ -6,7 +6,7 @@
 import { getAllPayments } from '../../../lib/storage.js';
 import { logRequest } from '../../../lib/logger.js';
 import { generateReferenceNo } from '../../../lib/tokenGenerator.js';
-import { rewriteUrl } from '../../../lib/urlUtils.js';
+import { rewriteUrl, omiseAuthorizeUri } from '../../../lib/urlUtils.js';
 import { enforceRateLimit } from '../../../lib/rateLimit.js';
 
 const OMISE_STATUS_MAP = {
@@ -201,8 +201,7 @@ export default async function handler(request, response) {
       failure_message: null,
       merchant_advice: null,
       status: omiseStatus,
-      authorize_uri: payment.status === 'pending' && payment.omiseCard ? 
-        `https://3dsms.omise.co/payments/pay2_${(payment.omiseChargeId || chargeId).substring(0, 20)}/authorize` : null,
+      authorize_uri: omiseAuthorizeUri(payment, request),
       return_uri: payment.frontendReturnUrl ? rewriteUrl(payment.frontendReturnUrl) : null,
       created_at: payment.createdAt,
       paid_at: isPaid ? payment.updatedAt : null,

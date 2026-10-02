@@ -7,8 +7,8 @@
  * - POST /api/2c2p/payment
  * - GET /api/2c2p/qr/:invoiceNo
  * 
- * Note: /api/2c2p/token and /api/2c2p/inquiry remain as separate files
- * to keep them as dedicated functions (most frequently used)
+ * Also: POST /api/2c2p/inquiry, folded in here from lib/inquiryHandler.js.
+ * /api/2c2p/token keeps a file of its own (see the note on it below).
  */
 
 import { getPaymentByToken, getPayment, updatePayment } from '../../lib/storage.js';
@@ -17,6 +17,8 @@ import { logRequest } from '../../lib/logger.js';
 import { RESP_CODES } from '../../lib/constants.js';
 import { enforceRateLimit } from '../../lib/rateLimit.js';
 import handleInquiry from '../../lib/inquiryHandler.js';
+import { publicOrigin } from '../../lib/urlUtils.js';
+import { renderMockQr } from '../../lib/qrImage.js';
 
 const LOG_TIMEOUT_MS = 2000;
 
@@ -340,7 +342,7 @@ async function handlePayment(request, response) {
     
     if (QR_CHANNELS.includes(channelCode)) {
       const qrType = paymentData.qrType || 'URL';
-      const qrCodeUrl = `https://paygate-sandbox.vercel.app/api/2c2p/qr/${invoiceNo}?t=${Date.now()}`;
+      const qrCodeUrl = `${publicOrigin(request)}/api/2c2p/qr/${encodeURIComponent(invoiceNo)}?t=${Date.now()}`;
       
       let expiryDate = paymentRecord.paymentExpiry 
         ? new Date(paymentRecord.paymentExpiry)
@@ -397,25 +399,7 @@ async function handleQR(request, response, invoiceNo) {
   const amount = payment ? parseFloat(payment.amount || 0).toFixed(2) : '0.00';
   const currency = payment?.currencyCode || 'THB';
   
-  const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="250" height="300" viewBox="0 0 250 300">
-  <rect width="100%" height="100%" fill="white"/>
-  <rect x="25" y="25" width="200" height="200" fill="none" stroke="#333" stroke-width="2"/>
-  <rect x="35" y="35" width="40" height="40" fill="#333"/>
-  <rect x="40" y="40" width="30" height="30" fill="white"/>
-  <rect x="45" y="45" width="20" height="20" fill="#333"/>
-  <rect x="175" y="35" width="40" height="40" fill="#333"/>
-  <rect x="180" y="40" width="30" height="30" fill="white"/>
-  <rect x="185" y="45" width="20" height="20" fill="#333"/>
-  <rect x="35" y="175" width="40" height="40" fill="#333"/>
-  <rect x="40" y="180" width="30" height="30" fill="white"/>
-  <rect x="45" y="185" width="20" height="20" fill="#333"/>
-  <rect x="90" y="90" width="70" height="70" fill="none" stroke="#333" stroke-width="1"/>
-  <text x="125" y="130" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#333">MOCK QR</text>
-  <text x="125" y="245" text-anchor="middle" font-family="monospace" font-size="10" fill="#666">${invoiceNo.length > 25 ? invoiceNo.substring(0, 22) + '...' : invoiceNo}</text>
-  <text x="125" y="265" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="bold" fill="#333">${amount} ${currency}</text>
-  <text x="125" y="285" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#999">Paygate Sandbox</text>
-</svg>`;
+  const svg = renderMockQr({ reference: invoiceNo, detail: `${amount} ${currency}` });
   
   response.setHeader('Content-Type', 'image/svg+xml');
   response.setHeader('Cache-Control', 'no-cache');

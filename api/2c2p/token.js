@@ -24,7 +24,7 @@ import { generatePaymentToken, generateTranRef, generateApprovalCode, generateRe
 import { applyDelay, checkForceError, getErrorResponse } from '../../lib/simulation.js';
 import { logRequest } from '../../lib/logger.js';
 import { sendCallback } from '../../lib/callback.js';
-import { rewriteUrl } from '../../lib/urlUtils.js';
+import { rewriteUrl, publicOrigin } from '../../lib/urlUtils.js';
 import { RESP_CODES, getRespCodeForStatus } from '../../lib/constants.js';
 import { enforceRateLimit } from '../../lib/rateLimit.js';
 
@@ -230,11 +230,7 @@ async function handleRedirectPayment(request, response, body, logAndRespond) {
   
   // Generate token and URLs
   const paymentToken = generatePaymentToken();
-  // Use http for localhost, https for production
-  const host = request.headers.host || 'localhost:3000';
-  const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
-  const protocol = isLocalhost ? 'http' : 'https';
-  const serverUrl = process.env.MOCK_SERVER_URL || `${protocol}://${host}`;
+  const serverUrl = publicOrigin(request);
   const webPaymentUrl = `${serverUrl}/mock-pay/${encodeURIComponent(paymentToken)}`;
   
   // Create payment record
@@ -505,10 +501,7 @@ async function handle3DSecurePayment(request, response, body, logAndRespond) {
   const parsedAmount = parseFloat(body.amount);
   
   // Build redirect URL
-  const host = request.headers.host || 'localhost:3000';
-  const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
-  const protocol = isLocalhost ? 'http' : 'https';
-  const serverUrl = process.env.MOCK_SERVER_URL || `${protocol}://${host}`;
+  const serverUrl = publicOrigin(request);
   const webPaymentUrl = `${serverUrl}/mock-pay/${encodeURIComponent(paymentToken)}`;
   
   // Create payment record
@@ -581,11 +574,8 @@ async function handleQRPayment(request, response, body, logAndRespond) {
   
   // Generate QR code data
   const qrCode = `QR-${tranRef}-${Date.now()}`;
-  const host = request.headers.host || 'localhost:3000';
-  const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
-  const protocol = isLocalhost ? 'http' : 'https';
-  const serverUrl = process.env.MOCK_SERVER_URL || `${protocol}://${host}`;
-  const qrPaymentUrl = `${serverUrl}/qr-pay/${encodeURIComponent(qrCode)}`;
+  const serverUrl = publicOrigin(request);
+  const qrPaymentUrl = `${serverUrl}/mock-pay/${encodeURIComponent(paymentToken)}`;
   
   // Create payment record
   const payment = {
@@ -637,7 +627,7 @@ async function handleQRPayment(request, response, body, logAndRespond) {
     paymentToken,
     qrCode,
     qrPaymentUrl,
-    webPaymentUrl: qrPaymentUrl  // Alias for compatibility
+    webPaymentUrl: qrPaymentUrl  // the same link, under the name the other flows use
   };
   
   return logAndRespond(200, responseData, body.invoiceNo);
@@ -656,11 +646,8 @@ async function handleDigitalWalletPayment(request, response, body, logAndRespond
   const parsedAmount = parseFloat(body.amount);
   
   // Build redirect URL
-  const host = request.headers.host || 'localhost:3000';
-  const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
-  const protocol = isLocalhost ? 'http' : 'https';
-  const serverUrl = process.env.MOCK_SERVER_URL || `${protocol}://${host}`;
-  const webPaymentUrl = `${serverUrl}/wallet-pay/${encodeURIComponent(paymentToken)}`;
+  const serverUrl = publicOrigin(request);
+  const webPaymentUrl = `${serverUrl}/mock-pay/${encodeURIComponent(paymentToken)}`;
   
   // Create payment record
   const payment = {
@@ -860,11 +847,8 @@ async function handleInternetBanking(request, response, body, logAndRespond) {
   const parsedAmount = parseFloat(body.amount);
   
   // Build redirect URL
-  const host = request.headers.host || 'localhost:3000';
-  const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
-  const protocol = isLocalhost ? 'http' : 'https';
-  const serverUrl = process.env.MOCK_SERVER_URL || `${protocol}://${host}`;
-  const webPaymentUrl = `${serverUrl}/bank-pay/${encodeURIComponent(paymentToken)}`;
+  const serverUrl = publicOrigin(request);
+  const webPaymentUrl = `${serverUrl}/mock-pay/${encodeURIComponent(paymentToken)}`;
   
   // Create payment record
   const payment = {

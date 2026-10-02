@@ -121,6 +121,13 @@ function createMockReqRes(req, res, body, query) {
       });
       res.end(JSON.stringify(data));
     },
+    // Vercel's response has send() as well, and the QR image handler uses it;
+    // without it here that route answered 500 locally and worked deployed.
+    send(data) {
+      if (data !== null && typeof data === 'object' && !Buffer.isBuffer(data)) return this.json(data);
+      res.writeHead(this.statusCode, this.headers);
+      res.end(data);
+    },
     end(data) {
       res.writeHead(this.statusCode, this.headers);
       res.end(data);
@@ -327,7 +334,15 @@ async function handleRequest(req, res) {
     const c2pMatch = pathname.match(/^\/api\/2c2p\/(.+)$/);
     if (c2pMatch) {
       const handler = (await import('./api/2c2p/[...slug].js')).default;
-      const pathSegments = c2pMatch[1].split('/');
+      // Decoded per segment, as the platform does for a catch-all — the QR
+      // route carries an invoice number, which is whatever the caller sent.
+      const pathSegments = c2pMatch[1].split('/').map((segment) => {
+        try {
+          return decodeURIComponent(segment);
+        } catch {
+          return segment;
+        }
+      });
       const { mockReq, mockRes } = createMockReqRes(req, res, body, { ...query, slug: pathSegments });
       try {
         await handler(mockReq, mockRes);

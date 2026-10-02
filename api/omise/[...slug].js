@@ -13,7 +13,8 @@ import { savePayment, getPayment, getAllPayments } from '../../lib/storage.js';
 import { generateOmiseChargeId, generateOmiseTokenId, generateOmiseSourceId, generateTranRef, generateReferenceNo } from '../../lib/tokenGenerator.js';
 import { applyDelay, checkForceError, getErrorResponse, getOmiseErrorResponse } from '../../lib/simulation.js';
 import { logRequest } from '../../lib/logger.js';
-import { rewriteUrl } from '../../lib/urlUtils.js';
+import { rewriteUrl, omiseAuthorizeUri, publicOrigin } from '../../lib/urlUtils.js';
+import { renderMockQr } from '../../lib/qrImage.js';
 import { enforceRateLimit } from '../../lib/rateLimit.js';
 
 const OMISE_STATUS_MAP = {
@@ -117,8 +118,7 @@ function buildOmiseChargeObject(payment, amountInt, chargeId, request = null) {
     failure_message: null,
     merchant_advice: null,
     status: omiseStatus,
-    authorize_uri: payment.status === 'pending' && payment.omiseCard ? 
-      `https://3dsms.omise.co/payments/pay2_${chargeId.substring(0, 20)}/authorize` : null,
+    authorize_uri: omiseAuthorizeUri(payment, request),
     return_uri: payment.frontendReturnUrl ? rewriteUrl(payment.frontendReturnUrl) : null,
     created_at: now,
     paid_at: isPaid ? updatedAt : null,
@@ -495,6 +495,13 @@ export default async function handler(request, response) {
       return handleCreateToken(request, response, logAndRespond);
     } else if (action === 'sources' && request.method === 'POST') {
       return handleCreateSource(request, response, logAndRespond);
+    } else if (action === 'sources' && request.method === 'GET' && id && pathSegments[2] === 'downloads') {
+      // The QR image a source's scannable_code points at, served here rather
+      // than on the provider's domain. Nothing is stored for a source, so the
+      // image carries its id and nothing more.
+      response.setHeader('Content-Type', 'image/svg+xml');
+      response.setHeader('Cache-Control', 'no-cache');
+      return response.status(200).send(renderMockQr({ reference: id, detail: 'Omise source' }));
     } else {
       return logAndRespond(404, { 
         object: 'error', 
@@ -564,10 +571,7 @@ async function handleCreateCharge(request, response, logAndRespond) {
   }
   
   // Build mock payment URL
-  const host = request.headers.host || 'localhost:3000';
-  const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
-  const protocol = isLocalhost ? 'http' : 'https';
-  const serverUrl = process.env.MOCK_SERVER_URL || `${protocol}://${host}`;
+  const serverUrl = publicOrigin(request);
   const paymentToken = `omise_token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const returnUri = body.return_uri ? rewriteUrl(body.return_uri) : null;
   
@@ -614,7 +618,10 @@ async function handleCreateCharge(request, response, logAndRespond) {
     // Omise-specific fields
     omiseCard: body.card ? { object: 'card', id: body.card } : null,
     omiseSource: body.source || null,
-    omiseMetadata: body.metadata || {}
+    omiseMetadata: body.metadata || {},
+    // Where this instance was reached, so a webhook sent later — with no
+    // request to read it from — still links back here.
+    origin: serverUrl
   };
   
   // Save payment
@@ -793,7 +800,6 @@ async function handleCreateSource(request, response, logAndRespond) {
     sourceResponse.scannable_code = null;
     sourceResponse.references = {};
     sourceResponse.charge_status = 'pending';
-    sourceResponse.authorize_uri = `https://paygate-sandbox.vercel.app/omise-authorize/${sourceId}`;
   }
   
   // QR Payment (PromptPay, PayNow)
@@ -802,8 +808,8 @@ async function handleCreateSource(request, response, logAndRespond) {
       object: 'barcode',
       type: 'qr',
       image: {
-        download_uri: `https://api.omise.co/sources/${sourceId}/downloads/qr.png`,
-        filename: 'qr.png'
+        download_uri: `${publicOrigin(request)}/api/omise/sources/${encodeURIComponent(sourceId)}/downloads/qr.svg`,
+        filename: 'qr.svg'
       }
     };
     sourceResponse.references = {
@@ -817,7 +823,6 @@ async function handleCreateSource(request, response, logAndRespond) {
     sourceResponse.scannable_code = null;
     sourceResponse.references = {};
     sourceResponse.charge_status = 'pending';
-    sourceResponse.authorize_uri = `https://paygate-sandbox.vercel.app/alipay-authorize/${sourceId}`;
   }
   
   // Alipay+ (Online, Offline)
@@ -828,8 +833,8 @@ async function handleCreateSource(request, response, logAndRespond) {
         object: 'barcode',
         type: 'qr',
         image: {
-          download_uri: `https://api.omise.co/sources/${sourceId}/downloads/qr.png`,
-          filename: 'qr.png'
+          download_uri: `${publicOrigin(request)}/api/omise/sources/${encodeURIComponent(sourceId)}/downloads/qr.svg`,
+          filename: 'qr.svg'
         }
       };
       sourceResponse.references = {
@@ -840,7 +845,6 @@ async function handleCreateSource(request, response, logAndRespond) {
       sourceResponse.scannable_code = null;
       sourceResponse.references = {};
       sourceResponse.charge_status = 'pending';
-      sourceResponse.authorize_uri = `https://paygate-sandbox.vercel.app/alipay-authorize/${sourceId}`;
     }
   }
   
@@ -850,8 +854,8 @@ async function handleCreateSource(request, response, logAndRespond) {
       object: 'barcode',
       type: 'qr',
       image: {
-        download_uri: `https://api.omise.co/sources/${sourceId}/downloads/qr.png`,
-        filename: 'qr.png'
+        download_uri: `${publicOrigin(request)}/api/omise/sources/${encodeURIComponent(sourceId)}/downloads/qr.svg`,
+        filename: 'qr.svg'
       }
     };
     sourceResponse.references = {
@@ -864,7 +868,6 @@ async function handleCreateSource(request, response, logAndRespond) {
     sourceResponse.scannable_code = null;
     sourceResponse.references = {};
     sourceResponse.charge_status = 'pending';
-    sourceResponse.authorize_uri = `https://paygate-sandbox.vercel.app/shopee-authorize/${sourceId}`;
   }
   
   // WiPay
@@ -873,8 +876,8 @@ async function handleCreateSource(request, response, logAndRespond) {
       object: 'barcode',
       type: 'qr',
       image: {
-        download_uri: `https://api.omise.co/sources/${sourceId}/downloads/qr.png`,
-        filename: 'qr.png'
+        download_uri: `${publicOrigin(request)}/api/omise/sources/${encodeURIComponent(sourceId)}/downloads/qr.svg`,
+        filename: 'qr.svg'
       }
     };
     sourceResponse.references = {
@@ -891,7 +894,6 @@ async function handleCreateSource(request, response, logAndRespond) {
     sourceResponse.scannable_code = null;
     sourceResponse.references = {};
     sourceResponse.charge_status = 'pending';
-    sourceResponse.authorize_uri = `https://paygate-sandbox.vercel.app/mobile-authorize/${sourceId}`;
   }
   
   // GrabPay, Boost, Touch 'n Go, etc.
@@ -899,7 +901,6 @@ async function handleCreateSource(request, response, logAndRespond) {
     sourceResponse.scannable_code = null;
     sourceResponse.references = {};
     sourceResponse.charge_status = 'pending';
-    sourceResponse.authorize_uri = `https://paygate-sandbox.vercel.app/wallet-authorize/${sourceId}`;
   }
   
   // Rabbit LINE Pay
@@ -907,7 +908,6 @@ async function handleCreateSource(request, response, logAndRespond) {
     sourceResponse.scannable_code = null;
     sourceResponse.references = {};
     sourceResponse.charge_status = 'pending';
-    sourceResponse.authorize_uri = `https://paygate-sandbox.vercel.app/line-authorize/${sourceId}`;
   }
   
   // Atome, PayPay, Konbini, etc.
@@ -917,8 +917,8 @@ async function handleCreateSource(request, response, logAndRespond) {
         object: 'barcode',
         type: body.type === 'konbini' ? 'barcode' : 'qr',
         image: {
-          download_uri: `https://api.omise.co/sources/${sourceId}/downloads/qr.png`,
-          filename: 'qr.png'
+          download_uri: `${publicOrigin(request)}/api/omise/sources/${encodeURIComponent(sourceId)}/downloads/qr.svg`,
+          filename: 'qr.svg'
         }
       };
       sourceResponse.references = {
@@ -928,7 +928,6 @@ async function handleCreateSource(request, response, logAndRespond) {
       sourceResponse.scannable_code = null;
       sourceResponse.references = {};
       sourceResponse.charge_status = 'pending';
-      sourceResponse.authorize_uri = `https://paygate-sandbox.vercel.app/${body.type}-authorize/${sourceId}`;
     }
   }
   
@@ -939,8 +938,8 @@ async function handleCreateSource(request, response, logAndRespond) {
       object: 'barcode',
       type: 'qr',
       image: {
-        download_uri: `https://api.omise.co/sources/${sourceId}/downloads/qr.png`,
-        filename: 'qr.png'
+        download_uri: `${publicOrigin(request)}/api/omise/sources/${encodeURIComponent(sourceId)}/downloads/qr.svg`,
+        filename: 'qr.svg'
       }
     };
     sourceResponse.references = {

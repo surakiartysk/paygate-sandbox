@@ -175,7 +175,7 @@ behaviour, not an HTTP error.
 | `POST /api/2c2p/payment` | QR payment request |
 | `GET /api/2c2p/qr/:invoiceNo` | QR image for a payment |
 | `POST /api/2c2p/optionDetails` | Available payment options |
-| `GET /api/2c2p/info` | Merchant info |
+| `GET /api/2c2p/info` | Payment details by `?token=` |
 
 ---
 
@@ -189,6 +189,7 @@ curl -X POST http://localhost:3000/api/omise/charges \
   -d '{
     "amount": 150000,
     "currency": "thb",
+    "card": "tokn_test_5xyz",
     "description": "Order #1234",
     "return_uri": "https://your-app.example.com/payment/return"
   }'

@@ -12,6 +12,9 @@ with a specific issuer code, make an inquiry time out, or deliver the same webho
 order. A built-in callback inspector captures what your webhook would have received, so the whole
 request → callback loop stays in one place.
 
+**Try it:** [paygate-sandbox.vercel.app](https://paygate-sandbox.vercel.app) — sign in with `demo` for
+sample payments of your own.
+
 > **Unofficial, and not affiliated with 2C2P or Omise.** Request and response shapes follow each
 > provider's public API documentation. This is a testing tool: it processes no real money, holds no
 > real credentials, and must never be pointed at a production system.
@@ -158,7 +161,7 @@ api/            Serverless handlers (Vercel file-based routing)
   demo/         Seed data and the guided scenario
 lib/            Domain logic shared by the handlers
 public/         Landing page, dashboard and inspector (vanilla JS, no build step)
-test/           Smoke tests
+test/           The suite — drives a real server over HTTP
 ```
 
 ## License

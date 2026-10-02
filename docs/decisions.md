@@ -429,6 +429,8 @@ messages are measurements rather than estimates.
 ask about, and the audit is only as good as the questions. Three of the eight were found while
 looking for something else.
 
+---
+
 ## 17. A demo password that can be published, because of what it opens
 
 **Context.** The landing page offered "Open the dashboard", and on a public deployment that led to a

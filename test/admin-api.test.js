@@ -4,7 +4,7 @@
 
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { startSandbox, adminHeaders, postJson } from './helpers.js';
+import { startSandbox, adminHeaders, postJson, uniqueInvoice } from './helpers.js';
 
 describe('admin API', () => {
   let sandbox;
@@ -139,3 +139,43 @@ describe('invoice numbers that need encoding', () => {
   });
 });
 
+
+/**
+ * The summary tiles' numbers, from the server.
+ *
+ * The dashboard counted statuses on the page it had loaded and put them beside
+ * a total for every page — so past one page the tiles could not add up — and
+ * its third tile left expired payments out altogether. The list now carries
+ * counts over every page, filters applied, and the tiles read those.
+ */
+describe('payment list counts', () => {
+  let sandbox;
+
+  before(async () => {
+    sandbox = await startSandbox();
+  });
+
+  after(async () => {
+    await sandbox?.stop();
+  });
+
+  test('counts every status across all pages, not just the one returned', async () => {
+    const statuses = ['pending', 'success', 'failed', 'cancelled', 'expired', 'expired'];
+    for (const status of statuses) {
+      const invoiceNo = uniqueInvoice();
+      await postJson(`${sandbox.baseUrl}/api/2c2p/token`, { invoiceNo, amount: 100 });
+      if (status !== 'pending') {
+        await postJson(`${sandbox.baseUrl}/api/admin/payments/${invoiceNo}/status`, { status }, adminHeaders());
+      }
+    }
+
+    // One payment per page, so a count taken from the page could only ever be 1.
+    const response = await fetch(`${sandbox.baseUrl}/api/admin/payments?limit=1`, { headers: adminHeaders() });
+    const body = await response.json();
+
+    assert.equal(body.payments.length, 1);
+    assert.deepEqual(body.counts, { pending: 1, success: 1, failed: 1, cancelled: 1, expired: 2 });
+    const summed = Object.values(body.counts).reduce((a, b) => a + b, 0);
+    assert.equal(summed, body.pagination.total);
+  });
+});

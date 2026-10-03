@@ -5,6 +5,7 @@
 
 // State
 let payments = [];
+let paymentCounts = {};
 let config = {};
 let logs = [];
 let currentInvoiceNo = null;
@@ -272,6 +273,7 @@ async function loadPayments(page = null) {
     }
 
     payments = data.payments;
+    paymentCounts = data.counts || {};
     if (data.pagination) {
       paymentsPagination = {
         ...paymentsPagination,
@@ -983,9 +985,15 @@ function renderLogs() {
 function updateStats() {
   // Use pagination total for accurate count
   const total = paymentsPagination.total || payments.length;
-  const pending = payments.filter(p => p.status === 'pending').length;
-  const success = payments.filter(p => p.status === 'success').length;
-  const failed = payments.filter(p => p.status === 'failed' || p.status === 'cancelled').length;
+  // From the server's counts over every page, not the loaded page, so the
+  // tiles describe the same payments the total does. The third tile is every
+  // way a payment can end without being paid — failed, cancelled and expired
+  // — so the three add up to the total; it used to leave expired out and call
+  // cancelled "failed".
+  const count = (status) => paymentCounts[status] || 0;
+  const pending = count('pending');
+  const success = count('success');
+  const failed = count('failed') + count('cancelled') + count('expired');
   
   // Provider breakdown
   const count2c2p = payments.filter(p => (p.provider || '2c2p') === '2c2p').length;

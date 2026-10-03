@@ -101,10 +101,17 @@ export default async function handler(request, response) {
       
       // Apply pagination
       const paginated = filtered.slice(offset, offset + limit);
+
+      // Counts by status over every page, filters applied — what the summary
+      // tiles show. Counting the loaded page instead put a page's worth of
+      // statuses beside a total for all of them.
+      const counts = {};
+      for (const p of filtered) counts[p.status] = (counts[p.status] || 0) + 1;
       
       return response.status(200).json({
         success: true,
         payments: paginated,
+        counts,
         pagination: {
           page,
           limit,

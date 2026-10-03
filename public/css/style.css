@@ -328,6 +328,14 @@ a:hover {
   color: var(--warning);
 }
 
+/* Ended without anyone acting — neither a failure nor a warning, so it
+   recedes rather than borrowing either colour. */
+.badge-expired {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
 .badge-token {
   background: var(--token-bg);
   color: var(--token-color);

@@ -463,9 +463,11 @@ after a day. The token, never the shared password, is the credential after that.
   30-second ceiling [decision 9](#9-simulation-lives-in-headers-and-a-caller-chosen-number-gets-a-ceiling)
   gave the delay header, on its inquiry delay and its simulated timeout, because it is exactly the
   stranger that decision was written for.
-- **Each side sees only its own.** The admin's list leaves visitors' payments out: strings a
-  stranger chose do not belong on the admin's screen, and two hundred copies of the same ten
-  samples are no use there.
+- **Each side sees only its own.** The admin's list leaves visitors' payments out, because two
+  hundred copies of the same ten samples are no use there. That is not what keeps a stranger's
+  strings off the admin's screen — anyone can create a payment through the public provider APIs
+  with whatever description they like, and the admin's list shows it. What makes those strings
+  harmless is that the dashboard escapes what it renders.
 - **Bounded.** Sign-in has its own rate-limit bucket of ten a minute, a visitor on the admin
   routes is held to the provider APIs' limit, and the instance refuses new visitors past 2,000
   live visitor payments. Each seeded payment measured 0.83–1.06 KB serialised, about 9.2 KB a

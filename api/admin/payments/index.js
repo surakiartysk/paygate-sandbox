@@ -47,9 +47,10 @@ export default async function handler(request, response) {
     // Handle list payments (default - GET /api/admin/payments)
     if (request.method === 'GET') {
       // Each side sees only its own: a visitor their sample payments, and the
-      // admin everything except visitors' payments — strings a stranger chose
-      // have no business on the admin's screen, and the admin has no use for
-      // two hundred copies of the same ten samples.
+      // admin everything except visitors' payments, because the admin has no
+      // use for two hundred copies of the same ten samples. This is not what
+      // keeps a stranger's strings off the admin's screen — the public provider
+      // APIs put them there — escaping in the dashboard is (decision 17).
       const payments = (await getAllPayments()).filter(p => principal.role === 'admin'
         ? !p.demoOwner
         : ownsPayment(principal.visitor, p));

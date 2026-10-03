@@ -92,12 +92,12 @@ describe('payment flows', () => {
 
     await postJson(
       `${sandbox.baseUrl}/api/admin/payments/${invoiceNo}/callback`,
-      { sequence: [{ status: 'failed', respCode: '4010', delayAfter: 0 }] },
+      { sequence: [{ status: 'failed', respCode: '4051', delayAfter: 0 }] },
       adminHeaders()
     );
 
     const [received] = (await receiver.waitFor(before + 1)).slice(before);
-    assert.equal(received.body.payload.respCode, '4010');
+    assert.equal(received.body.payload.respCode, '4051');
     assert.match(received.body.payload.respDesc, /insufficient/i);
   });
 

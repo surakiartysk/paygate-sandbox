@@ -26,12 +26,12 @@ const RESPONSE_CODES = {
     ],
     failed: [
       // Card Issues
-      { code: '4010', desc: 'Insufficient funds', category: 'Card' },
-      { code: '4011', desc: 'Invalid card number', category: 'Card' },
+      { code: '4051', desc: 'Insufficient funds', category: 'Card' },
+      { code: '4014', desc: 'Invalid card number', category: 'Card' },
       { code: '4012', desc: 'Invalid CVV', category: 'Card' },
       { code: '4013', desc: 'Transaction not allowed', category: 'Card' },
       { code: '4019', desc: 'Invalid card number', category: 'Card' },
-      { code: '4051', desc: 'Expired card', category: 'Card' },
+      { code: '4054', desc: 'Expired card', category: 'Card' },
       { code: '4057', desc: 'Card stolen', category: 'Card' },
       { code: '4058', desc: 'Card lost', category: 'Card' },
       

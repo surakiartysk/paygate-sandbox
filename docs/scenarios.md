@@ -49,11 +49,12 @@ curl -X POST $BASE/api/2c2p/token -H "$JSON" \
   -d "{\"invoiceNo\":\"T-101\",\"amount\":990,\"backendReturnUrl\":\"$HOOK\"}"
 
 curl -X POST $BASE/api/admin/payments/T-101/callback -H "$JSON" -H "$ADMIN" \
-  -d '{"sequence":[{"status":"failed","respCode":"4010","delayAfter":0}]}'
+  -d '{"sequence":[{"status":"failed","respCode":"4051","delayAfter":0}]}'
 ```
 
-Swap `4010` for `4011` (invalid card), `4051` (expired), `4057` (stolen), or `4033` (limit
-exceeded).
+Swap `4051` for `4014` (invalid card number), `4054` (expired card), `4043` (stolen card), or
+`4061` (over the withdrawal limit) — card declines are `40` followed by the ISO 8583 response
+code.
 
 **What to assert:** the order is not fulfilled, and the decline reason is recorded rather than
 flattened to "payment failed".

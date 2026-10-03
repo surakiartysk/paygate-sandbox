@@ -26,7 +26,7 @@ The rest is what happens when the issuer declines, when the callback arrives bef
 commit, when the same webhook is delivered twice, or when an inquiry hangs for thirty seconds.
 
 Those cases are hard to produce against a provider's own sandbox: you cannot ask it to decline with
-code 4010 on demand, replay a webhook, or introduce latency. So they get tested by hand once and
+code 4051 on demand, replay a webhook, or introduce latency. So they get tested by hand once and
 then never again. This sandbox makes each of them a single API call, which means they can live in an
 automated test suite.
 

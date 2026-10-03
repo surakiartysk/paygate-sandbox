@@ -79,7 +79,7 @@ const RESPONSE_CODES = {
   '0000': { status: 'success', desc: 'Successful' },
   '0001': { status: 'pending', desc: 'Transaction is pending' },
   '0003': { status: 'cancelled', desc: 'Transaction is cancelled' },
-  '4010': { status: 'failed', desc: 'Insufficient funds' },
+  '4051': { status: 'failed', desc: 'Insufficient funds' },
   '9035': { status: 'failed', desc: 'Payment failed' },
   '5009': { status: 'failed', desc: 'Payment Expired' },
   '9999': { status: 'failed', desc: 'System error' },

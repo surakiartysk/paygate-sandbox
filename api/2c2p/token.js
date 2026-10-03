@@ -223,8 +223,8 @@ async function handleRedirectPayment(request, response, body, logAndRespond) {
       existingInvoice: existing.invoiceNo 
     });
     return logAndRespond(200, {
-      respCode: '0003',
-      respDesc: 'Duplicate invoice number'
+      respCode: '9015',
+      respDesc: 'Existing invoice number'
     }, body.invoiceNo);
   }
   
@@ -359,8 +359,8 @@ async function handleDirectPayment(request, response, body, logAndRespond) {
   const existing = await getPayment(body.invoiceNo);
   if (existing) {
     return logAndRespond(200, {
-      respCode: '0003',
-      respDesc: 'Duplicate invoice number'
+      respCode: '9015',
+      respDesc: 'Existing invoice number'
     }, body.invoiceNo);
   }
   

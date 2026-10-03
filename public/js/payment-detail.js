@@ -954,9 +954,9 @@ function getResponseCodeOptions(status, selectedCode) {
       ],
       failed: [
         { code: '9035', desc: 'Payment failed' },
-        { code: '4010', desc: 'Insufficient funds' },
-        { code: '4011', desc: 'Invalid card' },
-        { code: '4051', desc: 'Expired card' },
+        { code: '4051', desc: 'Insufficient funds' },
+        { code: '4014', desc: 'Invalid card' },
+        { code: '4054', desc: 'Expired card' },
         { code: '9999', desc: 'System error' },
         { code: '5002', desc: 'Timeout' }
       ],

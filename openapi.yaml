@@ -258,7 +258,7 @@ paths:
                 respCode:
                   type: string
                   description: Defaults to a sensible code for the status.
-                  example: '4010'
+                  example: '4051'
       responses:
         '200': { description: Status updated }
         '400': { description: Invalid status }
@@ -334,7 +334,7 @@ paths:
                 summary: Declined for insufficient funds
                 value:
                   sequence:
-                    - { status: failed, respCode: '4010', delayAfter: 0 }
+                    - { status: failed, respCode: '4051', delayAfter: 0 }
       responses:
         '200':
           description: Delivery results, one per callback

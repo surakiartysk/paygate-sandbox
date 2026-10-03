@@ -250,7 +250,7 @@ Add `?preview=callback` to see the payload that *would* be sent without sending 
 curl -X POST http://localhost:3000/api/admin/payments/INV-0001/status \
   -H 'Content-Type: application/json' \
   -H 'X-Admin-Password: mockpay' \
-  -d '{"status": "failed", "respCode": "4010"}'
+  -d '{"status": "failed", "respCode": "4051"}'
 ```
 
 `respCode` is optional; a sensible default is chosen per status. Moving a payment to `success`
@@ -391,9 +391,9 @@ Seeding refuses to run when payments already exist, so it never overwrites your 
 | `2001` | Transaction in progress |
 | `0003` | Cancelled |
 | `2002` | Transaction not found |
-| `4010` | Insufficient funds |
-| `4011` | Invalid card number |
-| `4051` | Expired card |
+| `4014` | Invalid card number |
+| `4051` | Insufficient funds |
+| `4054` | Expired card |
 | `5002` | Timeout |
 | `5009` | Payment expired |
 | `0999` | System error |

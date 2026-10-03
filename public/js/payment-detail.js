@@ -12,9 +12,18 @@ let callbackSequence = [];
 let callbackMode = 'sequence'; // 'sequence' or 'custom'
 let callbackPreviewPayload = null;
 
-// Get invoice number from URL
+// Get invoice number from URL. The dashboard links here with the number
+// percent-encoded, and location.pathname keeps it that way: decode once, or the
+// fetch below encodes it again and asks for a payment that does not exist. A
+// malformed path is kept raw — the API's 404 is a better answer than a page
+// whose script stopped at its first line.
 const pathParts = window.location.pathname.split('/');
 invoiceNo = pathParts[pathParts.length - 1];
+try {
+  invoiceNo = decodeURIComponent(invoiceNo);
+} catch {
+  // Not valid percent-encoding; look it up as typed.
+}
 
 // Whether this browser signed in as the admin. A marker, not a credential: the
 // credential is an HttpOnly session cookie the page cannot read, and the

@@ -21,14 +21,15 @@ data is fake.
 
 ## The pattern this repo keeps producing
 
-Ten bugs here have had the same shape: **a defence that is present, correct
+Eleven bugs here have had the same shape: **a defence that is present, correct
 and documented, sitting beside a path that goes around it.** An SSRF guard that
 missed one spelling of the metadata address. A `fetch` that followed redirects
 past the guard its comment called the single choke point. A rate limit keyed on
 a header the caller sends. A capture cap counting rows while one row held 5 MB.
 A redaction list that had never been told the name of this application's own
 password. A sign-in limit beside admin routes that took the password in a
-header and counted nothing.
+header and counted nothing. An admin API taught to decode an invoice number
+beside the one page that read it from its own URL without decoding it.
 
 So when you read a comment claiming a protection, **go and check it** rather
 than believing it. Most of those were found by a probe against a running

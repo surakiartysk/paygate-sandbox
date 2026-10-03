@@ -406,7 +406,7 @@ forcing an error for everything would pass.
 
 ## 16. The pattern all of this keeps producing
 
-Eleven bugs here have had the same shape: **a defence that is present, correct and documented,
+Twelve bugs here have had the same shape: **a defence that is present, correct and documented,
 sitting beside a path that goes around it.**
 
 | The defence | The path around it |
@@ -422,6 +422,7 @@ sitting beside a path that goes around it.**
 | Escaping every invoice number in the dashboard | The QR image drew it raw into an SVG on the same origin |
 | A limit of ten sign-in guesses a minute | Every admin route took the password in a header, uncounted |
 | Decoding an encoded invoice number on both sides of the admin API | The payment page read it back out of its own URL undecoded |
+| One table of 2C2P descriptions, so no code is described three ways | The status route kept tables of its own, and stored "Unknown" for the rest |
 
 Most were found not by reading but by a probe against a running server, asking whether
 the thing the comment claimed was actually true — which is why `CLAUDE.md` says to go and check a
@@ -429,7 +430,7 @@ claimed protection rather than believe it, and why the numbers in this repositor
 messages are measurements rather than estimates.
 
 **Trade-off.** Probing costs more than reading and does not scale: it finds what you thought to
-ask about, and the audit is only as good as the questions. Five of the eleven were found while
+ask about, and the audit is only as good as the questions. Six of the twelve were found while
 looking for something else.
 
 ---

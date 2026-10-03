@@ -253,8 +253,9 @@ curl -X POST http://localhost:3000/api/admin/payments/INV-0001/status \
   -d '{"status": "failed", "respCode": "4051"}'
 ```
 
-`respCode` is optional; a sensible default is chosen per status. Moving a payment to `success`
-generates an approval code and reference number if it does not already have them.
+`respCode` is optional. Without one the payment gets the code a callback for that status carries:
+`0000` success, `2001` pending, `2003` failed, `0003` cancelled, `5009` expired. Moving a payment to
+`success` generates an approval code and reference number if it does not already have them.
 
 ### `POST /api/admin/payments/:invoiceNo/callback`
 

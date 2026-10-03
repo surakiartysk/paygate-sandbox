@@ -160,23 +160,54 @@ describe('2C2P response codes', () => {
     /*
      * Choosing a status in the dashboard pre-selects a response code, from a
      * table of its own in each page. Expired defaulted to 2003, "Payment /
-     * Inquiry Failed", with a comment saying to treat it as failed — after the
-     * server had moved expired to 5009, Payment Expired.
+     * Inquiry Failed", after the server had moved expired to 5009.
      *
-     * Held only where the server is itself of one mind. Its two tables still
-     * disagree on pending and failed (2001 or 0001, 2003 or 9035), and which
-     * is right is a decision, not something this test should make.
+     * The server had two tables as well — the status route's own said 0001
+     * and 9035 for pending and failed, where callbacks and inquiries said
+     * 2001 and 2003. There is one now, so every status is held to it.
      */
-    const route = codeTable('api/admin/payments/[invoiceNo]/[...slug].js', /const DEFAULT_RESP_CODES = \{/);
-    const settled = Object.keys(STATUS_TO_RESP_CODE).filter((s) => route[s] === STATUS_TO_RESP_CODE[s]);
-    assert.ok(settled.includes('expired'), `the server's tables no longer agree on expired: ${JSON.stringify(route)}`);
-
     for (const page of ['public/js/dashboard.js', 'public/js/payment-detail.js']) {
       const ui = codeTable(page, /function getDefaultRespCode\(status\) \{/);
-      for (const status of settled) {
-        assert.equal(ui[status], STATUS_TO_RESP_CODE[status], `${page}: '${status}' defaults to ${ui[status]}`);
-      }
+      assert.deepEqual(ui, STATUS_TO_RESP_CODE, `${page} defaults a status differently from the server`);
     }
+  });
+
+  test('a status set without a code gets the code its callback will carry', async () => {
+    for (const status of ['pending', 'failed', 'cancelled', 'expired']) {
+      const invoiceNo = uniqueInvoice();
+      await postJson(`${sandbox.baseUrl}/api/2c2p/token`, { invoiceNo, amount: 100 });
+      await postJson(`${sandbox.baseUrl}/api/admin/payments/${invoiceNo}/status`, { status }, adminHeaders());
+
+      const { payment } = await (await fetch(`${sandbox.baseUrl}/api/admin/payments/${invoiceNo}`, {
+        headers: adminHeaders()
+      })).json();
+      assert.equal(payment.respCode, STATUS_TO_RESP_CODE[status], status);
+    }
+  });
+
+  test('a decline the dashboard offers is stored and called back by name, not as Unknown', async () => {
+    // The status route described seven codes and stored "Unknown" for the
+    // rest; a callback described a dozen. 4054 and 4005 are both offered.
+    const invoiceNo = uniqueInvoice();
+    await postJson(`${sandbox.baseUrl}/api/2c2p/token`, { invoiceNo, amount: 100 });
+    await postJson(
+      `${sandbox.baseUrl}/api/admin/payments/${invoiceNo}/status`,
+      { status: 'failed', respCode: '4054' },
+      adminHeaders()
+    );
+    const { payment } = await (await fetch(`${sandbox.baseUrl}/api/admin/payments/${invoiceNo}`, {
+      headers: adminHeaders()
+    })).json();
+    assert.equal(payment.respDesc, OFFICIAL['4054']);
+
+    const session = await (await fetch(`${sandbox.baseUrl}/api/inspect`, { method: 'POST' })).json();
+    await postJson(
+      `${sandbox.baseUrl}/api/admin/payments/${invoiceNo}/callback`,
+      { callbackUrl: session.callbackUrl, sequence: [{ status: 'failed', respCode: '4005', delayAfter: 0 }] },
+      adminHeaders()
+    );
+    const captured = await (await fetch(session.callbackUrl)).json();
+    assert.equal(captured.captures.at(-1).body.payload.respDesc, OFFICIAL['4005']);
   });
 
   test('a duplicate invoice number is 9015, not the cancelled status', async () => {

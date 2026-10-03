@@ -12,6 +12,7 @@ import { unauthorized } from '../../../../lib/auth.js';
 import { ownsPayment, resolvePrincipal } from '../../../../lib/demoAccess.js';
 import { enforceRateLimit } from '../../../../lib/rateLimit.js';
 import { generateApprovalCode, generateReferenceNo } from '../../../../lib/tokenGenerator.js';
+import { getRespCodeForStatus, getRespDesc } from '../../../../lib/constants.js';
 import { sendCallback, sendCallbackSequence, buildCallbackPayload, executeCallback } from '../../../../lib/callback.js';
 
 const VALID_STATUSES = ['pending', 'success', 'failed', 'cancelled', 'expired'];
@@ -74,24 +75,6 @@ function validateSequence(sequence) {
 
   return null;
 }
-
-const RESPONSE_CODES = {
-  '0000': { status: 'success', desc: 'Successful' },
-  '0001': { status: 'pending', desc: 'Transaction is pending' },
-  '0003': { status: 'cancelled', desc: 'Transaction is cancelled' },
-  '4051': { status: 'failed', desc: 'Insufficient funds' },
-  '9035': { status: 'failed', desc: 'Payment failed' },
-  '5009': { status: 'failed', desc: 'Payment Expired' },
-  '0999': { status: 'failed', desc: 'System error' },
-};
-
-const DEFAULT_RESP_CODES = {
-  success: '0000',
-  pending: '0001',
-  failed: '9035',
-  cancelled: '0003',
-  expired: '5009'
-};
 
 /**
  * Read an invoice number out of a URL path segment.
@@ -237,8 +220,12 @@ export default async function handler(request, response) {
         return respondWithJson(400, { success: false, error: `Invalid status. Valid: ${VALID_STATUSES.join(', ')}` });
       }
       
-      const finalRespCode = respCode || DEFAULT_RESP_CODES[status];
-      const respInfo = RESPONSE_CODES[finalRespCode] || { desc: 'Unknown' };
+      // The same defaults and wording a callback and an inquiry use. This route
+      // kept tables of its own: seven descriptions, so a decline the dashboard
+      // offers was stored as "Unknown", and defaults of 0001 and 9035 where
+      // the callback for the same status said 2001 and 2003.
+      const finalRespCode = respCode || getRespCodeForStatus(status);
+      const respInfo = { desc: getRespDesc(finalRespCode) };
       
       const now = new Date().toISOString();
       const updates = {

@@ -264,7 +264,9 @@ paths:
                   enum: [pending, success, failed, cancelled, expired]
                 respCode:
                   type: string
-                  description: Defaults to a sensible code for the status.
+                  description: >-
+                    Defaults to the code a callback for that status carries — 0000 success,
+                    2001 pending, 2003 failed, 0003 cancelled, 5009 expired.
                   example: '4051'
       responses:
         '200': { description: Status updated }

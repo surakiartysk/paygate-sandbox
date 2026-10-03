@@ -82,7 +82,7 @@ const RESPONSE_CODES = {
   '4051': { status: 'failed', desc: 'Insufficient funds' },
   '9035': { status: 'failed', desc: 'Payment failed' },
   '5009': { status: 'failed', desc: 'Payment Expired' },
-  '9999': { status: 'failed', desc: 'System error' },
+  '0999': { status: 'failed', desc: 'System error' },
 };
 
 const DEFAULT_RESP_CODES = {

@@ -48,7 +48,7 @@ export default async function handler(request, response) {
   if (enforceRateLimit(request, response)) return;
   
   if (request.method !== 'POST') {
-    return response.status(405).json({ respCode: '0001', respDesc: 'Method not allowed' });
+    return response.status(405).json({ respCode: '9004', respDesc: 'The method value is not valid' });
   }
   
   const startTime = Date.now();
@@ -167,7 +167,7 @@ export default async function handler(request, response) {
   } catch (error) {
     console.error('Payment token error:', error);
     const errorResp = {
-      respCode: '9999',
+      respCode: '0999',
       respDesc: 'System error: ' + error.message
     };
     return logAndRespond(200, errorResp, body?.invoiceNo);
@@ -190,8 +190,8 @@ async function handleRedirectPayment(request, response, body, logAndRespond) {
   if (!body.invoiceNo) {
     console.warn('❌ 2C2P Redirect API validation failed: missing invoiceNo');
     return logAndRespond(200, {
-      respCode: '0001',
-      respDesc: 'Invalid invoice number'
+      respCode: '9005',
+      respDesc: 'Some mandatory fields are missing'
     }, 'MISSING_INVOICE'); // Use placeholder so validation errors are still logged
   }
   
@@ -204,8 +204,8 @@ async function handleRedirectPayment(request, response, body, logAndRespond) {
       invoiceNo: body.invoiceNo 
     });
     return logAndRespond(200, {
-      respCode: '0002',
-      respDesc: 'Invalid amount'
+      respCode: '9009',
+      respDesc: 'Amount is invalid'
     }, body.invoiceNo);
   }
   
@@ -341,8 +341,8 @@ async function handleDirectPayment(request, response, body, logAndRespond) {
   // Validate required fields
   if (!body.invoiceNo) {
     return logAndRespond(200, {
-      respCode: '0001',
-      respDesc: 'Invalid invoice number'
+      respCode: '9005',
+      respDesc: 'Some mandatory fields are missing'
     });
   }
   
@@ -350,8 +350,8 @@ async function handleDirectPayment(request, response, body, logAndRespond) {
   const parsedAmount = parseFloat(body.amount);
   if (!body.amount || isNaN(parsedAmount) || parsedAmount <= 0) {
     return logAndRespond(200, {
-      respCode: '0002',
-      respDesc: 'Invalid amount'
+      respCode: '9009',
+      respDesc: 'Amount is invalid'
     }, body.invoiceNo);
   }
   
@@ -389,8 +389,8 @@ async function handleDirectPayment(request, response, body, logAndRespond) {
         invoiceNo: body.invoiceNo,
         amount: body.amount.toFixed(2),
         currencyCode: body.currencyCode || 'THB',
-        respCode: '0001',
-        respDesc: `Unsupported payment method: ${paymentMethod}`
+        respCode: '9058',
+        respDesc: `Payment channel invalid: ${paymentMethod}`
       }, body.invoiceNo);
   }
 }

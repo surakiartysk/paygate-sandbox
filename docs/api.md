@@ -387,16 +387,24 @@ Seeding refuses to run when payments already exist, so it never overwrites your 
 
 | Code | Meaning |
 | --- | --- |
-| `0000` | Success |
+| `0000` | Successful |
+| `0001` | Transaction is pending |
 | `2001` | Transaction in progress |
-| `0003` | Cancelled |
+| `0003` | Transaction is cancelled |
 | `2002` | Transaction not found |
-| `4014` | Invalid card number |
-| `4051` | Insufficient funds |
-| `4054` | Expired card |
+| `4014` | Invalid Card Number |
+| `4051` | Insufficient Funds |
+| `4054` | Expired Card |
 | `5002` | Timeout |
-| `5009` | Payment expired |
+| `5009` | Payment Expired |
+| `9005` | Some mandatory fields are missing |
+| `9009` | Amount is invalid |
+| `9015` | Existing Invoice Number |
+| `9040` | The token is invalid |
 | `0999` | System error |
+
+Descriptions are the provider's own, word for word. A card decline is `40` followed by the ISO 8583
+response code, so any code in that range the provider lists can be sent in a callback sequence.
 
 References: [2C2P response codes](https://developer.2c2p.com/docs/response-code-payment) ·
 [Omise errors](https://docs.omise.co/api/errors)

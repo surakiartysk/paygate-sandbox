@@ -95,10 +95,10 @@ describe('provider-specific forced errors', () => {
     const { body } = await postJson(
       `${sandbox.baseUrl}/api/2c2p/token`,
       { invoiceNo: uniqueInvoice(), amount: 100 },
-      { 'Content-Type': 'application/json', 'x-mock-error': '0002' }
+      { 'Content-Type': 'application/json', 'x-mock-error': '9009' }
     );
 
-    assert.equal(body.respCode, '0002');
+    assert.equal(body.respCode, '9009');
   });
 });
 

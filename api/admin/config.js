@@ -22,23 +22,26 @@ const RESPONSE_CODES = {
       { code: '2001', desc: 'Transaction in progress' }
     ],
     cancelled: [
-      { code: '0003', desc: 'Transaction is cancelled' }
+      { code: '0003', desc: 'Transaction is cancelled' },
+      { code: '4080', desc: 'User Cancellation by Closing Internet Browser' }
     ],
     failed: [
-      // Card Issues
-      { code: '4051', desc: 'Insufficient funds', category: 'Card' },
-      { code: '4014', desc: 'Invalid card number', category: 'Card' },
-      { code: '4012', desc: 'Invalid CVV', category: 'Card' },
-      { code: '4013', desc: 'Transaction not allowed', category: 'Card' },
-      { code: '4019', desc: 'Invalid card number', category: 'Card' },
-      { code: '4054', desc: 'Expired card', category: 'Card' },
-      { code: '4057', desc: 'Card stolen', category: 'Card' },
-      { code: '4058', desc: 'Card lost', category: 'Card' },
+      // Card declines: 40 followed by the ISO 8583 response code
+      { code: '4001', desc: 'Refer to card issuer', category: 'Card' },
+      { code: '4005', desc: 'Do not honor', category: 'Card' },
+      { code: '4014', desc: 'Invalid Card Number', category: 'Card' },
+      { code: '4041', desc: 'Lost Card - Pick Up', category: 'Card' },
+      { code: '4043', desc: 'Stolen Card - Pick Up', category: 'Card' },
+      { code: '4051', desc: 'Insufficient Funds', category: 'Card' },
+      { code: '4054', desc: 'Expired Card', category: 'Card' },
+      { code: '4057', desc: 'Transaction Not Permitted to Cardholder', category: 'Card' },
+      { code: '4078', desc: 'Invalid Three Digits Format', category: 'Card' },
       
       // Transaction Issues
       { code: '2002', desc: 'Transaction not found', category: 'Transaction' },
-      { code: '4033', desc: 'Exceeds amount limit', category: 'Transaction' },
-      { code: '4034', desc: 'Exceeds frequency limit', category: 'Transaction' },
+      { code: '2003', desc: 'Payment / Inquiry Failed', category: 'Transaction' },
+      { code: '4061', desc: 'Exceeds Withdrawal Amount Limits', category: 'Transaction' },
+      { code: '4065', desc: 'Exceeds Withdrawal Frequency Limit', category: 'Transaction' },
       { code: '4094', desc: 'Duplicate Transmission', category: 'Transaction' },
       
       // System/Timeout
@@ -49,9 +52,9 @@ const RESPONSE_CODES = {
       // Validation
       { code: '5005', desc: 'Duplicated Invoice', category: 'Validation' },
       { code: '5006', desc: 'Invalid Amount', category: 'Validation' },
-      { code: '5009', desc: 'Payment Expired', category: 'Validation' },
+      { code: '9009', desc: 'Amount is invalid', category: 'Validation' },
       { code: '9015', desc: 'Existing Invoice Number', category: 'Validation' },
-      { code: '9035', desc: 'Payment failed (Default)', category: 'General' },
+      { code: '9035', desc: 'Payment failed', category: 'General' },
       { code: '9040', desc: 'The token is invalid', category: 'Validation' },
       
       // Backend
@@ -59,7 +62,7 @@ const RESPONSE_CODES = {
     ],
     expired: [
       { code: '5009', desc: 'Payment Expired' },
-      { code: '9020', desc: 'Payment Expired (V4 API)' }
+      { code: '9020', desc: 'Payment Expired ( From V4 Payment API )' }
     ]
   },
   'omise': {

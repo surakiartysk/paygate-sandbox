@@ -1518,10 +1518,10 @@ function getResponseCodeOptions(status, selectedCode) {
         { code: '4051', desc: 'Insufficient funds' },
         { code: '4014', desc: 'Invalid card' },
         { code: '4054', desc: 'Expired card' },
-        { code: '9999', desc: 'System error' },
+        { code: '0999', desc: 'System error' },
         { code: '5002', desc: 'Timeout' }
       ],
-      cancelled: [{ code: '0003', desc: 'Cancelled' }, { code: '0004', desc: 'User cancelled' }],
+      cancelled: [{ code: '0003', desc: 'Cancelled' }, { code: '4080', desc: 'User closed the browser' }],
       expired: [{ code: '5009', desc: 'Payment expired' }]
     };
     codes = codesByStatus[status] || codesByStatus.failed;

@@ -77,8 +77,8 @@ export default async function handler(request, response) {
   // keeps its cold starts independent of the rest.
   if (path === 'token') {
     return response.status(404).json({
-      respCode: '0002',
-      respDesc: 'Endpoint not found'
+      respCode: '9004',
+      respDesc: 'The path value is not valid'
     });
   }
   
@@ -105,8 +105,8 @@ export default async function handler(request, response) {
   
   // Not found
   return response.status(404).json({ 
-    respCode: '0002',
-    respDesc: 'Endpoint not found' 
+    respCode: '9004',
+    respDesc: 'The path value is not valid' 
   });
 }
 
@@ -197,16 +197,16 @@ async function handleOptionDetails(request, response) {
     
     if (!body.paymentToken) {
       return logAndRespond(200, {
-        respCode: '0001',
-        respDesc: 'Payment token is required'
+        respCode: '9005',
+        respDesc: 'Some mandatory fields are missing'
       });
     }
     
     const payment = await getPaymentByToken(body.paymentToken);
     if (!payment) {
       return logAndRespond(200, {
-        respCode: '0002',
-        respDesc: 'Invalid payment token'
+        respCode: '9040',
+        respDesc: 'The token is invalid'
       });
     }
     
@@ -275,7 +275,7 @@ async function handleOptionDetails(request, response) {
   } catch (error) {
     console.error('Payment option details error:', error);
     return logAndRespond(200, {
-      respCode: '9999',
+      respCode: '0999',
       respDesc: 'System error: ' + error.message
     }, null);
   }
@@ -323,16 +323,16 @@ async function handlePayment(request, response) {
     
     if (!paymentToken) {
       return logAndRespond(200, {
-        respCode: '0001',
-        respDesc: 'Payment token is required'
+        respCode: '9005',
+        respDesc: 'Some mandatory fields are missing'
       }, null);
     }
     
     const paymentRecord = await getPaymentByToken(paymentToken);
     if (!paymentRecord) {
       return logAndRespond(200, {
-        respCode: '0002',
-        respDesc: 'Invalid or expired payment token'
+        respCode: '9040',
+        respDesc: 'The token is invalid'
       }, null);
     }
     
@@ -374,8 +374,8 @@ async function handlePayment(request, response) {
     }
     
     return logAndRespond(200, {
-      respCode: '0001',
-      respDesc: `Payment channel ${channelCode} is not supported in mock`
+      respCode: '9058',
+      respDesc: `Payment channel invalid: ${channelCode} is not emulated`
     }, invoiceNo);
   } catch (error) {
     console.error('Payment API error:', error);

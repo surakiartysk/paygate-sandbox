@@ -47,17 +47,20 @@ describe('2C2P catch-all dispatch', () => {
 
   test("dispatches when segments arrive under Vercel's '...slug' key", async () => {
     const response = await callWith({ '...slug': ['inquiry'] });
-    assert.notEqual(response.body?.respDesc, 'Endpoint not found');
+    // Reached the inquiry handler, which reports an unknown invoice as 2002.
+    assert.equal(response.body?.respCode, '2002', `not dispatched: ${JSON.stringify(response.body)}`);
   });
 
   test("dispatches when segments arrive under the dev server's 'slug' key", async () => {
     const response = await callWith({ slug: ['inquiry'] });
-    assert.notEqual(response.body?.respDesc, 'Endpoint not found');
+    // Reached the inquiry handler, which reports an unknown invoice as 2002.
+    assert.equal(response.body?.respCode, '2002', `not dispatched: ${JSON.stringify(response.body)}`);
   });
 
   test('dispatches from the URL when the query carries no segments at all', async () => {
     const response = await callWith({});
-    assert.notEqual(response.body?.respDesc, 'Endpoint not found');
+    // Reached the inquiry handler, which reports an unknown invoice as 2002.
+    assert.equal(response.body?.respCode, '2002', `not dispatched: ${JSON.stringify(response.body)}`);
   });
 
   test('a genuinely unknown route still reports not found', async () => {
@@ -67,7 +70,8 @@ describe('2C2P catch-all dispatch', () => {
       { method: 'POST', url: '/api/2c2p/nonsense', headers: {}, query: { '...slug': ['nonsense'] }, body: {} },
       response
     );
-    assert.equal(response.body?.respDesc, 'Endpoint not found');
+    assert.equal(response.statusCode, 404);
+    assert.equal(response.body?.respCode, '9004');
   });
 });
 

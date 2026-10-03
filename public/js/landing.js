@@ -8,29 +8,34 @@
 /**
  * Fill in the quick-start snippet with this deployment's own origin, so it is
  * copy-pasteable as-is rather than needing a placeholder swapped out.
+ *
+ * Nothing in it needs the admin password. It used to settle the payment
+ * through the admin API with the local default, `mockpay`, which every public
+ * deployment refuses — so on the one instance a visitor could reach, step 2
+ * was a 401, and a guess spent against their sign-in allowance. The invoice
+ * number is made unique for the same reason: on a shared instance a fixed one
+ * is a duplicate for every visitor after the first.
  */
 function renderQuickstart() {
   const origin = location.origin;
   document.getElementById('quickstart-code').textContent =
-`# 1. Create a payment, pointing callbacks at the built-in inspector
+`# 1. Open a session on the built-in inspector — it stands in for your webhook
 SESSION=$(curl -s -X POST ${origin}/api/inspect | sed 's/.*"sessionId":"\\([^"]*\\)".*/\\1/')
 
+# 2. Pay by card through the Direct API. A card payment settles at once,
+#    and the sandbox sends the callback to backendReturnUrl by itself.
 curl -X POST ${origin}/api/2c2p/token \\
   -H 'Content-Type: application/json' \\
   -d "{
-    \\"invoiceNo\\": \\"INV-0001\\",
+    \\"invoiceNo\\": \\"INV-$(date +%s)-$RANDOM\\",
     \\"amount\\": 1500,
     \\"currencyCode\\": \\"THB\\",
+    \\"paymentMethod\\": \\"CC\\",
     \\"backendReturnUrl\\": \\"${origin}/api/inspect/\${SESSION}\\"
   }"
 
-# 2. Settle it and fire the callback
-curl -X POST ${origin}/api/admin/payments/INV-0001/callback \\
-  -H 'Content-Type: application/json' \\
-  -H 'X-Admin-Password: mockpay' \\
-  -d '{"sequence":[{"status":"success","respCode":"0000","delayAfter":0}]}'
-
-# 3. Read back what your webhook would have received
+# 3. A moment later, read back what your webhook received
+sleep 1
 curl ${origin}/api/inspect/\${SESSION}`;
 }
 

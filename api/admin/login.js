@@ -14,15 +14,15 @@
 
 import { clearAdminSession, DEMO_PASSWORD, issueAdminSession, verifyPassword } from '../../lib/auth.js';
 import { createDemoVisitor } from '../../lib/demoAccess.js';
-import { enforceRateLimit } from '../../lib/rateLimit.js';
+import { enforceRateLimit, LOGIN_ATTEMPTS_PER_MINUTE, LOGIN_SCOPE } from '../../lib/rateLimit.js';
 
-/**
+/*
  * Attempts per client per minute, admin and demo together. A demo sign-in
  * writes ten payments, and an admin attempt is a guess at the password, so
  * both are held well below the provider APIs' allowance — in a bucket of their
- * own, so browsing the sandbox does not spend them.
+ * own, so browsing the sandbox does not spend them. A wrong X-Admin-Password
+ * on any admin route spends the same allowance (lib/auth.js).
  */
-const LOGIN_ATTEMPTS_PER_MINUTE = 10;
 
 export default async function handler(request, response) {
   // Set CORS headers
@@ -47,7 +47,7 @@ export default async function handler(request, response) {
     return response.status(200).json({ success: true });
   }
 
-  if (enforceRateLimit(request, response, LOGIN_ATTEMPTS_PER_MINUTE, 'login')) return;
+  if (enforceRateLimit(request, response, LOGIN_ATTEMPTS_PER_MINUTE, LOGIN_SCOPE)) return;
   
   try {
     const { password } = request.body;

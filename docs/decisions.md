@@ -406,7 +406,7 @@ forcing an error for everything would pass.
 
 ## 16. The pattern all of this keeps producing
 
-Eight bugs here have had the same shape: **a defence that is present, correct and documented,
+Ten bugs here have had the same shape: **a defence that is present, correct and documented,
 sitting beside a path that goes around it.**
 
 | The defence | The path around it |
@@ -419,6 +419,8 @@ sitting beside a path that goes around it.**
 | Header redaction | Never told the name of this application's own password |
 | A callback history | Appended to a snapshot taken before the network call |
 | A force-error setting | Detected a provider by a path this repo does not serve |
+| Escaping every invoice number in the dashboard | The QR image drew it raw into an SVG on the same origin |
+| A limit of ten sign-in guesses a minute | Every admin route took the password in a header, uncounted |
 
 Most were found not by reading but by a probe against a running server, asking whether
 the thing the comment claimed was actually true — which is why `CLAUDE.md` says to go and check a
@@ -426,7 +428,7 @@ claimed protection rather than believe it, and why the numbers in this repositor
 messages are measurements rather than estimates.
 
 **Trade-off.** Probing costs more than reading and does not scale: it finds what you thought to
-ask about, and the audit is only as good as the questions. Three of the eight were found while
+ask about, and the audit is only as good as the questions. Four of the ten were found while
 looking for something else.
 
 ---

@@ -21,6 +21,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startSandbox, postJson, uniqueInvoice, adminHeaders } from './helpers.js';
+import { STATUS_TO_RESP_CODE } from '../lib/constants.js';
 
 const OFFICIAL = {
   '0000': 'Successful',
@@ -72,6 +73,21 @@ function sourceFiles(dir) {
     if (statSync(path).isDirectory()) return sourceFiles(path);
     return path.endsWith('.js') ? [path] : [];
   });
+}
+
+/**
+ * The status-to-code table a source file writes out as `status: '1234'` pairs
+ * inside the given function or object.
+ * @param {string} file - Path from the repository root
+ * @param {RegExp} start - Matches the opening of the table
+ * @returns {Record<string, string>}
+ */
+function codeTable(file, start) {
+  const src = readFileSync(join(ROOT, file), 'utf8');
+  const open = start.exec(src);
+  assert.ok(open, `${file}: could not find the table this test reads`);
+  const body = src.slice(open.index, src.indexOf('};', open.index));
+  return Object.fromEntries([...body.matchAll(/(\w+):\s*'(\d{4})'/g)].map((m) => [m[1], m[2]]));
 }
 
 describe('2C2P response codes', () => {
@@ -137,6 +153,29 @@ describe('2C2P response codes', () => {
     for (const [reason, expected] of cases) {
       const body = await tokenWithForcedError(reason);
       assert.equal(body.respCode, expected, `${reason} must decline with ${expected}`);
+    }
+  });
+
+  test('the dashboard defaults a status to the code the server gives it', () => {
+    /*
+     * Choosing a status in the dashboard pre-selects a response code, from a
+     * table of its own in each page. Expired defaulted to 2003, "Payment /
+     * Inquiry Failed", with a comment saying to treat it as failed — after the
+     * server had moved expired to 5009, Payment Expired.
+     *
+     * Held only where the server is itself of one mind. Its two tables still
+     * disagree on pending and failed (2001 or 0001, 2003 or 9035), and which
+     * is right is a decision, not something this test should make.
+     */
+    const route = codeTable('api/admin/payments/[invoiceNo]/[...slug].js', /const DEFAULT_RESP_CODES = \{/);
+    const settled = Object.keys(STATUS_TO_RESP_CODE).filter((s) => route[s] === STATUS_TO_RESP_CODE[s]);
+    assert.ok(settled.includes('expired'), `the server's tables no longer agree on expired: ${JSON.stringify(route)}`);
+
+    for (const page of ['public/js/dashboard.js', 'public/js/payment-detail.js']) {
+      const ui = codeTable(page, /function getDefaultRespCode\(status\) \{/);
+      for (const status of settled) {
+        assert.equal(ui[status], STATUS_TO_RESP_CODE[status], `${page}: '${status}' defaults to ${ui[status]}`);
+      }
     }
   });
 

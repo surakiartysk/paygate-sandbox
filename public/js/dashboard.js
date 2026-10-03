@@ -1493,7 +1493,7 @@ function getDefaultRespCode(status) {
     pending: '2001',     // Transaction in progress
     failed: '2003',      // Payment / Inquiry Failed
     cancelled: '0003',   // Transaction is cancelled
-    expired: '2003'      // Treat as failed
+    expired: '5009'      // Payment Expired
   };
   return RESP_CODES[status] || '2001';
 }

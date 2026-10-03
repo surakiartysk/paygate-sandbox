@@ -233,6 +233,22 @@ describe('guided demo', () => {
     assert.equal(body.received[0].body.payload.respCode, '0000');
     assert.match(body.steps[3].result, /Delivered/);
   });
+
+  test('the guided payment\'s history ends at the status it shows', async () => {
+    // The scenario settled the payment without recording it, so its page
+    // showed a success badge above a timeline that stopped at pending, and an
+    // empty response description beside code 0000.
+    const { body } = await postJson(`${sandbox.baseUrl}/api/demo/scenario`, {});
+
+    const response = await fetch(`${sandbox.baseUrl}/api/admin/payments/${body.invoiceNo}`, {
+      headers: adminHeaders()
+    });
+    const { payment } = await response.json();
+
+    assert.equal(payment.status, 'success');
+    assert.equal(payment.statusHistory.at(-1).status, payment.status, 'the timeline stops short of the status');
+    assert.ok(payment.respDesc, 'a settled payment has no response description');
+  });
 });
 
 /*

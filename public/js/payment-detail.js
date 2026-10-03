@@ -573,11 +573,16 @@ function renderCallbackHistory() {
   countBadge.textContent = history.length;
 
   if (history.length === 0) {
+    // Says why when nothing can be sent, rather than pointing at a button
+    // that is disabled for want of a callback URL.
+    const hint = payment.backendReturnUrl
+      ? 'Send one with Send Callback and it will appear here.'
+      : 'This payment has no callback URL, so there is nowhere to send one.';
     container.innerHTML = `
       <div class="empty-state" style="padding: 2rem;">
         <div class="empty-state-icon">📭</div>
         <div class="empty-state-title">No callbacks sent yet</div>
-        <p>Click "Send Callback" to notify your system</p>
+        <p>${hint}</p>
       </div>
     `;
     return;

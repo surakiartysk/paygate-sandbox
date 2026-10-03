@@ -236,7 +236,7 @@
         <div class="empty-state">
           <div class="empty-state-icon">📭</div>
           <div class="empty-state-title">No callbacks sent yet</div>
-          <p>Click "Send Callback" to notify your system</p>
+          <p>Send one with Send Callback and it will appear here.</p>
         </div>
       </div>
     </div>
@@ -255,7 +255,7 @@
           <div class="form-group">
             <label class="form-label">Behavior</label>
             <select id="inquiry-behavior" class="form-select" onchange="onInquiryBehaviorChange()">
-              <option value="normal">Normal - Return real payment status</option>
+              <option value="normal">Normal - Return the current payment status</option>
               <option value="delay">Delay - Respond after specified time</option>
               <option value="error">Error - Return specific error code</option>
               <option value="timeout">Timeout - Never respond (hang forever)</option>
@@ -304,7 +304,7 @@
           <button type="button" class="btn btn-secondary btn-sm" onclick="addCustomField()">+ Add field</button>
           <p class="form-hint">
             Merged into the callback payload alongside the provider's own fields.
-            Configure reusable presets in <strong>Settings → Custom field presets</strong>.
+            <span data-admin-only>Configure reusable presets in <strong>Settings → Custom field presets</strong>.</span>
           </p>
         </div>
         <!-- Mode Tabs -->

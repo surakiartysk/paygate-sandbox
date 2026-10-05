@@ -8,6 +8,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join, extname } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { headersFor } from './lib/vercelHeaders.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -140,13 +141,15 @@ function createMockReqRes(req, res, body, query) {
 // Serve static files
 function serveStatic(res, filePath) {
   const fullPath = join(__dirname, 'public', filePath);
+  // Every static file is a page-side path, so it gets the page rules.
+  const pageHeaders = headersFor(filePath.startsWith('/') ? filePath : `/${filePath}`);
   
   if (!existsSync(fullPath)) {
     // Serve 404 page for HTML requests
     const notFoundPath = join(__dirname, 'public', '404.html');
     if (existsSync(notFoundPath)) {
       const content = readFileSync(notFoundPath);
-      res.writeHead(404, { 'Content-Type': 'text/html' });
+      res.writeHead(404, { ...pageHeaders, 'Content-Type': 'text/html' });
       res.end(content);
     } else {
       res.writeHead(404);
@@ -160,7 +163,7 @@ function serveStatic(res, filePath) {
   
   try {
     const content = readFileSync(fullPath);
-    res.writeHead(200, { 'Content-Type': contentType });
+    res.writeHead(200, { ...pageHeaders, 'Content-Type': contentType });
     res.end(content);
   } catch (error) {
     res.writeHead(500);
@@ -173,13 +176,10 @@ async function handleRequest(req, res) {
   const url = req.url;
   const pathname = url.split('?')[0];
 
-  // Handle CORS preflight
+  // A preflight gets whatever vercel.json grants this path, and nothing more:
+  // the admin API grants no other origin anything, so its preflight fails.
   if (req.method === 'OPTIONS') {
-    res.writeHead(200, {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, X-Mock-Delay, X-Mock-Error, X-Admin-Password'
-    });
+    res.writeHead(200, headersFor(pathname));
     res.end();
     return;
   }

@@ -25,10 +25,8 @@ import { enforceRateLimit, LOGIN_ATTEMPTS_PER_MINUTE, LOGIN_SCOPE } from '../../
  */
 
 export default async function handler(request, response) {
-  // Set CORS headers
-  response.setHeader('Access-Control-Allow-Origin', '*');
-  response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // No CORS headers: the admin API answers this origin's own pages and
+  // scripts, and neither needs one — decision 19 in docs/decisions.md.
   
   if (request.method === 'OPTIONS') {
     return response.status(200).end();

@@ -172,7 +172,7 @@ behaviour, not an HTTP error.
 
 | Route | Purpose |
 | --- | --- |
-| `POST /api/2c2p/payment` | QR payment request |
+| `POST /api/2c2p/payment` | QR payment request. Answers `9040` for a token whose payment is no longer `pending`: it never moves a settled payment back (the code is this sandbox's choice, not checked against 2C2P) |
 | `GET /api/2c2p/qr/:invoiceNo` | QR image for a payment |
 | `POST /api/2c2p/optionDetails` | Available payment options |
 | `GET /api/2c2p/info` | Payment details by `?token=` |

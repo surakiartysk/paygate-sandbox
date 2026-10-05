@@ -232,15 +232,30 @@
     }
     
     function returnToMerchant() {
-      if (frontendReturnUrl) {
-        // Build return URL with payment info
-        const returnUrl = new URL(frontendReturnUrl);
-        returnUrl.searchParams.set('invoiceNo', payment.invoiceNo);
-        returnUrl.searchParams.set('status', payment.status);
-        window.location.href = returnUrl.toString();
-      } else {
+      if (!frontendReturnUrl) {
         alert('No return URL configured for this payment');
+        return;
       }
+
+      // The address came from whoever created the payment, and this page is
+      // public. Only a web address is followed: assigning a javascript: URL to
+      // location runs it on this origin, and adding query parameters to one does
+      // not stop it (a trailing // comments them out).
+      let returnUrl = null;
+      try {
+        returnUrl = new URL(frontendReturnUrl);
+      } catch {
+        // Not a URL at all — a template placeholder, say.
+      }
+      if (!returnUrl || (returnUrl.protocol !== 'http:' && returnUrl.protocol !== 'https:')) {
+        alert('The return URL for this payment is not a web address, so there is nowhere to send you.');
+        return;
+      }
+
+      // Build return URL with payment info
+      returnUrl.searchParams.set('invoiceNo', payment.invoiceNo);
+      returnUrl.searchParams.set('status', payment.status);
+      window.location.href = returnUrl.toString();
     }
     
     function formatAmount(amount) {

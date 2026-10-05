@@ -193,6 +193,17 @@ loopback callbacks being allowed, and a check that breaks the quick start is a c
 disable. `VERCEL=1` is the signal, and it covers preview deployments deliberately: a preview URL
 is as reachable as a production one.
 
+Two further settings are reported and not enforced: `TRUST_PROXY` (unset, every client behind the
+platform's proxy shares one rate-limit bucket) and the KV pair (unset, storage falls back to files a
+serverless instance cannot keep). Neither has a direction in which refusing is the safe default.
+Refusing to serve because `TRUST_PROXY` is unset would take a working instance down over a
+setting whose absence only makes the limiter stricter. What an instance without KV does depends on
+the platform's filesystem, which this code does not probe, so naming what is missing says less than
+a guess about what will happen and is true either way. So they are logged, once per
+instance and again if the list changes, by the rate limiter every API request passes. The cost is
+the one this decision began with, in a milder form: a log line is a requirement in a log, and an
+owner who never reads their function logs runs with the problem.
+
 ---
 
 ## 8. Redaction matches the shape of a name, not a list of names

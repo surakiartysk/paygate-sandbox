@@ -76,8 +76,8 @@ working has an explanation in the logs rather than a mystery.
 
 Two more settings are reported but not enforced, because neither has a safe
 fallback to enforce: `TRUST_PROXY` (unset, every client shares one rate-limit
-bucket) and the KV pair (unset, storage falls back to local files that a
-serverless instance cannot keep). The first API request to a deployment missing
+bucket) and the KV pair (unset, storage falls back to local files, which the
+section above says do not work on Vercel). The first API request to a deployment missing
 any of the four logs a `[deployment]` line naming what is missing, and logs again
 only if the list changes. It is a log line, and nothing refuses to run — a
 deployment that never reads its logs still runs with the problem.

@@ -5,7 +5,7 @@
  * so a filter could only find what was already among the newest fifty: an
  * older request for the same invoice answered "No logs yet" with a total of
  * zero, and "page 2 of the token logs" could never exist. Retention is capped
- * (MAX_TOTAL_LOGS), so scanning for a filtered query is bounded.
+ * (MAX_TOTAL_LOGS in lib/storage.js), so scanning for a filtered query is bounded.
  */
 
 import { test, describe, before, after } from 'node:test';

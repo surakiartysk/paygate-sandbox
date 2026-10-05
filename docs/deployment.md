@@ -74,6 +74,14 @@ check that broke those is a check people disable.
 The reason is logged once per instance, so a password that suddenly stops
 working has an explanation in the logs rather than a mystery.
 
+Two more settings are reported but not enforced, because neither has a safe
+fallback to enforce: `TRUST_PROXY` (unset, every client shares one rate-limit
+bucket) and the KV pair (unset, storage falls back to local files that a
+serverless instance cannot keep). The first API request to a deployment missing
+any of the four logs a `[deployment]` line naming what is missing, and logs again
+only if the list changes. It is a log line, and nothing refuses to run — a
+deployment that never reads its logs still runs with the problem.
+
 Most of these are read per request, so a new instance picks them up immediately. `ADMIN_PASSWORD`
 is the exception — it is captured once when `lib/auth.js` loads, so a rotated password does not
 take effect until every warm instance has cycled. Rotate it expecting a window where both the old

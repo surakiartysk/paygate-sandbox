@@ -37,7 +37,7 @@ export default async function handler(request, response) {
 
       // A filter has to see every log, not the page being shown: filtering the
       // newest fifty can only ever find what is already among the newest fifty.
-      // Retention is capped (MAX_TOTAL_LOGS), so reading them all is bounded;
+      // Retention is capped (MAX_TOTAL_LOGS in lib/storage.js, 500), so reading them all is bounded;
       // an unfiltered request still reads only its own page.
       const { logs: fetched, total: totalCount } = await getLogs(
         filtering ? { reverse: true } : { offset, limit, reverse: true }

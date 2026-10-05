@@ -524,6 +524,25 @@ async function saveConfig() {
   }
 }
 
+/**
+ * Actions that are under way, by name. A button that sends a request stays
+ * pressable until its answer arrives, and a second press is a second request:
+ * `once` runs the work only if no other call with the same key is still going,
+ * and lets go of the key whether the work succeeded or threw.
+ * @returns {Promise<boolean>} false when it was skipped
+ */
+const actionsUnderWay = new Set();
+async function once(key, work) {
+  if (actionsUnderWay.has(key)) return false;
+  actionsUnderWay.add(key);
+  try {
+    await work();
+  } finally {
+    actionsUnderWay.delete(key);
+  }
+  return true;
+}
+
 async function updateStatus(invoiceNo, status) {
   try {
     const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}/status`, {
@@ -1412,6 +1431,10 @@ async function confirmUpdateStatus() {
   
   const sendCallback = document.getElementById('send-callback-after').checked;
   
+  await once(`status:${invoiceNo}`, () => submitStatusUpdate(invoiceNo, status, respCode, sendCallback));
+}
+
+async function submitStatusUpdate(invoiceNo, status, respCode, sendCallback) {
   try {
     const body = { status };
     if (respCode) {
@@ -1740,6 +1763,11 @@ async function sendCallbackSequence() {
   
   // Save invoiceNo, custom fields and sequence before closing modal (which clears them)
   const invoiceNo = currentInvoiceNo;
+  if (actionsUnderWay.has(`callback:${invoiceNo}`)) {
+    showToast(`A callback for ${invoiceNo} is already being sent`, 'error');
+    return;
+  }
+
   const customFields = getCustomFields();
   const sequence = [...callbackSequence]; // Create a copy before modal closes
   
@@ -1757,13 +1785,10 @@ async function sendCallbackSequence() {
   });
   
   closeCallbackModal();
-  
-  const btn = document.getElementById('callback-send-btn');
-  if (btn) {
-    const originalText = btn.textContent;
-    btn.textContent = '⏳ Sending...';
-    btn.disabled = true;
-    
+
+  // The modal is closed from here on, so there is no button to show progress
+  // on; `once` is what keeps the same invoice from being sent twice at once.
+  await once(`callback:${invoiceNo}`, async () => {
     try {
       const requestBody = { sequence: sequence };
       if (customFields) {
@@ -1805,11 +1830,8 @@ async function sendCallbackSequence() {
       
     } catch (error) {
       showToast('Failed to send callback: ' + error.message, 'error');
-    } finally {
-      btn.textContent = originalText;
-      btn.disabled = false;
     }
-  }
+  });
 }
 
 async function sendCustomCallback() {
@@ -1818,6 +1840,11 @@ async function sendCustomCallback() {
   // Save invoiceNo before closing modal (which clears currentInvoiceNo)
   const invoiceNo = currentInvoiceNo;
   
+  if (actionsUnderWay.has(`callback:${invoiceNo}`)) {
+    showToast(`A callback for ${invoiceNo} is already being sent`, 'error');
+    return;
+  }
+
   const payload = validateCallbackPayload();
   
   if (!payload) {
@@ -1827,12 +1854,7 @@ async function sendCustomCallback() {
   
   closeCallbackModal();
   
-  const btn = document.getElementById('callback-send-btn');
-  if (btn) {
-    const originalText = btn.textContent;
-    btn.textContent = '⏳ Sending...';
-    btn.disabled = true;
-    
+  await once(`callback:${invoiceNo}`, async () => {
     try {
       const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}/callback`, {
         method: 'POST',
@@ -1856,19 +1878,12 @@ async function sendCustomCallback() {
       
     } catch (error) {
       showToast('Failed to send callback: ' + error.message, 'error');
-    } finally {
-      btn.textContent = originalText;
-      btn.disabled = false;
     }
-  }
+  });
 }
 
 function handleCallbackSend() {
-  if (callbackMode === 'sequence') {
-    sendCallbackSequence();
-  } else {
-    sendCustomCallback();
-  }
+  return callbackMode === 'sequence' ? sendCallbackSequence() : sendCustomCallback();
 }
 
 // Expose callback functions globally

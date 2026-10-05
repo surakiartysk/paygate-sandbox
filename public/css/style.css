@@ -2180,13 +2180,17 @@ a:hover {
 
 .landing-footer-links {
   display: flex;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0 0.5rem;
   align-items: center;
 }
 
+/* Four links no longer fit one phone-width row; each stays whole and the row
+   wraps, instead of every link breaking onto two lines. */
 .landing-footer-links a {
   color: var(--accent);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .landing-footer-links a:hover {

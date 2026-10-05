@@ -32,28 +32,29 @@ export default async function handler(request, response) {
       const limit = Math.min(100, Math.max(1, parseInt(request.query.limit, 10) || 50)); // Default 50, max 100 for free tier
       const offset = (page - 1) * limit;
       
-      // Get logs with server-side pagination (efficient for KV)
-      const { logs: allLogs, total: totalCount } = await getLogs({ 
-        offset, 
-        limit, 
-        reverse: true 
-      });
-      
-      // Apply filters on fetched logs (small dataset, efficient)
-      let filteredLogs = allLogs;
       const { type, invoiceNo } = request.query;
-      
+      const filtering = Boolean(type || invoiceNo);
+
+      // A filter has to see every log, not the page being shown: filtering the
+      // newest fifty can only ever find what is already among the newest fifty.
+      // Retention is capped (MAX_TOTAL_LOGS), so reading them all is bounded;
+      // an unfiltered request still reads only its own page.
+      const { logs: fetched, total: totalCount } = await getLogs(
+        filtering ? { reverse: true } : { offset, limit, reverse: true }
+      );
+
+      let filteredLogs = fetched;
       if (type) {
         filteredLogs = filteredLogs.filter(log => log.type === type);
       }
-      
       if (invoiceNo) {
         filteredLogs = filteredLogs.filter(log => log.invoiceNo === invoiceNo);
       }
-      
-      // Note: When filtering, we might have fewer items than requested
-      // This is acceptable for the free tier optimization
-      const filteredTotal = type || invoiceNo ? filteredLogs.length : totalCount;
+
+      const filteredTotal = filtering ? filteredLogs.length : totalCount;
+      if (filtering) {
+        filteredLogs = filteredLogs.slice(offset, offset + limit);
+      }
       const totalPages = Math.ceil(filteredTotal / limit);
       
       // Get TTL config

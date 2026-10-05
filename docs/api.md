@@ -327,7 +327,7 @@ Global simulation settings.
 | --- | --- |
 | `DELETE /api/admin/payments/:invoiceNo` | Delete one payment |
 | `POST /api/admin/payments/clear` | Delete all payments |
-| `GET /api/admin/logs` | Request log |
+| `GET /api/admin/logs` | Request log, newest first. `type`, `invoiceNo`, `page`, `limit` (max 100); filters match across every retained log, not just the page shown |
 | `GET /api/admin/response-codes` | Every supported code, by provider |
 | `POST /api/admin/login` | Verify a password |
 

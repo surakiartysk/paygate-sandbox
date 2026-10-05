@@ -2430,3 +2430,125 @@ a:hover {
   }
 }
 
+/*
+ * Narrow screens: the two pages a phone actually opens — the mock payment page
+ * (a customer's) and a payment's detail page.
+ *
+ * Measured at 375px, scrollWidth against the screen: the detail page was 395
+ * wide on every payment, because its three action buttons sat in one row that
+ * could not wrap; the mock payment page was 386 wide for an amount of
+ * 12,500,000.50 and 548 for an invoice number of 56 characters. Found by the
+ * mobile review. A value that cannot break (an invoice number, a merchant id)
+ * now breaks anywhere rather than pushing the page wider.
+ */
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.detail-subtitle,
+.detail-title {
+  overflow-wrap: anywhere;
+}
+
+.info-item {
+  min-width: 0;
+}
+
+/* Spans both columns of the two-column grid. It was an inline style on each, which
+   kept a second column alive when the grid was set to one, and squeezed the first. */
+.info-item-wide {
+  grid-column: span 2;
+}
+
+@media (max-width: 640px) {
+  .detail-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .detail-actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-item-wide {
+    grid-column: auto;
+  }
+
+  .detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mock-pay-container {
+    padding: 1rem;
+  }
+
+  .mock-pay-card {
+    padding: 1.25rem;
+  }
+
+  .mock-pay-amount {
+    font-size: clamp(1.5rem, 8vw, 2.5rem);
+  }
+}
+
+.mock-pay-amount {
+  overflow-wrap: anywhere;
+}
+
+.mock-pay-info-row {
+  gap: 0.75rem;
+}
+
+.mock-pay-info-label {
+  flex-shrink: 0;
+}
+
+.mock-pay-info-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+/*
+ * On a touch screen: fields at 16px, and every control answers a tap on at least
+ * 44px, drawn no bigger.
+ *
+ * Measured at 375px wide with touch, by tapping 21px from each control's centre
+ * in each direction: 197 of the dashboard's 203 buttons missed at least one
+ * (36px icon buttons, 30px row actions), 15 of 20 on a payment's page, 7 of 7 on
+ * the inspector. And fifteen fields were 13–14px, which makes iOS Safari zoom
+ * the page in when one is focused and leave it zoomed. Found by the mobile
+ * review.
+ *
+ * :where() keeps the specificity at nothing, so a control that positions itself
+ * (the password eye inside its field) keeps its own rule; an unpositioned one
+ * becomes the anchor for its larger area.
+ */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    /* !important: the fields' own classes set their size, and a media query adds no specificity. */
+    font-size: 16px !important;
+  }
+
+  :where(button, .btn, summary, [role='button']) {
+    position: relative;
+  }
+
+  :where(button, .btn, summary, [role='button'])::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}

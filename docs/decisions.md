@@ -293,7 +293,10 @@ This sandbox exists to show an integrator which callbacks went out. A callback t
 not written down is that job failing in the quietest possible way: the caller is told it worked,
 the receiver has it, and the dashboard does not.
 
-**Decision.** The append lives in one function in storage, and both callback paths use it. Forty
+**Decision.** The append lives in one function in storage, and every callback path uses it — the
+plain callback and the custom-payload callback, as well as the sequence sender, which the paragraph
+below describes. (The custom-payload path was missed the first time, and found by the state review:
+six concurrent custom callbacks were delivered and one was recorded.) Forty
 lines further down the same file, the sequence sender already re-read the payment immediately
 before appending — which is why sequences were correct under identical load and single callbacks
 were not. Same file, same problem, solved in one place and not the other.

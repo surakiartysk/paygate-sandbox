@@ -7,7 +7,7 @@
  * GET/POST /api/admin/payments/:invoiceNo/inquiry-config - Inquiry config
  */
 
-import { getPayment, deletePayment, updatePayment } from '../../../../lib/storage.js';
+import { getPayment, deletePayment, updatePayment, appendCallbackHistory } from '../../../../lib/storage.js';
 import { unauthorized } from '../../../../lib/auth.js';
 import { ownsPayment, resolvePrincipal } from '../../../../lib/demoAccess.js';
 import { enforceRateLimit } from '../../../../lib/rateLimit.js';
@@ -323,12 +323,10 @@ export default async function handler(request, response) {
           customPayload: true
         };
         
-        // Update payment with callback history
-        const updatedHistory = [...(payment.callbackHistory || []), historyEntry];
-        await updatePayment(invoiceNo, {
-          callbackHistory: updatedHistory,
-          callbackCount: updatedHistory.length
-        });
+        // Appended where the other callback paths append it (decision 11). This
+        // built the new history from the payment read before the network call and
+        // wrote it back after, so concurrent callbacks overwrote each other's entry.
+        await appendCallbackHistory(invoiceNo, historyEntry);
         
         return respondWithJson(200, { success: true, result: { ...result, historyEntry } });
       }

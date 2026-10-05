@@ -30,6 +30,7 @@ one that was obvious.
 16. [The pattern all of this keeps producing](#16-the-pattern-all-of-this-keeps-producing)
 17. [A demo password that can be published, because of what it opens](#17-a-demo-password-that-can-be-published-because-of-what-it-opens)
 18. [The browser holds a session, not the password](#18-the-browser-holds-a-session-not-the-password)
+19. [The admin API answers no other origin, and a page says who may frame it](#19-the-admin-api-answers-no-other-origin-and-a-page-says-who-may-frame-it)
 
 ---
 
@@ -541,6 +542,58 @@ survived. That protection is only as good as the browser's — an old one that i
 sends the cookie, where a header would never have been sent. The usual cost of `Strict`, a link
 from another site landing signed out, does not apply: the dashboard's HTML is public and its data
 comes from its own same-site requests, which carry the cookie — also probed.
+
+---
+
+## 19. The admin API answers no other origin, and a page says who may frame it
+
+**Context.** `Access-Control-Allow-Origin: *` covered all of `/api/*`, and the allowed request
+headers included `X-Admin-Password`. It was set three times over: by `vercel.json`, by each admin
+handler, and by the dev server's own preflight answer. A wildcard sends no cookies, so the session
+from [decision 18](#18-the-browser-holds-a-session-not-the-password) was never exposed. The
+password header was. A local instance accepts the published default `mockpay`, so any site a
+developer visited could send that header to `localhost` and read the answer. Probed in Chromium
+from a page on another port, it read that instance's payments, its request log and its config.
+Nothing on a public deployment's side stops this either. The attack needs a password the attacker
+knows, and only a local instance has one.
+
+The pages sent no security headers at all. The same probe that
+[decision 18](#18-the-browser-holds-a-session-not-the-password) describes was run again here. It
+put markup in every caller-controlled field of a 2C2P and an Omise payment, then opened the
+dashboard, three payment pages and the mock payment page signed in as the admin. Every payload
+showed as text and none ran.
+
+**Decision.**
+
+- **The admin API sends no CORS headers anywhere.** `vercel.json` grants them only to the provider
+  and sandbox APIs (`2c2p`, `omise`, `inspect`, `demo`), and no longer offers `X-Admin-Password` to
+  anything. The admin handlers stopped setting their own. With no grant the preflight fails, so a
+  cross-origin request carrying the header is never sent. Probed again afterwards: the reads were
+  refused, a `POST` to the clear route never arrived and all seven payments survived. The
+  dashboard, on its own origin, works as before.
+- **The dev server reads `vercel.json`** (`lib/vercelHeaders.js`) instead of keeping its own copy.
+  The copy is how the dev server came to grant more than it needed, and tests that run against the
+  dev server were testing the copy.
+- **Pages get `frame-ancestors 'none'`, `base-uri 'self'`, `object-src 'none'` and `nosniff`.**
+
+**Trade-offs.**
+
+- **A browser app on another origin can no longer drive the admin API.** Nothing here does that.
+  A script or CI job is unaffected, because CORS binds only browsers. The cost lands on someone
+  who wanted to build a separate admin front-end in a browser. They would need a proxy, or an
+  allow-list entry here.
+- **No script CSP.** The pages carry 83 inline `onclick` handlers, in the HTML and in markup
+  the scripts build, and five inline `<script>` blocks, so a policy that blocks injected script would block the pages' own script
+  too. Moving them out is a refactor of every page. The probe found the escaping holding, so a
+  script CSP would be a second line behind one that currently holds, at the cost of that
+  refactor. It is not done, and that is the reason.
+- **Framing protection is mostly a second line.** `SameSite=Strict` already means a dashboard
+  framed by another site is signed out. The mock payment page needs no sign-in, but paying there
+  moves no money.
+- **`vercel.json` sources are read as regular expressions** by the dev server. Vercel reads them
+  as path-to-regexp patterns. The two agree on the patterns used here (`(.*)`, an alternation, a
+  lookahead) and would disagree on `:name`. A test pins the outcome for every admin, API and page
+  path, so a pattern the two read differently fails there rather than in production.
 
 ---
 

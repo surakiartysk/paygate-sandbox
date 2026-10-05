@@ -130,10 +130,8 @@ const DEFAULT_CODES = {
 };
 
 export default async function handler(request, response) {
-  // Set CORS headers
-  response.setHeader('Access-Control-Allow-Origin', '*');
-  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Password, X-Demo-Token');
+  // No CORS headers: the admin API answers this origin's own pages and
+  // scripts, and neither needs one — decision 19 in docs/decisions.md.
   
   if (request.method === 'OPTIONS') {
     return response.status(200).end();

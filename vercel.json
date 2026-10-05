@@ -43,7 +43,7 @@
   ],
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/(2c2p|omise|inspect|demo)(.*)",
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
@@ -55,7 +55,20 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, X-Mock-Delay, X-Mock-Error, X-Admin-Password"
+          "value": "Content-Type, X-Mock-Delay, X-Mock-Error"
+        }
+      ]
+    },
+    {
+      "source": "/((?!api/).*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors 'none'; base-uri 'self'; object-src 'none'"
         }
       ]
     }

@@ -259,7 +259,9 @@ curl -X POST http://localhost:3000/api/admin/payments/INV-0001/status \
 
 ### `POST /api/admin/payments/:invoiceNo/callback`
 
-Delivers one or more callbacks.
+Delivers one or more callbacks. **It does not change the payment's status** — a callback saying
+`success` for a payment still stored as `pending` is delivered as asked, and an inquiry afterwards
+still answers `2001`, in progress. Use [`/status`](#post-apiadminpaymentsinvoicenostatus) to move the payment.
 
 | Field | Type | Notes |
 | --- | --- | --- |

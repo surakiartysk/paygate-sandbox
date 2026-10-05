@@ -18,8 +18,10 @@ let callbackMode = 'sequence';
 let callbackPreviewPayload = null;
 let autoRefreshInterval = null;
 let lastPaymentCount = 0;
-let currentPollInterval = 60000; // Start with 60 seconds (60 requests/hour - safe for Hobby plan: 100/hour limit)
-let consecutiveNoChanges = 0;
+// How often auto-refresh asks: a minute, 60 requests an hour, inside a Hobby plan's 100.
+const POLL_INTERVAL_MS = 60000;
+// Counts the list requests asked for; only the newest one's answer is used.
+let paymentsRequestSeq = 0;
 let autoRefreshEnabled = false; // Default disabled to prevent Vercel rate limit issues with teams
 
 // Pagination state
@@ -237,12 +239,105 @@ async function refreshPayments() {
   }, 300);
 }
 
-async function loadPayments(page = null) {
-  const tbody = document.getElementById('payments-tbody');
+/**
+ * The query for the list the reader is looking at: the filters on screen and the
+ * page they are on. Auto-refresh asks for exactly this, so what it compares is
+ * what is displayed.
+ */
+function paymentsQuery() {
   const status = document.getElementById('status-filter').value;
   const provider = document.getElementById('provider-filter')?.value || paymentsPagination.provider || 'all';
   const method = document.getElementById('method-filter')?.value || 'all';
   const search = document.getElementById('search-input').value;
+
+  const params = new URLSearchParams();
+  if (provider && provider !== 'all') params.set('provider', provider);
+  if (method && method !== 'all') params.set('method', method);
+  if (status && status !== 'all') params.set('status', status);
+  if (search) params.set('search', search);
+  params.set('page', paymentsPagination.page);
+  params.set('limit', paymentsPagination.limit);
+  return params;
+}
+
+/**
+ * Asks for the list, and returns it — or null if a newer request was asked for
+ * while this one was in flight, or the session ended.
+ *
+ * Without the check, a slow answer to an older filter overwrote the answer to
+ * the newer one: the dropdown said "success" and the rows were the pending ones.
+ */
+async function fetchPaymentsList() {
+  const seq = ++paymentsRequestSeq;
+  const response = await fetch(`/api/admin/payments?${paymentsQuery()}`, { headers: authHeaders() });
+
+  if (handleAuthError(response)) return null;
+  const data = await safeParseJson(response);
+  if (seq !== paymentsRequestSeq) return null;
+
+  if (!data.success) {
+    throw new Error(data.error || 'Failed to load payments');
+  }
+  return data;
+}
+
+/** Which page to ask for instead, if the one asked for is past the last; otherwise null. */
+function pageToLandOn(pagination) {
+  if (!pagination || pagination.page <= 1) return null;
+  const last = Math.max(1, pagination.totalPages || 1);
+  return pagination.page > last ? last : null;
+}
+
+/** Puts a list the server answered on screen. */
+function applyPaymentsList(data) {
+  payments = data.payments;
+  paymentCounts = data.counts || {};
+  if (data.pagination) {
+    paymentsPagination = {
+      ...paymentsPagination,
+      ...data.pagination
+    };
+    lastPaymentCount = data.pagination.total || 0;
+  }
+  renderPayments();
+  renderPaymentsPagination();
+  updateStats();
+}
+
+/**
+ * What auto-refresh does each time it fires: ask for the list on screen, and put
+ * the answer there only if it differs.
+ *
+ * It used to ask for the unfiltered total and compare it with the filtered count
+ * the last load had stored. With a filter on they never matched, so every tick
+ * reloaded the list and restarted its own timer — which polls at once — and went
+ * round again: 511 requests in 185 seconds. And watching only the total, it never
+ * saw a payment change status, or one deleted as another was created.
+ *
+ * @returns {Promise<boolean>} whether the list on screen changed
+ */
+async function refreshPaymentsIfChanged() {
+  const data = await fetchPaymentsList();
+  if (!data) return false;
+
+  const landing = pageToLandOn(data.pagination);
+  if (landing !== null) {
+    paymentsPagination.page = landing;
+    await loadPayments();
+    return true;
+  }
+
+  const same =
+    JSON.stringify(data.payments) === JSON.stringify(payments) &&
+    (data.pagination?.total || 0) === paymentsPagination.total;
+  if (same) return false;
+
+  applyPaymentsList(data);
+  return true;
+}
+
+async function loadPayments(page = null) {
+  const tbody = document.getElementById('payments-tbody');
 
   try {
     // Use provided page or current page, reset to 1 if filters change
@@ -250,41 +345,22 @@ async function loadPayments(page = null) {
       paymentsPagination.page = page;
     }
     
-    // Update provider filter state
-    paymentsPagination.provider = provider;
+    // Remember the provider filter, for the next load
+    paymentsPagination.provider = document.getElementById('provider-filter')?.value || paymentsPagination.provider || 'all';
     
-    const params = new URLSearchParams();
-    if (provider && provider !== 'all') params.set('provider', provider);
-    if (method && method !== 'all') params.set('method', method);
-    if (status && status !== 'all') params.set('status', status);
-    if (search) params.set('search', search);
-    params.set('page', paymentsPagination.page);
-    params.set('limit', paymentsPagination.limit);
+    const data = await fetchPaymentsList();
+    if (!data) return;
 
-    const response = await fetch(`/api/admin/payments?${params}`, {
-      headers: authHeaders()
-    });
-    
-    if (handleAuthError(response)) return;
-    const data = await safeParseJson(response);
-
-    if (!data.success) {
-      throw new Error(data.error || 'Failed to load payments');
+    // The page the reader was on may be gone (its last row deleted): go to the
+    // last one that exists instead of showing an empty table under a footer that
+    // counts payments there is no way back to.
+    const landing = pageToLandOn(data.pagination);
+    if (landing !== null) {
+      paymentsPagination.page = landing;
+      return loadPayments();
     }
 
-    payments = data.payments;
-    paymentCounts = data.counts || {};
-    if (data.pagination) {
-      paymentsPagination = {
-        ...paymentsPagination,
-        ...data.pagination
-      };
-      // Update lastPaymentCount for auto-refresh
-      lastPaymentCount = data.pagination.total || 0;
-    }
-    renderPayments();
-    renderPaymentsPagination();
-    updateStats();
+    applyPaymentsList(data);
 
   } catch (error) {
     console.error('Error loading payments:', error);
@@ -376,12 +452,6 @@ function startAutoRefresh() {
     return;
   }
   
-  // Use adaptive polling to stay within Vercel rate limits:
-  // - Hobby plan: 100 requests/hour
-  // - Pro plan: 1,000 requests/hour
-  // Start with 30 seconds = 120 requests/hour (exceeds Hobby, but we'll back off)
-  // After no changes, increase to 60 seconds = 60 requests/hour (safe for Hobby)
-  
   const poll = async () => {
     // Only refresh if we're on payments tab and page is visible
     if (currentTab !== 'payments' || document.hidden) {
@@ -389,58 +459,17 @@ function startAutoRefresh() {
     }
     
     try {
-      const response = await fetch(`/api/admin/payments?page=1&limit=1`, {
-        headers: authHeaders()
-      });
-      
-      if (handleAuthError(response)) return;
-      
-      const data = await safeParseJson(response);
-      
-      if (data.success && data.pagination) {
-        const currentCount = data.pagination.total || 0;
-        // Only refresh if count changed (new payment added)
-        if (currentCount !== lastPaymentCount && lastPaymentCount > 0) {
-          lastPaymentCount = currentCount;
-          loadPayments();
-          // Reset to faster polling when change detected (but still safe)
-          consecutiveNoChanges = 0;
-          if (currentPollInterval > 30000) {
-            currentPollInterval = 30000; // 30 seconds (120/hour - OK for Pro, but will back off if no more changes)
-            stopAutoRefresh();
-            startAutoRefresh();
-          }
-        } else if (lastPaymentCount === 0) {
-          // Initialize count on first check
-          lastPaymentCount = currentCount;
-        } else {
-          // No changes detected - increase interval gradually
-          consecutiveNoChanges++;
-          if (consecutiveNoChanges >= 2 && currentPollInterval < 60000) {
-            // After 2 checks with no changes, increase to 60 seconds
-            currentPollInterval = 60000; // 60 seconds = 60 requests/hour (safe for Hobby)
-            stopAutoRefresh();
-            startAutoRefresh();
-          }
-        }
-      }
+      await refreshPaymentsIfChanged();
     } catch (error) {
       // Silently fail - don't spam errors for polling
       console.debug('Auto-refresh check failed:', error);
-      // On error, back off to slower polling
-      if (currentPollInterval < 60000) {
-        currentPollInterval = 60000;
-        stopAutoRefresh();
-        startAutoRefresh();
-      }
     }
   };
   
   // Initial poll
   poll();
   
-  // Set up interval with current poll interval
-  autoRefreshInterval = setInterval(poll, currentPollInterval);
+  autoRefreshInterval = setInterval(poll, POLL_INTERVAL_MS);
 }
 
 function stopAutoRefresh() {
@@ -448,9 +477,6 @@ function stopAutoRefresh() {
     clearInterval(autoRefreshInterval);
     autoRefreshInterval = null;
   }
-  // Reset polling state when stopped
-  currentPollInterval = 60000; // Reset to safe default (60 requests/hour)
-  consecutiveNoChanges = 0;
 }
 
 async function saveConfig() {

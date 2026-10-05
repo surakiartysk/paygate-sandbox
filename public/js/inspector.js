@@ -51,6 +51,7 @@ async function init() {
  */
 function setSession(id) {
   sessionId = id;
+  renderedFrom = null; // whatever is on screen belongs to the session just left
   document.getElementById('session-input').value = id;
   document.getElementById('callback-url').value = `${location.origin}/api/inspect/${id}`;
 
@@ -77,26 +78,53 @@ async function newSession() {
 }
 
 /**
- * Fetch and render the current session's captures.
+ * What the capture list was last drawn from, as text. A refresh that would draw the same thing leaves the page alone, because
+ * rebuilding the list discards a text selection — and a payload is here to be
+ * copied from. `null` while the list shows an error or nothing yet.
  */
-async function loadSession() {
+let renderedFrom = null;
+
+/** Only the newest request's answer is drawn; an older one belongs to a session or moment that has passed. */
+let loadSeq = 0;
+
+/**
+ * Fetch and render the current session's captures.
+ * @param {{ keepOnFailure?: boolean }} [options] - A background refresh passes
+ *   keepOnFailure: a dropped poll then leaves the list it is refreshing in
+ *   place instead of replacing it with an error.
+ */
+async function loadSession({ keepOnFailure = false } = {}) {
   const typed = document.getElementById('session-input').value.trim();
   if (typed && typed !== sessionId) setSession(typed);
   if (!sessionId) return;
+
+  const mine = ++loadSeq;
+  const failed = (message) => {
+    if (mine !== loadSeq) return;
+    if (keepOnFailure && renderedFrom !== null) return;
+    renderError(message);
+  };
 
   try {
     const response = await fetch(`/api/inspect/${encodeURIComponent(sessionId)}`);
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
-      renderError(body.message || `Request failed with status ${response.status}`);
+      failed(body.message || `Request failed with status ${response.status}`);
       return;
     }
 
     const data = await response.json();
+    if (mine !== loadSeq) return;
     renderCaptures(data.captures || []);
   } catch (error) {
-    renderError(`Could not load the session: ${error.message}`);
+    failed(`Could not load the session: ${error.message}`);
   }
+}
+
+/** The timer's refresh: not worth a request while nobody is looking. */
+function refreshSession() {
+  if (document.hidden) return Promise.resolve();
+  return loadSession({ keepOnFailure: true });
 }
 
 /**
@@ -129,6 +157,10 @@ async function copyCallbackUrl() {
 function renderCaptures(captures) {
   const container = document.getElementById('captures');
   const count = document.getElementById('capture-count');
+
+  const from = JSON.stringify(captures);
+  if (from === renderedFrom) return;
+  renderedFrom = from;
 
   count.textContent = captures.length === 0
     ? 'No callbacks yet'
@@ -197,6 +229,7 @@ function summarize(payload) {
  * @param {string} message - Message to display
  */
 function renderError(message) {
+  renderedFrom = null;
   document.getElementById('captures').innerHTML = `
     <div class="inspector-empty">
       <p class="inspector-empty-title">Something went wrong</p>
@@ -208,7 +241,7 @@ function renderError(message) {
 function startAutoRefresh() {
   stopAutoRefresh();
   if (!document.getElementById('auto-refresh').checked) return;
-  refreshTimer = setInterval(loadSession, REFRESH_MS);
+  refreshTimer = setInterval(refreshSession, REFRESH_MS);
 }
 
 /** Stop polling. */

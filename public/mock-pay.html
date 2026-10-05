@@ -128,38 +128,42 @@
     let payment = null;
     let frontendReturnUrl = null;
 
+    /** Ask the public API about this payment; throws if the answer is not usable JSON. */
+    async function fetchPaymentInfo() {
+      // Use public API - no auth required
+      const response = await fetch(`/api/2c2p/info?token=${encodeURIComponent(token)}`);
+
+      // Safely parse JSON response
+      try {
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => 'Unknown error');
+          throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`);
+        }
+        const contentType = response.headers.get('content-type');
+        if (contentType && !contentType.includes('application/json')) {
+          const text = await response.text().catch(() => 'Non-JSON response');
+          throw new Error(`Expected JSON but got ${contentType}: ${text.substring(0, 200)}`);
+        }
+        const text = await response.text();
+        if (!text.trim()) {
+          throw new Error('Empty response body');
+        }
+        return JSON.parse(text);
+      } catch (error) {
+        if (error instanceof SyntaxError) {
+          throw new Error(`Invalid JSON response: ${error.message}`);
+        }
+        throw error;
+      }
+    }
+
     async function loadPayment() {
       const loadingState = document.getElementById('loading-state');
       const paymentDetails = document.getElementById('payment-details');
       const errorState = document.getElementById('error-state');
 
       try {
-        // Use public API - no auth required
-        const response = await fetch(`/api/2c2p/info?token=${encodeURIComponent(token)}`);
-        
-        // Safely parse JSON response
-        let data;
-        try {
-          if (!response.ok) {
-            const errorText = await response.text().catch(() => 'Unknown error');
-            throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`);
-          }
-          const contentType = response.headers.get('content-type');
-          if (contentType && !contentType.includes('application/json')) {
-            const text = await response.text().catch(() => 'Non-JSON response');
-            throw new Error(`Expected JSON but got ${contentType}: ${text.substring(0, 200)}`);
-          }
-          const text = await response.text();
-          if (!text.trim()) {
-            throw new Error('Empty response body');
-          }
-          data = JSON.parse(text);
-        } catch (error) {
-          if (error instanceof SyntaxError) {
-            throw new Error(`Invalid JSON response: ${error.message}`);
-          }
-          throw error;
-        }
+        const data = await fetchPaymentInfo();
 
         if (!data.success) {
           loadingState.style.display = 'none';
@@ -187,6 +191,8 @@
 
         loadingState.style.display = 'none';
         paymentDetails.style.display = 'block';
+
+        if (payment.status === 'pending') startWatching();
 
       } catch (error) {
         console.error('Error loading payment:', error);
@@ -227,10 +233,57 @@
           completedMessage.style.borderColor = 'var(--warning)';
           completedMessage.style.color = 'var(--warning)';
           completedMessage.innerHTML = '⚠️ <strong>Payment was cancelled</strong>';
+        } else if (status === 'expired') {
+          completedMessage.style.background = 'var(--warning-bg)';
+          completedMessage.style.borderColor = 'var(--warning)';
+          completedMessage.style.color = 'var(--warning)';
+          completedMessage.innerHTML = '⌛ <strong>Payment expired</strong>';
+        } else {
+          // A status this page has no wording for must not inherit the markup's
+          // own default, which says the payment completed.
+          completedMessage.style.background = 'var(--bg-secondary)';
+          completedMessage.style.borderColor = 'var(--border)';
+          completedMessage.style.color = 'var(--text-secondary)';
+          completedMessage.textContent = `Payment status: ${status}`;
         }
       }
     }
     
+    // While the payment is pending, ask again: the page says the admin will
+    // update the status, and the reader should see that without reloading.
+    const WATCH_MS = 3000;
+    let watcher = null;
+    let watchInFlight = false;
+
+    function startWatching() {
+      if (watcher !== null) return;
+      watcher = setInterval(watchPayment, WATCH_MS);
+    }
+
+    function stopWatching() {
+      if (watcher === null) return;
+      clearInterval(watcher);
+      watcher = null;
+    }
+
+    async function watchPayment() {
+      // Not worth a request while nobody is looking, or while the last is out.
+      if (document.hidden || watchInFlight) return;
+      watchInFlight = true;
+      try {
+        const data = await fetchPaymentInfo();
+        if (!data.success) return;
+        payment = data.payment;
+        updateStatusDisplay(payment.status);
+        if (payment.status !== 'pending') stopWatching();
+      } catch (error) {
+        // A dropped poll leaves the payment on screen; the next one tries again.
+        console.error('Error refreshing payment:', error);
+      } finally {
+        watchInFlight = false;
+      }
+    }
+
     function returnToMerchant() {
       if (!frontendReturnUrl) {
         alert('No return URL configured for this payment');

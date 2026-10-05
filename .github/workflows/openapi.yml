@@ -18,6 +18,7 @@ jobs:
         with:
           node-version: '22'
 
-      # The spec is published for people to import into Postman, so a broken
+      # The CLI is pinned: "latest" would let a new rule fail a build on an
+      # unchanged spec. The spec is published for people to import into Postman, so a broken
       # one is a broken promise rather than a broken build.
-      - run: npx --yes @redocly/cli@latest lint openapi.yaml
+      - run: npx --yes @redocly/cli@2.58.0 lint openapi.yaml

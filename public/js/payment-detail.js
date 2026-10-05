@@ -152,7 +152,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ============ API Calls ============
 
+// The newest request is the only one whose answer is used: a slow answer to an
+// older one would otherwise put the older state back on screen.
+let paymentRequestSeq = 0;
+
 async function loadPayment() {
+  const mine = ++paymentRequestSeq;
   try {
     const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}`, {
       headers: authHeaders()
@@ -166,13 +171,26 @@ async function loadPayment() {
       throw new Error(data.error || 'Payment not found');
     }
 
+    if (mine !== paymentRequestSeq) return;
+
     payment = data.payment;
     renderPayment();
 
   } catch (error) {
+    if (mine !== paymentRequestSeq) return;
     console.error('Error loading payment:', error);
-    document.getElementById('invoice-display').textContent = 'Error: ' + error.message;
+    // Only a page with nothing on it has a heading to replace; one that loaded
+    // a moment ago keeps what it shows through a dropped poll.
+    if (!payment) {
+      document.getElementById('invoice-display').textContent = 'Error: ' + error.message;
+    }
   }
+}
+
+/** The periodic refresh: not worth a request while nobody is looking. */
+function refreshPayment() {
+  if (document.hidden) return Promise.resolve();
+  return loadPayment();
 }
 
 async function loadResponseCodes() {
@@ -433,6 +451,12 @@ function renderPayment() {
   }
 }
 
+// What the form was last filled from. The page refreshes itself, and filling the
+// form on every refresh would put back a setting the reader has chosen and not
+// yet saved; so it is filled only when the stored setting is not the one it
+// already shows.
+let inquiryFormFilledFrom = null;
+
 function renderInquiryConfig() {
   // Update badge
   const badge = document.getElementById('inquiry-behavior-badge');
@@ -440,11 +464,14 @@ function renderInquiryConfig() {
   badge.textContent = behavior.toUpperCase();
   badge.className = `badge badge-${behavior === 'normal' ? 'success' : behavior === 'timeout' ? 'failed' : 'pending'}`;
   
-  // Update form values
-  document.getElementById('inquiry-behavior').value = behavior;
-  document.getElementById('inquiry-delay').value = payment.inquiryDelay || 5000;
-  if (payment.inquiryErrorCode) {
-    document.getElementById('inquiry-error-code').value = payment.inquiryErrorCode;
+  const stored = JSON.stringify([behavior, payment.inquiryDelay, payment.inquiryErrorCode]);
+  if (stored !== inquiryFormFilledFrom) {
+    inquiryFormFilledFrom = stored;
+    document.getElementById('inquiry-behavior').value = behavior;
+    document.getElementById('inquiry-delay').value = payment.inquiryDelay || 5000;
+    if (payment.inquiryErrorCode) {
+      document.getElementById('inquiry-error-code').value = payment.inquiryErrorCode;
+    }
   }
   
   // Show/hide conditional fields
@@ -1144,4 +1171,4 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Auto-refresh every 10 seconds
-setInterval(loadPayment, 10000);
+setInterval(refreshPayment, 10000);

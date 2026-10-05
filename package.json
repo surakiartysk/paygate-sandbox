@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node dev-server.js",
-    "vercel-dev": "vercel dev",
+    "vercel-dev": "npx vercel dev",
     "build": "echo 'No build step required'",
     "start": "node dev-server.js",
     "test": "node --test test/*.test.js",
@@ -15,8 +15,7 @@
     "@vercel/kv": "^3.0.0"
   },
   "devDependencies": {
-    "husky": "^9.1.7",
-    "vercel": "^37.0.0"
+    "husky": "^9.1.7"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -98,7 +98,7 @@
         <p class="detail-subtitle" id="invoice-display">Loading...</p>
         <div id="provider-badge" style="margin-top: 0.5rem;"></div>
       </div>
-      <div style="display: flex; gap: 0.75rem;">
+      <div class="detail-actions">
         <button class="btn btn-secondary" id="btn-update-status" onclick="openStatusModal()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: middle;">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -169,27 +169,27 @@
             <div class="info-label" id="resp-desc-label">Response Desc</div>
             <div class="info-value" id="info-respdesc">-</div>
           </div>
-            <div class="info-item" style="grid-column: span 2;">
+            <div class="info-item info-item-wide">
               <div class="info-label">Description</div>
               <div class="info-value" id="info-description">-</div>
             </div>
-            <div class="info-item" style="grid-column: span 2;">
+            <div class="info-item info-item-wide">
               <div class="info-label">Payment Token</div>
               <div class="info-value mono" id="info-token" style="font-size: 0.75rem;">-</div>
             </div>
-            <div class="info-item" id="info-qr-item" style="grid-column: span 2; display: none;">
+            <div class="info-item info-item-wide" id="info-qr-item" style="display: none;">
               <div class="info-label">QR Code</div>
               <div class="info-value mono" id="info-qr-code" style="font-size: 0.85rem;">-</div>
             </div>
-            <div class="info-item" id="info-ref-item" style="grid-column: span 2; display: none;">
+            <div class="info-item info-item-wide" id="info-ref-item" style="display: none;">
               <div class="info-label">Payment Reference</div>
               <div class="info-value mono" id="info-payment-ref" style="font-size: 0.85rem;">-</div>
             </div>
-            <div class="info-item" id="info-redirect-item" style="grid-column: span 2; display: none;">
+            <div class="info-item info-item-wide" id="info-redirect-item" style="display: none;">
               <div class="info-label">Redirect URL</div>
               <div class="info-value mono" id="info-redirect-url" style="font-size: 0.75rem; word-break: break-all;">-</div>
             </div>
-            <div class="info-item" style="grid-column: span 2;">
+            <div class="info-item info-item-wide">
               <div class="info-label">Backend Return URL</div>
               <div class="info-value mono" id="info-backend-url" style="font-size: 0.8rem;">-</div>
             </div>

@@ -31,6 +31,7 @@ one that was obvious.
 17. [A demo password that can be published, because of what it opens](#17-a-demo-password-that-can-be-published-because-of-what-it-opens)
 18. [The browser holds a session, not the password](#18-the-browser-holds-a-session-not-the-password)
 19. [The admin API answers no other origin, and a page says who may frame it](#19-the-admin-api-answers-no-other-origin-and-a-page-says-who-may-frame-it)
+20. [Escaping text is not the same as vetting an address](#20-escaping-text-is-not-the-same-as-vetting-an-address)
 
 ---
 
@@ -192,6 +193,17 @@ loopback callbacks being allowed, and a check that breaks the quick start is a c
 disable. `VERCEL=1` is the signal, and it covers preview deployments deliberately: a preview URL
 is as reachable as a production one.
 
+Two further settings are reported and not enforced: `TRUST_PROXY` (unset, every client behind the
+platform's proxy shares one rate-limit bucket) and the KV pair (unset, storage falls back to files a
+serverless instance cannot keep). Neither has a direction in which refusing is the safe default.
+Refusing to serve because `TRUST_PROXY` is unset would take a working instance down over a
+setting whose absence only makes the limiter stricter. What an instance without KV does depends on
+the platform's filesystem, which this code does not probe, so naming what is missing says less than
+a guess about what will happen and is true either way. So they are logged, once per
+instance and again if the list changes, by the rate limiter every API request passes. The cost is
+the one this decision began with, in a milder form: a log line is a requirement in a log, and an
+owner who never reads their function logs runs with the problem.
+
 ---
 
 ## 8. Redaction matches the shape of a name, not a list of names
@@ -293,7 +305,10 @@ This sandbox exists to show an integrator which callbacks went out. A callback t
 not written down is that job failing in the quietest possible way: the caller is told it worked,
 the receiver has it, and the dashboard does not.
 
-**Decision.** The append lives in one function in storage, and both callback paths use it. Forty
+**Decision.** The append lives in one function in storage, and every callback path uses it — the
+plain callback and the custom-payload callback, as well as the sequence sender, which the paragraph
+below describes. (The custom-payload path was missed the first time, and found by the state review:
+six concurrent custom callbacks were delivered and one was recorded.) Forty
 lines further down the same file, the sequence sender already re-read the payment immediately
 before appending — which is why sequences were correct under identical load and single callbacks
 were not. Same file, same problem, solved in one place and not the other.
@@ -594,6 +609,39 @@ showed as text and none ran.
   as path-to-regexp patterns. The two agree on the patterns used here (`(.*)`, an alternation, a
   lookahead) and would disagree on `:name`. A test pins the outcome for every admin, API and page
   path, so a pattern the two read differently fails there rather than in production.
+
+---
+
+## 20. Escaping text is not the same as vetting an address
+
+**Context.** [Decision 19](#19-the-admin-api-answers-no-other-origin-and-a-page-says-who-may-frame-it)
+records a probe that put markup in every caller-controlled field and found it all rendered as text.
+That was true, and it was a probe of one kind of sink. A field that is *navigated to* is a different
+sink: the mock payment page's "Return to Merchant" button assigned `frontendReturnUrl` to
+`window.location.href` after adding two query parameters. The value is whatever the caller of the
+public token API sent. `javascript:alert(document.domain)//` is accepted and stored as it stands, and
+on the button press it ran on this origin. Measured in Chromium: the dialog opened and said
+`localhost`. The `//` comments out the parameters the page appends, so adding them does not break
+the script. The payment page in the dashboard had already refused such an address when it drew a
+link, so one sink was guarded and its sibling was not.
+
+**Decision.** The page follows the address only when it parses as `http:` or `https:`; anything else
+tells the reader there is nowhere to send them and does nothing. The check is an allow-list of
+schemes, not a block-list of `javascript:`, because `data:` and `vbscript:` are the next names on
+the list a block-list would have to learn. The token API still stores the value unchanged.
+
+**Trade-offs.**
+
+- **The API still accepts and stores an address that is not a web address.** The check is at the
+  one place that navigates, not where the value arrives. Rejecting it on creation would also be
+  right, and would break a caller that sends a template placeholder such as `{{returnUrl}}` to a
+  sandbox that has so far never complained about one. Nothing else navigates to the value
+  today (every assignment to `location` under `public/` was read), but a second place that did would
+  need its own check, and nothing would notice if it did not.
+- **A merchant whose return address is a custom scheme (`myapp://done`) gets no redirect.** A
+  mobile app that registers its own scheme is a plausible integration, and this sandbox now
+  refuses it with an alert. The cost is real for that caller; allowing it would mean allowing every
+  scheme but the dangerous ones, which is the block-list the decision was made to avoid.
 
 ---
 

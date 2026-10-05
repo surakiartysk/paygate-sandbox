@@ -168,13 +168,67 @@ curl -X POST http://localhost:3000/api/2c2p/inquiry \
 A payment that does not exist returns `respCode` `2002` with HTTP 200 — the provider's own
 behaviour, not an HTTP error.
 
+### Paying by QR, without the hosted page
+
+The token response's `webPaymentUrl` is the hosted page. An integration that draws its own
+checkout calls the Direct API routes instead, with the token from `/token`:
+
+```bash
+# 1. A payment that declares QR as a channel
+curl -X POST http://localhost:3000/api/2c2p/token \
+  -H 'Content-Type: application/json' \
+  -d '{"invoiceNo": "INV-QR-1", "amount": 250, "paymentChannel": ["QR"]}'
+
+# 2. Which options this token offers (optional)
+curl -X POST http://localhost:3000/api/2c2p/optionDetails \
+  -H 'Content-Type: application/json' \
+  -d '{"paymentToken": "<paymentToken from step 1>"}'
+
+# 3. Ask for the QR code
+curl -X POST http://localhost:3000/api/2c2p/payment \
+  -H 'Content-Type: application/json' \
+  -d '{"paymentToken": "<paymentToken from step 1>",
+       "payment": {"code": {"channelCode": "PPQR"}, "data": {"qrType": "URL", "name": "Somchai"}}}'
+```
+
+`optionDetails` lists what the token's `paymentChannel` allows: `QR` gives PromptPay and
+TrueMoney QR, `CC` and `3DS` give Visa and Mastercard, `DPAY` (and `CC`) the wallets, `IB`
+SCB and Bangkok Bank. `categoryCode` and `groupCode` in the body narrow the list.
+
+`payment` answers with the QR code's address and leaves the payment `pending`:
+
+```json
+{
+  "type": "URL",
+  "expiryDescription": "Please scan the QR code and complete the payment before 2026-09-01 14:45:00",
+  "data": "http://localhost:3000/api/2c2p/qr/INV-QR-1?t=1788273600000",
+  "channelCode": "PPQR",
+  "respCode": "1005",
+  "respDesc": "Pending for user scan QR."
+}
+```
+
+`data` is an SVG showing the invoice number and amount: something to put on a screen, not a
+code a banking app will scan. Nobody pays it. Move the payment with
+[`/status`](#post-apiadminpaymentsinvoicenostatus) and, if your integration waits for one,
+[deliver a callback](#post-apiadminpaymentsinvoicenocallback).
+
+Details the example does not show:
+
+- `channelCode` may be `PPQR`, `QRCS`, `EMVQR` or `QR`, and defaults to `PPQR`. Anything else is
+  answered `9058` with HTTP 200, as 2C2P answers its own errors.
+- The expiry is the token's `paymentExpiry`, or fifteen minutes from the request.
+- `name`, `email` and `mobileNo` under `data` are stored on the payment record, which
+  `GET /api/admin/payments/:invoiceNo` returns. The dashboard does not show them.
+- A missing `paymentToken` is `9005`; one that matches no payment is `9040`.
+
 ### Other 2C2P routes
 
 | Route | Purpose |
 | --- | --- |
-| `POST /api/2c2p/payment` | QR payment request |
-| `GET /api/2c2p/qr/:invoiceNo` | QR image for a payment |
-| `POST /api/2c2p/optionDetails` | Available payment options |
+| `POST /api/2c2p/payment` | QR payment request, above. Answers `9040` for a token whose payment is no longer `pending`: it never moves a settled payment back (the code is this sandbox's choice, not checked against 2C2P) |
+| `GET /api/2c2p/qr/:invoiceNo` | The QR image for a payment |
+| `POST /api/2c2p/optionDetails` | Available payment options, above |
 | `GET /api/2c2p/info` | Payment details by `?token=` |
 
 ---
@@ -259,7 +313,9 @@ curl -X POST http://localhost:3000/api/admin/payments/INV-0001/status \
 
 ### `POST /api/admin/payments/:invoiceNo/callback`
 
-Delivers one or more callbacks.
+Delivers one or more callbacks. **It does not change the payment's status** — a callback saying
+`success` for a payment still stored as `pending` is delivered as asked, and an inquiry afterwards
+still answers `2001`, in progress. Use [`/status`](#post-apiadminpaymentsinvoicenostatus) to move the payment.
 
 | Field | Type | Notes |
 | --- | --- | --- |
@@ -327,7 +383,7 @@ Global simulation settings.
 | --- | --- |
 | `DELETE /api/admin/payments/:invoiceNo` | Delete one payment |
 | `POST /api/admin/payments/clear` | Delete all payments |
-| `GET /api/admin/logs` | Request log |
+| `GET /api/admin/logs` | Request log, newest first. `type`, `invoiceNo`, `page`, `limit` (max 100); filters match across every retained log, not just the page shown |
 | `GET /api/admin/response-codes` | Every supported code, by provider |
 | `POST /api/admin/login` | Verify a password |
 

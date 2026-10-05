@@ -28,7 +28,7 @@ describe('callback history under concurrency', () => {
    * itself would pass no matter what was lost — the point is that the record
    * and the receiver disagree, so the receiver has to be asked.
    */
-  async function raceCallbacks(count, body) {
+  async function raceCallbacks(count, bodyOrFn) {
     const { body: session } = await postJson(`${sandbox.baseUrl}/api/inspect`, {});
     const sink = `${sandbox.baseUrl}/api/inspect/${session.sessionId}`;
     const invoiceNo = uniqueInvoice();
@@ -38,6 +38,9 @@ describe('callback history under concurrency', () => {
       amount: 100,
       backendReturnUrl: sink
     });
+
+    // A body may depend on the invoice, which is only known here.
+    const body = typeof bodyOrFn === 'function' ? bodyOrFn(invoiceNo) : bodyOrFn;
 
     await Promise.all(
       Array.from({ length: count }, () =>
@@ -76,6 +79,23 @@ describe('callback history under concurrency', () => {
     // This path re-read the payment before appending and was already correct.
     // It is here so a change to the shared append cannot regress it unnoticed.
     assert.equal(recorded, delivered);
+    assert.equal(count, delivered);
+  });
+
+  /*
+   * The third path. A custom payload built its history entry from a snapshot
+   * taken before the network call and wrote it back after, the very thing
+   * decision 11 moved the other two paths away from. With one custom callback
+   * racing four plain ones, five were delivered and the history held one: the
+   * custom entry overwrote the rest. Found by the state review.
+   */
+  test('records every custom-payload callback that was actually delivered', async () => {
+    const { delivered, recorded, count } = await raceCallbacks(6, (invoiceNo) => ({
+      customPayload: { invoiceNo, amount: 100, respCode: '0000' }
+    }));
+
+    assert.equal(delivered, 6, 'all six must reach the receiver');
+    assert.equal(recorded, delivered, 'every delivered custom callback must be in the history');
     assert.equal(count, delivered);
   });
 

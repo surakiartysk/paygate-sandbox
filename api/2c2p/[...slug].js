@@ -340,6 +340,19 @@ async function handlePayment(request, response) {
     const channelCode = payment?.code?.channelCode || 'PPQR';
     const paymentData = payment?.data || {};
     
+    // This endpoint is public and takes only the token, so it must not move a
+    // payment backwards. It wrote `pending` unconditionally: anyone holding the
+    // token could reopen a payment an admin had settled, with no history entry.
+    // 9040 is the code this sandbox already gives a token that cannot be used;
+    // which code 2C2P itself answers with is not something it has been checked
+    // against.
+    if (paymentRecord.status && paymentRecord.status !== 'pending') {
+      return logAndRespond(200, {
+        respCode: '9040',
+        respDesc: 'The token is invalid'
+      }, invoiceNo);
+    }
+    
     if (QR_CHANNELS.includes(channelCode)) {
       const qrType = paymentData.qrType || 'URL';
       const qrCodeUrl = `${publicOrigin(request)}/api/2c2p/qr/${encodeURIComponent(invoiceNo)}?t=${Date.now()}`;

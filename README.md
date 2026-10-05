@@ -57,17 +57,25 @@ curl -X POST http://localhost:3000/api/2c2p/token \
     \"backendReturnUrl\": \"http://localhost:3000/api/inspect/${SESSION}\"
   }"
 
-# 2. Settle it and fire the callback
+# 2. Settle it. This changes the payment's status and delivers nothing
+curl -X POST http://localhost:3000/api/admin/payments/INV-0001/status \
+  -H 'Content-Type: application/json' \
+  -H 'X-Admin-Password: mockpay' \
+  -d '{"status":"success","respCode":"0000"}'
+
+# 3. Deliver the callback. This sends a webhook and does not change the status
 curl -X POST http://localhost:3000/api/admin/payments/INV-0001/callback \
   -H 'Content-Type: application/json' \
   -H 'X-Admin-Password: mockpay' \
   -d '{"sequence":[{"status":"success","respCode":"0000","delayAfter":0}]}'
 
-# 3. Read back what your webhook would have received
+# 4. Read back what your webhook would have received
 curl http://localhost:3000/api/inspect/${SESSION}
 ```
 
-The same flow runs from the landing page with one click, if you would rather watch it than type it.
+The two are separate on purpose: a callback your endpoint never receives, or one that disagrees with
+the stored status, is a case worth testing ([scenarios](docs/scenarios.md)). The same flow runs from
+the landing page with one click, if you would rather watch it than type it.
 
 ## What it does
 
@@ -127,15 +135,19 @@ Everything is optional; the defaults give a working local instance.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `ADMIN_PASSWORD` | `mockpay` | Guards the dashboard and `/api/admin/*` |
+| `ADMIN_PASSWORD` | `mockpay` locally | Guards the dashboard and `/api/admin/*`. On a deployment, unset means the admin routes are refused |
 | `MOCK_SERVER_URL` | inferred | Public origin, used to build redirect and inspector URLs |
 | `DEFAULT_CALLBACK_URL` | — | Fallback callback target when a request omits one |
 | `URL_REWRITE_RULES` | — | Rewrite callback hosts, e.g. `api.example.com=>staging-api.example.com` |
-| `ALLOW_PRIVATE_CALLBACKS` | `true` | Set `false` on a public deployment to refuse private/loopback targets |
+| `ALLOW_PRIVATE_CALLBACKS` | `true` locally, `false` once deployed | Whether callbacks may target private and loopback addresses. An explicit value wins either way |
 | `RATE_LIMIT_MAX` | `60` | Requests per IP per minute; `0` disables |
+| `TRUST_PROXY` | unset | Set `true` behind a proxy, so the limit counts the client rather than the proxy's address ([why](docs/deployment.md#2-keep-the-rate-limit-on)) |
+| `MOCK_MAX_DELAY_MS` | `30000` | Ceiling on a delay a caller requests by header or per-payment setting |
 | `DEMO_TTL_SECONDS` | `86400` | How long a demo visitor and their sample payments last |
 | `DEMO_MAX_LIVE_PAYMENTS` | `2000` | Live visitor payments before demo sign-in answers `503` |
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | — | Use Vercel KV instead of local JSON files |
+| `DATA_DIR` | `./data` | Where the local JSON files live (ignored when KV is configured) |
+| `PORT` | `3000` | Port of the local dev server (`npm run dev`) |
 
 See [.env.example](.env.example) for the annotated version.
 

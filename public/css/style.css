@@ -8,17 +8,23 @@
   --bg-card: #1a1f2e;
   --bg-hover: #242b3d;
   --text-primary: #e6e6e6;
-  --text-secondary: #8b949e;
-  --text-muted: #5a6270;
+  --text-secondary: #a3abb6;
+  --text-muted: #8b949e;
   --accent: #00d4aa;
   --accent-hover: #00f5c4;
   --accent-dim: rgba(0, 212, 170, 0.15);
   --success: #2ea043;
   --success-bg: rgba(46, 160, 67, 0.15);
+  /* A fill and the text drawn on its own tint need different lightness: the
+     fill colours read well as bars and dots but are under 4.5:1 as 12px badge
+     text. test/contrast.test.js holds the *-text pairs to it. */
+  --success-text: #45aa58;
   --warning: #d29922;
   --warning-bg: rgba(210, 153, 34, 0.15);
+  --warning-text: #d29922;
   --error: #f85149;
   --error-bg: rgba(248, 81, 73, 0.15);
+  --error-text: #f9645d;
   --pending: #58a6ff;
   --pending-bg: rgba(88, 166, 255, 0.15);
   --border: #30363d;
@@ -27,8 +33,10 @@
   --modal-overlay: rgba(0, 0, 0, 0.7);
   --token-color: #a855f7;
   --token-bg: rgba(136, 46, 224, 0.15);
+  --token-text: #b977f9;
   --inquiry-color: #3b82f6;
   --inquiry-bg: rgba(59, 130, 246, 0.15);
+  --inquiry-text: #5a96f7;
   --logo-gradient-start: #007acc;
   --radius: 8px;
   --radius-lg: 12px;
@@ -47,16 +55,19 @@
   --bg-hover: #f3f4f6;
   --text-primary: #24292f;
   --text-secondary: #57606a;
-  --text-muted: #8c959f;
+  --text-muted: #656d76;
   --accent: #0969da;
   --accent-hover: #0860ca;
   --accent-dim: rgba(9, 105, 218, 0.1);
   --success: #1a7f37;
   --success-bg: rgba(26, 127, 55, 0.1);
+  --success-text: #197b35;
   --warning: #9a6700;
   --warning-bg: rgba(154, 103, 0, 0.1);
+  --warning-text: #926200;
   --error: #cf222e;
   --error-bg: rgba(207, 34, 46, 0.1);
+  --error-text: #cd222e;
   --pending: #0969da;
   --pending-bg: rgba(9, 105, 218, 0.1);
   --border: #d0d7de;
@@ -65,8 +76,10 @@
   --modal-overlay: rgba(0, 0, 0, 0.5);
   --token-color: #8250df;
   --token-bg: rgba(130, 80, 223, 0.1);
+  --token-text: #7e4ed8;
   --inquiry-color: #0969da;
   --inquiry-bg: rgba(9, 105, 218, 0.1);
+  --inquiry-text: #0967d6;
   --logo-gradient-start: #0969da;
   --radius: 8px;
   --radius-lg: 12px;
@@ -315,17 +328,17 @@ a:hover {
 
 .badge-success {
   background: var(--success-bg);
-  color: var(--success);
+  color: var(--success-text);
 }
 
 .badge-failed, .badge-error {
   background: var(--error-bg);
-  color: var(--error);
+  color: var(--error-text);
 }
 
 .badge-cancelled {
   background: var(--warning-bg);
-  color: var(--warning);
+  color: var(--warning-text);
 }
 
 /* Ended without anyone acting — neither a failure nor a warning, so it
@@ -338,12 +351,12 @@ a:hover {
 
 .badge-token {
   background: var(--token-bg);
-  color: var(--token-color);
+  color: var(--token-text);
 }
 
 .badge-inquiry {
   background: var(--inquiry-bg);
-  color: var(--inquiry-color);
+  color: var(--inquiry-text);
 }
 
 .badge-callback {
@@ -353,7 +366,7 @@ a:hover {
 
 .badge-optionDetails {
   background: rgba(168, 85, 247, 0.15);
-  color: #a855f7;
+  color: #b977f9;
   border: 1px solid rgba(168, 85, 247, 0.3);
 }
 
@@ -365,13 +378,13 @@ a:hover {
 
 .badge-payment {
   background: rgba(236, 72, 153, 0.15);
-  color: #ec4899;
+  color: #ef63a8;
   border: 1px solid rgba(236, 72, 153, 0.3);
 }
 
 [data-theme="light"] .badge-payment {
   background: rgba(236, 72, 153, 0.1);
-  color: #db2777;
+  color: #c7236c;
   border-color: rgba(236, 72, 153, 0.2);
 }
 
@@ -383,7 +396,7 @@ a:hover {
 
 [data-theme="light"] .badge-info {
   background: rgba(14, 165, 233, 0.1);
-  color: #0284c7;
+  color: #0272ab;
   border-color: rgba(14, 165, 233, 0.2);
 }
 
@@ -393,7 +406,7 @@ a:hover {
 .badge-omise-token,
 .badge-omise-source {
   background: rgba(76, 81, 191, 0.15);
-  color: #4c51bf;
+  color: #878ad4;
   border: 1px solid rgba(76, 81, 191, 0.3);
 }
 
@@ -408,17 +421,17 @@ a:hover {
 
 .badge-normal {
   background: var(--success-bg);
-  color: var(--success);
+  color: var(--success-text);
 }
 
 .badge-delay {
   background: var(--warning-bg);
-  color: var(--warning);
+  color: var(--warning-text);
 }
 
 .badge-timeout {
   background: var(--error-bg);
-  color: var(--error);
+  color: var(--error-text);
 }
 
 /* Provider badges */
@@ -439,7 +452,7 @@ a:hover {
 
 .badge-2c2p {
   background: rgba(0, 122, 204, 0.15);
-  color: #007acc;
+  color: #409bd9;
   border-color: rgba(0, 122, 204, 0.3);
 }
 
@@ -451,7 +464,7 @@ a:hover {
 
 .badge-omise {
   background: rgba(76, 81, 191, 0.15);
-  color: #4c51bf;
+  color: #878ad4;
   border-color: rgba(76, 81, 191, 0.3);
 }
 
@@ -1356,7 +1369,7 @@ a:hover {
 
 .log-detail-title .direction.incoming {
   background: var(--inquiry-bg);
-  color: var(--inquiry-color);
+  color: var(--inquiry-text);
 }
 
 .log-detail-title .direction.outgoing {
@@ -2430,3 +2443,125 @@ a:hover {
   }
 }
 
+/*
+ * Narrow screens: the two pages a phone actually opens — the mock payment page
+ * (a customer's) and a payment's detail page.
+ *
+ * Measured at 375px, scrollWidth against the screen: the detail page was 395
+ * wide on every payment, because its three action buttons sat in one row that
+ * could not wrap; the mock payment page was 386 wide for an amount of
+ * 12,500,000.50 and 548 for an invoice number of 56 characters. Found by the
+ * mobile review. A value that cannot break (an invoice number, a merchant id)
+ * now breaks anywhere rather than pushing the page wider.
+ */
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.detail-subtitle,
+.detail-title {
+  overflow-wrap: anywhere;
+}
+
+.info-item {
+  min-width: 0;
+}
+
+/* Spans both columns of the two-column grid. It was an inline style on each, which
+   kept a second column alive when the grid was set to one, and squeezed the first. */
+.info-item-wide {
+  grid-column: span 2;
+}
+
+@media (max-width: 640px) {
+  .detail-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .detail-actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-item-wide {
+    grid-column: auto;
+  }
+
+  .detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mock-pay-container {
+    padding: 1rem;
+  }
+
+  .mock-pay-card {
+    padding: 1.25rem;
+  }
+
+  .mock-pay-amount {
+    font-size: clamp(1.5rem, 8vw, 2.5rem);
+  }
+}
+
+.mock-pay-amount {
+  overflow-wrap: anywhere;
+}
+
+.mock-pay-info-row {
+  gap: 0.75rem;
+}
+
+.mock-pay-info-label {
+  flex-shrink: 0;
+}
+
+.mock-pay-info-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+/*
+ * On a touch screen: fields at 16px, and every control answers a tap on at least
+ * 44px, drawn no bigger.
+ *
+ * Measured at 375px wide with touch, by tapping 21px from each control's centre
+ * in each direction: 197 of the dashboard's 203 buttons missed at least one
+ * (36px icon buttons, 30px row actions), 15 of 20 on a payment's page, 7 of 7 on
+ * the inspector. And fifteen fields were 13–14px, which makes iOS Safari zoom
+ * the page in when one is focused and leave it zoomed. Found by the mobile
+ * review.
+ *
+ * :where() keeps the specificity at nothing, so a control that positions itself
+ * (the password eye inside its field) keeps its own rule; an unpositioned one
+ * becomes the anchor for its larger area.
+ */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    /* !important: the fields' own classes set their size, and a media query adds no specificity. */
+    font-size: 16px !important;
+  }
+
+  :where(button, .btn, summary, [role='button']) {
+    position: relative;
+  }
+
+  :where(button, .btn, summary, [role='button'])::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}

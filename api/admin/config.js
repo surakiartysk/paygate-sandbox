@@ -197,7 +197,7 @@ export default async function handler(request, response) {
       const updates = request.body;
       
       // Validate updates
-      const validKeys = ['globalDelay', 'forceError', 'forceError2c2p', 'forceErrorOmise', 'duplicateCallback', 'failureRate', 'logTTLDays', 'customFieldPresets'];
+      const validKeys = ['globalDelay', 'forceError', 'forceError2c2p', 'forceErrorOmise', 'duplicateCallback', 'failureRate', 'logTTLDays', 'customFieldPresets', 'autoRefresh'];
       const invalidKeys = Object.keys(updates).filter(k => !validKeys.includes(k));
       
       if (invalidKeys.length > 0) {
@@ -226,6 +226,13 @@ export default async function handler(request, response) {
         return response.status(400).json({
           success: false,
           error: 'logTTLDays must be a number >= 1'
+        });
+      }
+      
+      if (updates.autoRefresh !== undefined && typeof updates.autoRefresh !== 'boolean') {
+        return response.status(400).json({
+          success: false,
+          error: 'autoRefresh must be true or false'
         });
       }
       

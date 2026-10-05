@@ -74,6 +74,37 @@ describe('admin API', () => {
     assert.equal(status, 400);
   });
 
+  /*
+   * Save on the dashboard's Settings sent `autoRefresh`, which the API did not
+   * list, so every Save answered 400 "Invalid config keys: autoRefresh" and the
+   * global delay, forced errors, failure rate and duplicate callback could not
+   * be set from the page at all. It had been that way since the first commit and
+   * nothing exercised Save. Found by the state review, in Chromium.
+   *
+   * The keys are read from the dashboard's own source rather than copied here:
+   * a copy would keep agreeing with the API after the page changed.
+   */
+  test('accepts every setting the dashboard sends when Save is pressed', async () => {
+    const { readFileSync } = await import('node:fs');
+    const source = readFileSync(new URL('../public/js/dashboard.js', import.meta.url), 'utf8');
+    const block = /async function saveConfig\(\) \{[\s\S]*?const newConfig = \{([\s\S]*?)\n    \};/.exec(source)?.[1] ?? '';
+    const keys = [...block.matchAll(/^\s{6}(\w+):/gm)].map(m => m[1]);
+
+    assert.ok(keys.length >= 5, `found the keys saveConfig sends: ${keys.join(', ')}`);
+
+    const sent = Object.fromEntries(keys.map(k => [k, k.startsWith('force') ? null : k === 'duplicateCallback' || k === 'autoRefresh' ? true : 0]));
+    const { status, body } = await postJson(`${sandbox.baseUrl}/api/admin/config`, sent, adminHeaders());
+
+    assert.equal(status, 200, body.error);
+    assert.equal(body.config.autoRefresh, true, 'autoRefresh is stored, so the page can read it back');
+  });
+
+  test('refuses an autoRefresh that is not a boolean', async () => {
+    const { status } = await postJson(`${sandbox.baseUrl}/api/admin/config`, { autoRefresh: 'yes' }, adminHeaders());
+
+    assert.equal(status, 400);
+  });
+
   test('validates numeric configuration bounds', async () => {
     const { status } = await postJson(
       `${sandbox.baseUrl}/api/admin/config`,

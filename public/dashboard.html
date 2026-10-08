@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Paygate Sandbox</title>
+  <title>Payments · Paygate Sandbox</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <script src="/js/theme.js"></script>
   <script>
@@ -148,7 +148,7 @@
     <!-- Payments Table -->
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Payments</h2>
+        <h1 class="card-title">Payments</h1>
         <div style="display: flex; gap: 0.5rem;">
           <button id="refresh-payments-btn" class="btn btn-secondary btn-sm" onclick="refreshPayments()" title="Refresh payments" style="gap: 0.25rem;">
             <svg id="refresh-payments-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
@@ -305,7 +305,7 @@
                      placeholder="Filter by invoice..." onkeyup="handleLogSearch(event)" style="width: 200px;">
             </div>
             <div class="filter-group">
-              <span id="log-ttl-info" class="text-muted" style="font-size: 0.875rem;">
+              <span id="log-ttl-info" class="text-muted" style="font-size: 15px;">
                 TTL: 7 days
               </span>
             </div>
@@ -356,7 +356,7 @@
         <button class="modal-close" onclick="closeConfigModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.5rem;">
+        <p style="color: var(--text-secondary); font-size: 15px; margin-bottom: 1.5rem;">
           Configure global simulation settings that apply to all API requests across the gateway.
         </p>
         <div class="config-panel">
@@ -367,7 +367,7 @@
             <div class="form-group" style="margin-bottom: 0;">
               <input type="number" id="config-delay" class="form-input" 
                      placeholder="Delay in ms" min="0" step="100">
-              <small style="color: var(--text-muted); font-size: 0.75rem;">
+              <small style="color: var(--text-muted); font-size: 12px;">
                 Add delay to all API responses (milliseconds)
               </small>
             </div>
@@ -383,7 +383,7 @@
                   <option value="">No error (normal response)</option>
                 </select>
               </div>
-              <small style="color: var(--text-muted); font-size: 0.75rem;">
+              <small style="color: var(--text-muted); font-size: 12px;">
                 Force all 2C2P requests to return this error code
               </small>
             </div>
@@ -399,7 +399,7 @@
                   <option value="">No error (normal response)</option>
                 </select>
               </div>
-              <small style="color: var(--text-muted); font-size: 0.75rem;">
+              <small style="color: var(--text-muted); font-size: 12px;">
                 Force all Omise requests to return this error code
               </small>
             </div>
@@ -412,7 +412,7 @@
             <div class="form-group" style="margin-bottom: 0;">
               <input type="number" id="config-failure-rate" class="form-input" 
                      placeholder="Percentage (0-100)" min="0" max="100">
-              <small style="color: var(--text-muted); font-size: 0.75rem;">
+              <small style="color: var(--text-muted); font-size: 12px;">
                 Random failure percentage for requests
               </small>
             </div>
@@ -426,7 +426,7 @@
               <input type="checkbox" id="config-duplicate">
               <span>Send callbacks twice</span>
             </label>
-            <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 0.5rem;">
+            <small style="color: var(--text-muted); font-size: 12px; display: block; margin-top: 0.5rem;">
               Test idempotency by sending duplicate callbacks
             </small>
           </div>
@@ -439,7 +439,7 @@
               <input type="checkbox" id="config-auto-refresh" onchange="toggleAutoRefresh()">
               <span>Automatically check for new payments</span>
             </label>
-            <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 0.5rem;">
+            <small style="color: var(--text-muted); font-size: 12px; display: block; margin-top: 0.5rem;">
               ⚠️ With multiple team members, disable this to prevent exceeding Vercel rate limits (100 requests/hour on Hobby plan). 
               <br>When enabled, polls every 60 seconds (60 requests/hour per user).
             </small>
@@ -479,7 +479,7 @@
           <select id="resp-code" class="form-select">
             <!-- Populated dynamically -->
           </select>
-          <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.5rem; display: block;">
+          <small style="color: var(--text-muted); font-size: 12px; margin-top: 0.5rem; display: block;">
             Select specific error code to test how your system handles different failure scenarios
           </small>
         </div>
@@ -533,34 +533,34 @@
         
         <!-- Sequence Mode -->
         <div id="callback-sequence-mode">
-          <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+          <p style="color: var(--text-secondary); font-size: 15px; margin-bottom: 1rem;">
             Configure and send callbacks to your system. Build a sequence to test different scenarios.
           </p>
           <div id="callback-sequence-list"></div>
           <button class="btn btn-secondary btn-sm" onclick="addCallbackToSequence()" style="margin-top: 1rem;">
             + Add Callback
           </button>
-          <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 1rem;">
+          <p style="color: var(--text-muted); font-size: 12px; margin-top: 1rem;">
             Tip: Add multiple callbacks to test idempotency, status changes, or retry patterns.
           </p>
         </div>
         
         <!-- Custom Payload Mode -->
         <div id="callback-custom-mode" style="display: none;">
-          <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+          <p style="color: var(--text-secondary); font-size: 15px; margin-bottom: 1rem;">
             Edit the callback payload before sending. Useful for testing invalid payloads or amount mismatches.
           </p>
           <div class="form-group">
             <label class="form-label">Callback Payload (JSON)</label>
-            <textarea id="callback-payload-editor" class="form-input" rows="15" style="font-family: var(--font-mono); font-size: 0.85rem;"></textarea>
-            <div id="callback-json-error" style="display: none; color: var(--error); font-size: 0.75rem; margin-top: 0.5rem;"></div>
+            <textarea id="callback-payload-editor" class="form-input" rows="15" style="font-family: var(--font-mono); font-size: 13px;"></textarea>
+            <div id="callback-json-error" style="display: none; color: var(--error); font-size: 12px; margin-top: 0.5rem;"></div>
           </div>
           <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
             <button class="btn btn-secondary btn-sm" onclick="loadCallbackPreview()">Load Preview</button>
             <button class="btn btn-secondary btn-sm" onclick="resetCallbackPayload()">Reset to Default</button>
             <button class="btn btn-secondary btn-sm" onclick="formatCallbackPayload()">Format JSON</button>
           </div>
-          <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius); font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem;">
+          <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius); font-size: 13px; color: var(--text-muted); margin-top: 1rem;">
             <strong>Tip:</strong> Edit fields like <code>amount</code>, <code>invoiceNo</code>, or <code>respCode</code> to test how your system handles invalid payloads or mismatches.
           </div>
         </div>
@@ -596,10 +596,10 @@
         <button class="modal-close" onclick="closeClearPaymentsModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <p style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1rem;">
+        <p style="margin-bottom: 1rem; color: var(--text-primary); font-size: 16px;">
           Are you sure you want to delete <strong>all payments</strong>?
         </p>
-        <p style="color: var(--text-secondary); font-size: 0.9rem;">
+        <p style="color: var(--text-secondary); font-size: 15px;">
           This action cannot be undone. All payment records, status history, and callback history will be permanently deleted.
         </p>
       </div>
@@ -618,10 +618,10 @@
         <button class="modal-close" onclick="closeClearLogsModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <p style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1rem;">
+        <p style="margin-bottom: 1rem; color: var(--text-primary); font-size: 16px;">
           Are you sure you want to delete <strong>all request logs</strong>?
         </p>
-        <p style="color: var(--text-secondary); font-size: 0.9rem;">
+        <p style="color: var(--text-secondary); font-size: 15px;">
           This action cannot be undone. All API request and response logs will be permanently deleted.
         </p>
       </div>

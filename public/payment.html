@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payment Details - Paygate Sandbox</title>
+  <title>Payment · Paygate Sandbox</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <script src="/js/theme.js"></script>
   <script>
@@ -61,8 +61,7 @@
   <header class="header">
     <div class="header-content">
       <a href="/dashboard" class="logo">
-        <div class="logo-icon">MP</div>
-        <div class="logo-text">Mock <span>Payment</span> Gateway</div>
+        <div class="logo-text">Paygate Sandbox</div>
       </a>
       <div class="header-actions">
         <button class="theme-toggle" onclick="toggleTheme()" id="theme-toggle" title="Toggle theme" aria-label="Toggle theme">
@@ -175,23 +174,23 @@
             </div>
             <div class="info-item info-item-wide">
               <div class="info-label">Payment Token</div>
-              <div class="info-value mono" id="info-token" style="font-size: 0.75rem;">-</div>
+              <div class="info-value mono" id="info-token" style="font-size: 12px;">-</div>
             </div>
             <div class="info-item info-item-wide" id="info-qr-item" style="display: none;">
               <div class="info-label">QR Code</div>
-              <div class="info-value mono" id="info-qr-code" style="font-size: 0.85rem;">-</div>
+              <div class="info-value mono" id="info-qr-code" style="font-size: 13px;">-</div>
             </div>
             <div class="info-item info-item-wide" id="info-ref-item" style="display: none;">
               <div class="info-label">Payment Reference</div>
-              <div class="info-value mono" id="info-payment-ref" style="font-size: 0.85rem;">-</div>
+              <div class="info-value mono" id="info-payment-ref" style="font-size: 13px;">-</div>
             </div>
             <div class="info-item info-item-wide" id="info-redirect-item" style="display: none;">
               <div class="info-label">Redirect URL</div>
-              <div class="info-value mono" id="info-redirect-url" style="font-size: 0.75rem; word-break: break-all;">-</div>
+              <div class="info-value mono" id="info-redirect-url" style="font-size: 12px; word-break: break-all;">-</div>
             </div>
             <div class="info-item info-item-wide">
               <div class="info-label">Backend Return URL</div>
-              <div class="info-value mono" id="info-backend-url" style="font-size: 0.8rem;">-</div>
+              <div class="info-value mono" id="info-backend-url" style="font-size: 13px;">-</div>
             </div>
             <div class="info-item">
               <div class="info-label">Created At</div>
@@ -248,7 +247,7 @@
         <span class="badge" id="inquiry-behavior-badge">NORMAL</span>
       </div>
       <div class="card-body">
-        <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.875rem;">
+        <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 15px;">
           Control how the <code>/api/2c2p/inquiry</code> API responds when your system asks about this payment.
         </p>
         <div class="info-grid" style="gap: 1rem;">
@@ -319,7 +318,7 @@
         
         <!-- Sequence Mode -->
         <div id="callback-sequence-mode" style="display: block;">
-          <p style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.875rem;">
+          <p style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 15px;">
             Configure and send callbacks to your system. Build a sequence to test different scenarios.
           </p>
           
@@ -334,14 +333,14 @@
             </div>
           </div>
           
-          <div style="margin-top: 1rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius); font-size: 0.8rem; color: var(--text-muted);">
+          <div style="margin-top: 1rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius); font-size: 13px; color: var(--text-muted);">
             <strong>Tip:</strong> Add multiple callbacks to test idempotency, status changes, or retry patterns.
           </div>
         </div>
         
         <!-- Custom Payload Mode -->
         <div id="callback-custom-mode" style="display: none;">
-          <p style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.875rem;">
+          <p style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 15px;">
             Edit the callback payload before sending to test invalid payload / amount mismatch scenarios.
           </p>
           
@@ -352,8 +351,8 @@
               <button class="btn btn-secondary btn-sm" onclick="loadCallbackPreview()">🔄 Load Preview</button>
             </div>
             <div id="callback-preview-container" style="position: relative;">
-              <textarea id="callback-payload-editor" class="form-input" rows="15" style="font-family: var(--font-mono); font-size: 0.85rem; resize: vertical;" spellcheck="false"></textarea>
-              <div id="callback-json-error" style="display: none; color: var(--error); font-size: 0.8rem; margin-top: 0.25rem;"></div>
+              <textarea id="callback-payload-editor" class="form-input" rows="15" style="font-family: var(--font-mono); font-size: 13px; resize: vertical;" spellcheck="false"></textarea>
+              <div id="callback-json-error" style="display: none; color: var(--error); font-size: 13px; margin-top: 0.25rem;"></div>
             </div>
           </div>
           
@@ -363,7 +362,7 @@
             <button class="btn btn-secondary btn-sm" onclick="formatCallbackPayload()">✨ Format JSON</button>
           </div>
           
-          <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius); font-size: 0.8rem; color: var(--text-muted);">
+          <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius); font-size: 13px; color: var(--text-muted);">
             <strong>Tip:</strong> Edit fields like <code>amount</code>, <code>invoiceNo</code>, or <code>respCode</code> to test how your system handles invalid payloads or mismatches.
           </div>
         </div>
@@ -401,7 +400,7 @@
           <select id="resp-code" class="form-select">
             <!-- Populated dynamically -->
           </select>
-          <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.5rem; display: block;">
+          <small style="color: var(--text-muted); font-size: 12px; margin-top: 0.5rem; display: block;">
             Select specific error code to test how your system handles different failure scenarios
           </small>
         </div>

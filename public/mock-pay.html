@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Paygate Sandbox</title>
+  <title>Complete payment · Paygate Sandbox</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <script src="/js/theme.js"></script>
   <style>
@@ -24,7 +24,7 @@
       border-radius: var(--radius);
       padding: 0.75rem 1rem;
       margin-bottom: 1.5rem;
-      font-size: 0.85rem;
+      font-size: 13px;
       color: var(--accent);
       text-align: center;
     }
@@ -43,7 +43,7 @@
       <div class="mock-pay-logo">
         <div class="logo" style="justify-content: center;">
           <div class="logo-icon">MP</div>
-          <div class="logo-text">Mock <span>Payment</span> Gateway</div>
+          <h1 class="logo-text">Mock <span>Payment</span> Gateway</h1>
         </div>
       </div>
 
@@ -91,7 +91,7 @@
         <!-- Waiting for Admin State -->
         <div id="waiting-state" class="mock-pay-note status-waiting">
           ⏳ <strong>Waiting for payment confirmation...</strong><br>
-          <span style="font-size: 0.8rem;">The Admin Dashboard will update the status and trigger a callback.</span>
+          <span style="font-size: 13px;">The Admin Dashboard will update the status and trigger a callback.</span>
         </div>
         
         <!-- Redirect Button (shown when frontendReturnUrl exists) -->

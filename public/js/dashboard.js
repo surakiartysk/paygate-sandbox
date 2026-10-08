@@ -836,8 +836,8 @@ function renderPayments() {
       'APP': 'App'
     };
     const methodBadge = methodLabels[paymentMethod] 
-      ? `<span class="method-badge" style="font-size: 0.75rem; padding: 4px 8px; background: var(--bg-secondary); border-radius: 4px; font-weight: 500;">${methodLabels[paymentMethod]}</span>`
-      : `<span style="font-size: 0.75rem; color: var(--text-secondary);">${escapeHtml(paymentMethod)}</span>`;
+      ? `<span class="method-badge" style="font-size: 12px; padding: 4px 8px; background: var(--bg-secondary); border-radius: 4px; font-weight: 500;">${methodLabels[paymentMethod]}</span>`
+      : `<span style="font-size: 12px; color: var(--text-secondary);">${escapeHtml(paymentMethod)}</span>`;
     
     const isTruncated = payment.invoiceNo && payment.invoiceNo.length > 25;
     const invoiceDisplay = truncateInvoiceNo(payment.invoiceNo);
@@ -964,12 +964,12 @@ function renderLogs() {
   tbody.innerHTML = logs.map((log, index) => `
     <tr>
       <td style="white-space: nowrap;">
-        <span style="color: var(--text-secondary); font-size: 0.75rem; font-family: var(--font-mono);">
+        <span style="color: var(--text-secondary); font-size: 12px; font-family: var(--font-mono);">
           ${formatLogTime(log.timestamp)}
         </span>
       </td>
       <td>
-        <span class="badge badge-${log.type}" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;">
+        <span class="badge badge-${log.type}" style="font-size: 12px; padding: 0.2rem 0.5rem;">
           ${formatLogType(log.type)}
         </span>
       </td>
@@ -979,7 +979,7 @@ function renderLogs() {
           const invoiceDisplay = truncateInvoiceNo(log.invoiceNo);
           return `
             <div style="display: flex; align-items: center; gap: 0.5rem; max-width: 100%;">
-              <a href="/payment/${encodeURIComponent(log.invoiceNo)}" style="font-family: var(--font-mono); font-size: 0.8rem; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttr(log.invoiceNo)}">
+              <a href="/payment/${encodeURIComponent(log.invoiceNo)}" style="font-family: var(--font-mono); font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttr(log.invoiceNo)}">
                 ${escapeHtml(invoiceDisplay)}
               </a>
               ${isTruncated ? `
@@ -995,23 +995,23 @@ function renderLogs() {
         })() : '<span style="color: var(--text-muted);">-</span>'}
       </td>
       <td style="white-space: nowrap;">
-        <span style="font-family: var(--font-mono); font-size: 0.75rem;">
+        <span style="font-family: var(--font-mono); font-size: 12px;">
           ${escapeHtml(log.request?.method || '-')}
         </span>
       </td>
       <td style="max-width: 250px; min-width: 150px;">
-        <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" 
+        <span style="font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" 
               title="${escapeAttr(log.request?.path || '')}">
           ${escapeHtml(truncatePath(log.request?.path || '-'))}
         </span>
       </td>
       <td style="white-space: nowrap;">
-        <span class="badge ${getStatusBadgeClass(log.response?.status)}" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;">
+        <span class="badge ${getStatusBadgeClass(log.response?.status)}" style="font-size: 12px; padding: 0.2rem 0.5rem;">
           ${log.response?.status || '-'}
         </span>
       </td>
       <td style="white-space: nowrap;">
-        <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent);">
+        <span style="font-family: var(--font-mono); font-size: 12px; color: var(--accent);">
           ${log.response?.duration ? `${log.response.duration}ms` : '-'}
         </span>
       </td>
@@ -1951,7 +1951,7 @@ function viewLogDetail(index) {
         Request
         <span class="direction ${direction}">${directionLabel}</span>
       </div>
-      <div style="margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+      <div style="margin-bottom: 0.5rem; font-size: 13px; color: var(--text-secondary);">
         <strong>${escapeHtml(log.request?.method || 'UNKNOWN')}</strong> ${escapeHtml(log.request?.path || '')}
       </div>
       <div class="code-block">${formatJson(log.request?.body)}</div>

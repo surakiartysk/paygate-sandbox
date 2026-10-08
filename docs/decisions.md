@@ -32,6 +32,7 @@ one that was obvious.
 18. [The browser holds a session, not the password](#18-the-browser-holds-a-session-not-the-password)
 19. [The admin API answers no other origin, and a page says who may frame it](#19-the-admin-api-answers-no-other-origin-and-a-page-says-who-may-frame-it)
 20. [Escaping text is not the same as vetting an address](#20-escaping-text-is-not-the-same-as-vetting-an-address)
+21. [The pages share the portfolio's type, a neutral primary and one name](#21-the-pages-share-the-portfolios-type-a-neutral-primary-and-one-name)
 
 ---
 
@@ -642,6 +643,48 @@ the list a block-list would have to learn. The token API still stores the value 
   mobile app that registers its own scheme is a plausible integration, and this sandbox now
   refuses it with an alert. The cost is real for that caller; allowing it would mean allowing every
   scheme but the dangerous ones, which is the block-list the decision was made to avoid.
+
+## 21. The pages share the portfolio's type, a neutral primary and one name
+
+**Context.** A review of the pages against the other projects in the portfolio, and an axe run over
+every page in both themes and at 1280 and 375 px, found that this was the project that looked least
+like the rest and the one with the most small inconsistencies. The text was Inter where the others use
+Manrope. The accent was green on dark and blue on light, and the primary button was the accent, so
+"Send Callback" was the same green as a "Success" badge: a button and an outcome could not be told apart
+at a glance. The admin pages were called "Paygate Sandbox" except the payment page, which was "Mock
+Payment Gateway" with an "MP" mark. The dashboard and the login page had no `h1`, and the dashboard and
+the hosted payment page shared the title "Paygate Sandbox". Seventeen distinct `rem` sizes had grown up
+in the stylesheet (0.8rem, 0.85rem, 0.875rem and 0.9rem for text that differs by a pixel), and 57 more
+were written inline in the markup and the scripts. axe found `link-in-text-block` on the dashboard and the
+payment page: a link in a sentence told from the text by colour alone.
+
+**Decision.** Text is Manrope and code is JetBrains Mono. The accent is a neutral (`#e5e7eb` on dark,
+`#1f2937` on light), which keeps the primary button a plain light or dark button; green, red, blue and
+amber are left to mean success, failure, pending and warning, and nothing else. The admin pages are all
+"Paygate Sandbox". The hosted payment page keeps "Mock Payment Gateway" on purpose, because it is the
+page of the gateway this sandbox imitates and is not part of the admin. Every page has a title of its own,
+the page first and the site after it, and exactly one `h1`; a loaded payment is titled with its invoice
+and provider. Every font size is one of 12, 13, 15, 16, 22 and 28 px, with 32, 40 and 64 px kept for the
+big numbers on the dashboard, the landing page and the 404. `test/design-system.test.js` holds each of
+these, and each was proven able to fail by putting the old value back and watching the right test go red
+(22 changes, 22 red).
+
+**Trade-off.**
+
+- **A neutral accent cannot mark a link by colour.** The two links this step touched are underlined:
+  the one in the demo notice and the invoice number in each row. Other places that were coloured by the
+  accent (the landing page's footer links, the inspector's address) now read as plain text. They sit in
+  lists of links and next to controls rather than in running sentences, and they were not each audited
+  for another cue, so a link there may be harder to find than it was.
+- **Text is a pixel bigger.** The 14 px text (22 declarations) became 15 px. Nothing overflowed at 1280
+  or 375 px (no page was wider than the window), but a table on a width in between
+  was not measured.
+- **The fonts still come from Google Fonts.** Manrope replaces Inter in the same request, so nothing
+  about what a visitor's browser contacts has changed; self-hosting them is a separate decision and was
+  not made here.
+- **Not fixed here:** the `select` with no name on the payment page, the landing page's scrollable code
+  block and small targets, the unlabelled number fields and the `×` buttons. They are the next step, and
+  the long, boxed layout of the dashboard and the payment page is the one after.
 
 ---
 

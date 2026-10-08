@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mockup: DEMO-60A5FAFEE5-10 · Paygate Sandbox</title>
+    <link rel="stylesheet" href="mockup.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&family=JetBrains+Mono:wght@400..600&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="demo"><p>Demo: these ten payments are yours for a day. Change one, send its callback, then check your <a href="#">inspector</a>.</p></div>
+    <header class="bar">
+      <div class="bar-in">
+        <a class="brand" href="#">Paygate Sandbox</a>
+        <nav class="nav" aria-label="Pages">
+          <a href="#" aria-current="page">Payments</a>
+          <a href="#">Inspector</a>
+        </nav>
+        <div class="tools">
+          <button type="button" onclick="document.documentElement.dataset.theme = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'">Light / dark</button>
+          <button type="button">Sign out</button>
+        </div>
+      </div>
+    </header>
+    <main class="wrap">
+      <p class="crumb"><a href="#">Payments</a> / DEMO-60A5FAFEE5-10</p>
+      <div class="head">
+        <div>
+          <h1>DEMO-60A5FAFEE5-10 <span class="chip bad">Failed</span></h1>
+          <p class="sub">Omise · Card · 450.00 THB · created Oct 8, 10:24 PM</p>
+        </div>
+        <div class="actions-bar">
+          <button type="button">Update status</button>
+          <button type="button" class="primary">Send callback</button>
+        </div>
+      </div>
+      <div class="cols">
+        <section class="card" aria-labelledby="facts">
+          <h2 id="facts">Payment</h2>
+          <dl class="facts"><div><dt>Amount</dt><dd>450.00 THB</dd></div><div><dt>Payment method</dt><dd>Credit card (non-3DS)</dd></div><div><dt>Merchant ID</dt><dd>DEMO_MERCHANT</dd></div><div><dt>Transaction ref</dt><dd>TXN741164413877</dd></div><div><dt>Approval code</dt><dd>none</dd></div><div><dt>Charge status</dt><dd>failed</dd></div><div><dt>Failure message</dt><dd>Insufficient funds (code 4051)</dd></div></dl>
+        </section>
+        <section class="card" aria-labelledby="hist">
+          <h2 id="hist">Status history</h2>
+          <ol class="timeline">
+            <li><time>Oct 8, 10:24:56 PM</time><div class="what"><span class="chip wait">Pending</span><span class="mono note">2001</span></div><span class="note">Payment created (demo data), by system</span></li>
+            <li><time>Oct 8, 10:25:02 PM</time><div class="what"><span class="chip bad">Failed</span><span class="mono note">4051</span></div><span class="note">Set to failed, by you</span></li>
+          </ol>
+        </section>
+      </div>
+      <div class="danger">
+        <p>Delete removes this payment and its callback history from your session. It cannot be undone.</p>
+        <button type="button" class="del">Delete payment</button>
+      </div>
+      <p class="note" style="margin-top:16px">Mockup of the payment page: facts as a list, history sized to its content, Delete set apart and asking first.</p>
+    </main>
+  </body>
+</html>

@@ -316,7 +316,7 @@ function renderPayment() {
   
   // Header with provider badge
   document.getElementById('invoice-display').textContent = payment.invoiceNo;
-  document.title = `${payment.invoiceNo} - Paygate Sandbox (${provider.toUpperCase()})`;
+  document.title = `${payment.invoiceNo} (${provider.toUpperCase()}) · Paygate Sandbox`;
   
   // Add provider badge to header if element exists
   const providerBadgeEl = document.getElementById('provider-badge');
@@ -565,11 +565,11 @@ function renderStatusHistory() {
     <div class="timeline-item">
       <div class="timeline-time">${formatDateTime(entry.changedAt)}</div>
       <div class="timeline-content">
-        <span class="badge badge-${entry.status}" style="font-size: 0.7rem;">
+        <span class="badge badge-${entry.status}" style="font-size: 12px;">
           ${entry.status.toUpperCase()}
         </span>
         ${entry.respCode ? `
-          <span style="color: var(--accent); font-family: var(--font-mono); font-size: 0.75rem; margin-left: 0.5rem;">
+          <span style="color: var(--accent); font-family: var(--font-mono); font-size: 12px; margin-left: 0.5rem;">
             [${entry.respCode}]
           </span>
         ` : ''}
@@ -579,11 +579,11 @@ function renderStatusHistory() {
             ${entry.previousStatus}
           </span>
         ` : ''}
-        <span style="color: var(--text-muted); margin-left: 0.5rem; font-size: 0.8rem;">
+        <span style="color: var(--text-muted); margin-left: 0.5rem; font-size: 13px;">
           by ${entry.changedBy || entry.source || 'unknown'}
         </span>
         ${entry.respDesc && entry.status !== 'success' ? `
-          <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.25rem;">
+          <div style="color: var(--text-muted); font-size: 12px; margin-top: 0.25rem;">
             ${entry.respDesc}
           </div>
         ` : ''}

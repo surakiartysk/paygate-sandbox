@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mockup: Payments · Paygate Sandbox</title>
+    <link rel="stylesheet" href="mockup.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&family=JetBrains+Mono:wght@400..600&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="demo"><p>Demo: these ten payments are yours for a day. Change one, send its callback, then check your <a href="#">inspector</a>.</p></div>
+    <header class="bar">
+      <div class="bar-in">
+        <a class="brand" href="#">Paygate Sandbox</a>
+        <nav class="nav" aria-label="Pages">
+          <a href="#" aria-current="page">Payments</a>
+          <a href="#">Inspector</a>
+        </nav>
+        <div class="tools">
+          <button type="button" onclick="document.documentElement.dataset.theme = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'">Light / dark</button>
+          <button type="button">Sign out</button>
+        </div>
+      </div>
+    </header>
+    <main class="wrap">
+      <h1>Payments</h1>
+      <p class="sub">Sample payments for your session. Change a status or send a callback to see what your integration receives.</p>
+      <div class="strip" role="group" aria-label="Payments by status">
+        <div><b>10</b><span>payments</span></div>
+        <div class="s-wait"><b>2</b><span>pending</span></div>
+        <div class="s-ok"><b>4</b><span>success</span></div>
+        <div class="s-bad"><b>4</b><span>not paid</span></div>
+      </div>
+      <section class="card" aria-labelledby="list">
+        <h2 id="list" class="sr" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)">Payment list</h2>
+        <form class="filters" onsubmit="return false">
+          <label class="grow">Search<input type="search" placeholder="Invoice number" /></label>
+          <label>Provider<select><option>All</option><option>2C2P</option><option>Omise</option></select></label>
+          <label>Method<select><option>All</option><option>Card</option><option>QR</option></select></label>
+          <label>Status<select><option>All</option><option>Pending</option><option>Success</option><option>Failed</option></select></label>
+          <button class="refresh" type="button">Refresh</button>
+        </form>
+        <table>
+          <thead><tr><th scope="col">Invoice</th><th scope="col">Provider</th><th scope="col">Method</th><th scope="col">Amount</th><th scope="col">Status</th><th scope="col">Callbacks</th><th scope="col">Created</th><th scope="col"><span class="note">Actions</span></th></tr></thead>
+          <tbody><tr><td><a class="inv" href="#">DEMO-60A5FAFEE5-10</a></td><td>Omise</td><td>Card</td><td class="mono">450.00 <span class="note">THB</span></td><td><span class="chip bad">Failed</span></td><td class="mono">0</td><td class="note">Oct 8, 10:24 PM</td><td><div class="acts"><button type="button">Status</button><button type="button">Callback</button><button type="button" aria-label="More actions for DEMO-60A5FAFEE5-10">⋯</button></div></td></tr><tr><td><a class="inv" href="#">DEMO-60A5FAFEE5-09</a></td><td>Omise</td><td>QR</td><td class="mono">780.00 <span class="note">THB</span></td><td><span class="chip wait">Pending</span></td><td class="mono">0</td><td class="note">Oct 8, 10:07 PM</td><td><div class="acts"><button type="button">Status</button><button type="button">Callback</button><button type="button" aria-label="More actions for DEMO-60A5FAFEE5-09">⋯</button></div></td></tr><tr><td><a class="inv" href="#">DEMO-60A5FAFEE5-08</a></td><td>2C2P</td><td>Card</td><td class="mono">1,250.00 <span class="note">THB</span></td><td><span class="chip ok">Success</span></td><td class="mono">2</td><td class="note">Oct 8, 9:41 PM</td><td><div class="acts"><button type="button">Status</button><button type="button">Callback</button><button type="button" aria-label="More actions for DEMO-60A5FAFEE5-08">⋯</button></div></td></tr><tr><td><a class="inv" href="#">DEMO-60A5FAFEE5-07</a></td><td>2C2P</td><td>QR</td><td class="mono">320.00 <span class="note">THB</span></td><td><span class="chip ok">Success</span></td><td class="mono">1</td><td class="note">Oct 8, 9:15 PM</td><td><div class="acts"><button type="button">Status</button><button type="button">Callback</button><button type="button" aria-label="More actions for DEMO-60A5FAFEE5-07">⋯</button></div></td></tr><tr><td><a class="inv" href="#">DEMO-60A5FAFEE5-06</a></td><td>Omise</td><td>Card</td><td class="mono">2,990.00 <span class="note">THB</span></td><td><span class="chip bad">Failed</span></td><td class="mono">0</td><td class="note">Oct 8, 8:52 PM</td><td><div class="acts"><button type="button">Status</button><button type="button">Callback</button><button type="button" aria-label="More actions for DEMO-60A5FAFEE5-06">⋯</button></div></td></tr><tr><td><a class="inv" href="#">DEMO-60A5FAFEE5-05</a></td><td>2C2P</td><td>Card</td><td class="mono">150.00 <span class="note">THB</span></td><td><span class="chip wait">Pending</span></td><td class="mono">0</td><td class="note">Oct 8, 8:30 PM</td><td><div class="acts"><button type="button">Status</button><button type="button">Callback</button><button type="button" aria-label="More actions for DEMO-60A5FAFEE5-05">⋯</button></div></td></tr><tr><td><a class="inv" href="#">DEMO-60A5FAFEE5-04</a></td><td>Omise</td><td>QR</td><td class="mono">640.00 <span class="note">THB</span></td><td><span class="chip ok">Success</span></td><td class="mono">1</td><td class="note">Oct 8, 7:58 PM</td><td><div class="acts"><button type="button">Status</button><button type="button">Callback</button><button type="button" aria-label="More actions for DEMO-60A5FAFEE5-04">⋯</button></div></td></tr><tr><td><a class="inv" href="#">DEMO-60A5FAFEE5-03</a></td><td>2C2P</td><td>Card</td><td class="mono">1,800.00 <span class="note">THB</span></td><td><span class="chip bad">Failed</span></td><td class="mono">0</td><td class="note">Oct 8, 7:20 PM</td><td><div class="acts"><button type="button">Status</button><button type="button">Callback</button><button type="button" aria-label="More actions for DEMO-60A5FAFEE5-03">⋯</button></div></td></tr></tbody>
+        </table>
+        <div class="cards"><div class="pc"><div class="pc-top"><a href="#">DEMO-60A5FAFEE5-10</a><span class="mono">450.00 <span class="note">THB</span></span></div><div class="pc-mid"><span class="chip bad">Failed</span><span>Omise · Card</span><span>Oct 8, 10:24 PM</span></div><div class="acts"><button type="button">Status</button><button type="button">Callback</button><button type="button" aria-label="More actions for DEMO-60A5FAFEE5-10">⋯</button></div></div><div class="pc"><div class="pc-top"><a href="#">DEMO-60A5FAFEE5-09</a><span class="mono">780.00 <span class="note">THB</span></span></div><div class="pc-mid"><span class="chip wait">Pending</span><span>Omise · QR</span><span>Oct 8, 10:07 PM</span></div><div class="acts"><button type="button">Status</button><button type="button">Callback</button><button type="button" aria-label="More actions for DEMO-60A5FAFEE5-09">⋯</button></div></div><div class="pc"><div class="pc-top"><a href="#">DEMO-60A5FAFEE5-08</a><span class="mono">1,250.00 <span class="note">THB</span></span></div><div class="pc-mid"><span class="chip ok">Success</span><span>2C2P · Card</span><span>Oct 8, 9:41 PM</span></div><div class="acts"><button type="button">Status</button><button type="button">Callback</button><button type="button" aria-label="More actions for DEMO-60A5FAFEE5-08">⋯</button></div></div><div class="pc"><div class="pc-top"><a href="#">DEMO-60A5FAFEE5-07</a><span class="mono">320.00 <span class="note">THB</span></span></div><div class="pc-mid"><span class="chip ok">Success</span><span>2C2P · QR</span><span>Oct 8, 9:15 PM</span></div><div class="acts"><button type="button">Status</button><button type="button">Callback</button><button type="button" aria-label="More actions for DEMO-60A5FAFEE5-07">⋯</button></div></div></div>
+      </section>
+      <p class="note" style="margin-top:16px">Mockup of the payments page. Light/dark is the button in the header.</p>
+    </main>
+  </body>
+</html>

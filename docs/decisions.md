@@ -730,6 +730,13 @@ tried, and a regular expression for `switchTab` read the rest of the file), and 
 - **A toast still leaves after three seconds.** It is announced, but someone who needs longer to read it
   does not get it. That is a decision about time limits, not about names.
 - **Checked in Chrome only,** by axe, by the probe above and by reading the markup; not with a screen reader.
+- **The badges were first checked only on the card, not under the pointer.** A table row's hover colour is
+  lighter in dark and darker in light, and a badge's background is a tint with alpha, so what is behind it
+  changes the contrast: a FAILED badge was 4.22:1 on a hovered row in light and 3.98:1 in dark, found on the
+  deployed site after this decision was merged. `test/contrast.test.js` now checks every badge on both the card
+  and the hover colour (34 pairs failed at first), and the text colours moved by a few steps of lightness,
+  not by a change of hue. Hovering each row of the demo data in Chrome, light and dark, finds no contrast
+  violation; the same check on the site before the fix finds 19 in dark.
 
 ---
 

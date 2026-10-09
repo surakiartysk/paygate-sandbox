@@ -70,20 +70,7 @@
             <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
           </svg>
         </button>
-        <a href="/dashboard" class="btn btn-secondary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: middle;">
-            <path d="M19 12H5M12 19l-7-7 7-7"></path>
-          </svg>
-          Back to List
-        </a>
-        <button class="btn btn-secondary btn-sm" onclick="logout()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: middle;">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-          </svg>
-          Logout
-        </button>
+        <button class="btn btn-secondary btn-sm" onclick="logout()">Sign out</button>
       </div>
     </div>
   </header>
@@ -91,123 +78,97 @@
   <!-- Main Content -->
   <main class="container">
     <!-- Detail Header -->
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href="/dashboard">Payments</a> / <span id="crumb-invoice">…</span>
+    </nav>
     <div class="detail-header">
       <div>
-        <h1 class="detail-title">Payment Details</h1>
-        <p class="detail-subtitle" id="invoice-display">Loading...</p>
-        <div id="provider-badge" style="margin-top: 0.5rem;"></div>
+        <h1 class="detail-title"><span id="invoice-display" class="mono">Loading…</span> <span class="badge" id="status-badge" hidden>-</span></h1>
+        <p class="detail-subtitle" id="detail-summary"></p>
       </div>
       <div class="detail-actions">
-        <button class="btn btn-secondary" id="btn-update-status" onclick="openStatusModal()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: middle;">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-          </svg>
-          Update Status
-        </button>
-        <button class="btn btn-primary" id="btn-send-callback" onclick="openCallbackModal()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: middle;">
-            <line x1="22" y1="2" x2="11" y2="13"></line>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-          </svg>
-          Send Callback
-        </button>
-        <button class="btn btn-danger" onclick="deletePaymentAndRedirect()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: middle;">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
-          Delete
-        </button>
+        <button class="btn btn-secondary" id="btn-update-status" onclick="openStatusModal()">Update status</button>
+        <button class="btn btn-primary" id="btn-send-callback" onclick="openCallbackModal()">Send callback</button>
       </div>
     </div>
 
     <!-- Main Grid -->
     <div class="detail-grid">
-      <!-- Payment Info -->
+      <!-- Payment facts -->
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">Payment Information</h3>
-          <span class="badge" id="status-badge">-</span>
+          <h2 class="card-title">Payment</h2>
         </div>
         <div class="card-body">
-          <div class="info-grid">
+          <dl class="info-grid">
             <div class="info-item">
-              <div class="info-label">Invoice No</div>
-              <div class="info-value mono" id="info-invoice">-</div>
+              <dt class="info-label">Amount</dt>
+              <dd class="info-value" id="info-amount">-</dd>
             </div>
             <div class="info-item">
-              <div class="info-label">Amount</div>
-              <div class="info-value" id="info-amount">-</div>
+              <dt class="info-label">Payment method</dt>
+              <dd class="info-value" id="info-method">-</dd>
             </div>
             <div class="info-item">
-              <div class="info-label">Currency</div>
-              <div class="info-value" id="info-currency">-</div>
+              <dt class="info-label">Merchant ID</dt>
+              <dd class="info-value mono" id="info-merchant">-</dd>
             </div>
-          <div class="info-item">
-            <div class="info-label">Merchant ID</div>
-            <div class="info-value mono" id="info-merchant">-</div>
-          </div>
-          <div class="info-item">
-            <div class="info-label">Payment Method</div>
-            <div class="info-value" id="info-method">-</div>
-          </div>
-          <div class="info-item">
-            <div class="info-label">Transaction Ref</div>
-            <div class="info-value mono" id="info-tranref">-</div>
-          </div>
-          <div class="info-item">
-            <div class="info-label">Approval Code</div>
-            <div class="info-value mono" id="info-approval">-</div>
-          </div>
-          <div class="info-item">
-            <div class="info-label" id="resp-code-label">Response Code</div>
-            <div class="info-value mono" id="info-respcode">-</div>
-          </div>
-          <div class="info-item">
-            <div class="info-label" id="resp-desc-label">Response Desc</div>
-            <div class="info-value" id="info-respdesc">-</div>
-          </div>
-            <div class="info-item info-item-wide">
-              <div class="info-label">Description</div>
-              <div class="info-value" id="info-description">-</div>
+            <div class="info-item">
+              <dt class="info-label">Transaction ref</dt>
+              <dd class="info-value mono" id="info-tranref">-</dd>
+            </div>
+            <div class="info-item">
+              <dt class="info-label">Approval code</dt>
+              <dd class="info-value mono" id="info-approval">-</dd>
+            </div>
+            <div class="info-item">
+              <dt class="info-label" id="resp-code-label">Response code</dt>
+              <dd class="info-value mono" id="info-respcode">-</dd>
             </div>
             <div class="info-item info-item-wide">
-              <div class="info-label">Payment Token</div>
-              <div class="info-value mono" id="info-token" style="font-size: 12px;">-</div>
-            </div>
-            <div class="info-item info-item-wide" id="info-qr-item" style="display: none;">
-              <div class="info-label">QR Code</div>
-              <div class="info-value mono" id="info-qr-code" style="font-size: 13px;">-</div>
-            </div>
-            <div class="info-item info-item-wide" id="info-ref-item" style="display: none;">
-              <div class="info-label">Payment Reference</div>
-              <div class="info-value mono" id="info-payment-ref" style="font-size: 13px;">-</div>
-            </div>
-            <div class="info-item info-item-wide" id="info-redirect-item" style="display: none;">
-              <div class="info-label">Redirect URL</div>
-              <div class="info-value mono" id="info-redirect-url" style="font-size: 12px; word-break: break-all;">-</div>
+              <dt class="info-label" id="resp-desc-label">Response desc</dt>
+              <dd class="info-value" id="info-respdesc">-</dd>
             </div>
             <div class="info-item info-item-wide">
-              <div class="info-label">Backend Return URL</div>
-              <div class="info-value mono" id="info-backend-url" style="font-size: 13px;">-</div>
+              <dt class="info-label">Description</dt>
+              <dd class="info-value" id="info-description">-</dd>
+            </div>
+            <div class="info-item info-item-wide">
+              <dt class="info-label">Payment token</dt>
+              <dd class="info-value mono" id="info-token">-</dd>
+            </div>
+            <div class="info-item info-item-wide" id="info-qr-item" hidden>
+              <dt class="info-label">QR code</dt>
+              <dd class="info-value mono" id="info-qr-code">-</dd>
+            </div>
+            <div class="info-item info-item-wide" id="info-ref-item" hidden>
+              <dt class="info-label">Payment reference</dt>
+              <dd class="info-value mono" id="info-payment-ref">-</dd>
+            </div>
+            <div class="info-item info-item-wide" id="info-redirect-item" hidden>
+              <dt class="info-label">Redirect URL</dt>
+              <dd class="info-value mono" id="info-redirect-url">-</dd>
+            </div>
+            <div class="info-item info-item-wide">
+              <dt class="info-label">Backend return URL</dt>
+              <dd class="info-value mono" id="info-backend-url">-</dd>
             </div>
             <div class="info-item">
-              <div class="info-label">Created At</div>
-              <div class="info-value mono" id="info-created">-</div>
+              <dt class="info-label">Created</dt>
+              <dd class="info-value mono" id="info-created">-</dd>
             </div>
             <div class="info-item">
-              <div class="info-label">Updated At</div>
-              <div class="info-value mono" id="info-updated">-</div>
+              <dt class="info-label">Updated</dt>
+              <dd class="info-value mono" id="info-updated">-</dd>
             </div>
-          </div>
+          </dl>
         </div>
       </div>
 
       <!-- Status History -->
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">Status History</h3>
+          <h2 class="card-title">Status history</h2>
         </div>
         <div class="card-body">
           <div class="timeline" id="status-timeline">
@@ -223,18 +184,15 @@
     <!-- Callback History -->
     <div class="card" style="margin-top: 1.5rem;">
       <div class="card-header">
-        <h3 class="card-title">
-          Callback History 
+        <h2 class="card-title">
+          Callback history
           <span class="badge badge-pending" id="callback-count" style="margin-left: 0.5rem;">0</span>
-        </h3>
-        <button class="btn btn-primary btn-sm" onclick="openCallbackModal()">
-          📤 Send Callback
-        </button>
+        </h2>
+        <button class="btn btn-primary btn-sm" onclick="openCallbackModal()">Send callback</button>
       </div>
       <div class="card-body" id="callback-history">
         <div class="empty-state">
-          <div class="empty-state-icon">📭</div>
-          <div class="empty-state-title">No callbacks sent yet</div>
+            <div class="empty-state-title">No callbacks sent yet</div>
           <p>Send one with Send Callback and it will appear here.</p>
         </div>
       </div>
@@ -243,7 +201,7 @@
     <!-- Inquiry Simulation -->
     <div class="card" style="margin-top: 1.5rem;">
       <div class="card-header">
-        <h3 class="card-title">🔍 Inquiry Simulation</h3>
+        <h2 class="card-title">Inquiry simulation</h2>
         <span class="badge" id="inquiry-behavior-badge">NORMAL</span>
       </div>
       <div class="card-body">
@@ -276,18 +234,26 @@
           </div>
         </div>
         <div style="margin-top: 1rem; display: flex; gap: 0.75rem;">
-          <button class="btn btn-primary" onclick="saveInquiryConfig()">💾 Save Inquiry Settings</button>
-          <button class="btn btn-secondary" onclick="resetInquiryConfig()">↺ Reset to Normal</button>
+          <button class="btn btn-primary" onclick="saveInquiryConfig()">Save inquiry settings</button>
+          <button class="btn btn-secondary" onclick="resetInquiryConfig()">Reset to normal</button>
         </div>
       </div>
     </div>
+    <!-- Delete -->
+    <section class="danger-zone" aria-labelledby="delete-title">
+      <div>
+        <h2 id="delete-title" class="danger-title">Delete this payment</h2>
+        <p>Removes it and its callback history from your session. It cannot be undone.</p>
+      </div>
+      <button class="btn btn-danger" onclick="deletePaymentAndRedirect()">Delete payment</button>
+    </section>
   </main>
 
   <!-- Callback Sequence Modal -->
   <div class="modal-overlay" id="callback-modal">
     <div class="modal" style="max-width: 800px;" role="dialog" aria-modal="true" aria-labelledby="callback-modal-title">
       <div class="modal-header">
-        <h3 id="callback-modal-title" class="modal-title"><span aria-hidden="true">📤</span> Send Callback</h3>
+        <h3 id="callback-modal-title" class="modal-title">Send callback</h3>
         <button type="button" class="modal-close" onclick="closeCallbackModal()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
@@ -348,7 +314,7 @@
           <div style="margin-bottom: 1rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
               <label class="form-label" style="margin: 0;">Callback Payload Preview</label>
-              <button class="btn btn-secondary btn-sm" onclick="loadCallbackPreview()">🔄 Load Preview</button>
+              <button class="btn btn-secondary btn-sm" onclick="loadCallbackPreview()">Load preview</button>
             </div>
             <div id="callback-preview-container" style="position: relative;">
               <textarea id="callback-payload-editor" aria-label="Callback payload (JSON)" class="form-input" rows="15" style="font-family: var(--font-mono); font-size: 13px; resize: vertical;" spellcheck="false"></textarea>
@@ -358,8 +324,8 @@
           
           <!-- Action Buttons -->
           <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-            <button class="btn btn-secondary btn-sm" onclick="resetCallbackPayload()">↺ Reset to Default</button>
-            <button class="btn btn-secondary btn-sm" onclick="formatCallbackPayload()">✨ Format JSON</button>
+            <button class="btn btn-secondary btn-sm" onclick="resetCallbackPayload()">Reset to default</button>
+            <button class="btn btn-secondary btn-sm" onclick="formatCallbackPayload()">Format JSON</button>
           </div>
           
           <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius); font-size: 13px; color: var(--text-muted);">

@@ -249,7 +249,7 @@ async function updatePaymentStatus(status, respCode = null) {
 async function sendCallback() {
   const btn = document.getElementById('btn-send-callback');
   const originalText = btn.innerHTML;
-  btn.innerHTML = '⏳ Sending...';
+  btn.innerHTML = 'Sending…';
   btn.disabled = true;
 
   try {
@@ -314,28 +314,19 @@ function renderPayment() {
   const provider = payment.provider || '2c2p';
   const isOmise = provider === 'omise';
   
-  // Header with provider badge
+  // Header: the invoice is the title, the status sits beside it, and one line says the rest
   document.getElementById('invoice-display').textContent = payment.invoiceNo;
+  document.getElementById('crumb-invoice').textContent = payment.invoiceNo;
   document.title = `${payment.invoiceNo} (${provider.toUpperCase()}) · Paygate Sandbox`;
-  
-  // Add provider badge to header if element exists
-  const providerBadgeEl = document.getElementById('provider-badge');
-  if (providerBadgeEl) {
-    const providerBadge = isOmise
-      ? '<span class="provider-badge badge-omise">💳 Omise</span>'
-      : '<span class="provider-badge badge-2c2p">🏦 2C2P</span>';
-    providerBadgeEl.innerHTML = providerBadge;
-  }
 
   // Status badge
   const statusBadge = document.getElementById('status-badge');
   statusBadge.textContent = payment.status.toUpperCase();
   statusBadge.className = `badge badge-${payment.status}`;
+  statusBadge.hidden = false;
 
   // Info fields
-  document.getElementById('info-invoice').textContent = payment.invoiceNo;
-  document.getElementById('info-amount').textContent = formatAmount(payment.amount);
-  document.getElementById('info-currency').textContent = payment.currencyCode;
+  document.getElementById('info-amount').textContent = `${formatAmount(payment.amount)} ${payment.currencyCode}`;
   document.getElementById('info-merchant').textContent = payment.merchantID;
   document.getElementById('info-tranref').textContent = payment.tranRef || '-';
   document.getElementById('info-approval').textContent = payment.approvalCode || '-';
@@ -343,52 +334,54 @@ function renderPayment() {
   // Payment method display
   const paymentMethod = payment.paymentMethod || payment.channelCode || payment.paymentChannel?.[0] || '-';
   const methodLabels = {
-    'CC': '💳 Credit Card (Non-3DS)',
-    '3DS': '🔒 3D Secure Card',
-    'QR': '📱 QR Payment',
-    'DPAY': '💸 Digital Wallet',
-    'PC': '🏪 Pay At Counter',
-    'SSM': '🤖 Self Service Machine',
-    'IB': '🌐 Internet Banking',
-    'WAP': '🌍 Web Payment',
-    'APP': '📲 Mobile App Payment',
-    'DC': '💳 Debit Card'
+    'CC': 'Credit card (non-3DS)',
+    '3DS': '3D Secure card',
+    'QR': 'QR payment',
+    'DPAY': 'Digital wallet',
+    'PC': 'Pay at counter',
+    'SSM': 'Self-service machine',
+    'IB': 'Internet banking',
+    'WAP': 'Web payment',
+    'APP': 'Mobile app payment',
+    'DC': 'Debit card'
   };
   const methodDisplay = methodLabels[paymentMethod] || paymentMethod;
   document.getElementById('info-method').textContent = methodDisplay;
+  document.getElementById('detail-summary').textContent =
+    `${isOmise ? 'Omise' : '2C2P'} · ${methodDisplay} · created ${formatDateTime(payment.createdAt)}`;
   
   // Show/hide Direct API specific fields
   const qrItem = document.getElementById('info-qr-item');
   const qrCodeEl = document.getElementById('info-qr-code');
   if (payment.qrCode && paymentMethod === 'QR') {
-    qrItem.style.display = 'block';
+    qrItem.hidden = false;
     qrCodeEl.textContent = payment.qrCode;
     if (payment.qrPaymentUrl) {
       renderLink(qrCodeEl, payment.qrPaymentUrl, payment.qrCode);
     }
   } else {
-    qrItem.style.display = 'none';
+    qrItem.hidden = true;
   }
   
   const refItem = document.getElementById('info-ref-item');
   const refEl = document.getElementById('info-payment-ref');
   if (payment.paymentReference && (paymentMethod === 'PC' || paymentMethod === 'SSM')) {
-    refItem.style.display = 'block';
+    refItem.hidden = false;
     refEl.textContent = payment.paymentReference;
   } else {
-    refItem.style.display = 'none';
+    refItem.hidden = true;
   }
   
   const redirectItem = document.getElementById('info-redirect-item');
   const redirectEl = document.getElementById('info-redirect-url');
   if (payment.redirectUrl && (paymentMethod === '3DS' || paymentMethod === 'DPAY' || paymentMethod === 'IB')) {
-    redirectItem.style.display = 'block';
+    redirectItem.hidden = false;
     renderLink(redirectEl, payment.redirectUrl, payment.redirectUrl);
   } else if (payment.webPaymentUrl && paymentMethod === '3DS') {
-    redirectItem.style.display = 'block';
+    redirectItem.hidden = false;
     renderLink(redirectEl, payment.webPaymentUrl, payment.webPaymentUrl);
   } else {
-    redirectItem.style.display = 'none';
+    redirectItem.hidden = true;
   }
   
   // Provider-specific labels and values
@@ -407,15 +400,15 @@ function renderPayment() {
     const chargeStatus = omiseStatusMap[payment.status] || 'pending';
     
     // Update labels for Omise format
-    if (respCodeLabelEl) respCodeLabelEl.textContent = 'Charge Status';
-    if (respDescLabelEl) respDescLabelEl.textContent = 'Failure Message';
+    if (respCodeLabelEl) respCodeLabelEl.textContent = 'Charge status';
+    if (respDescLabelEl) respDescLabelEl.textContent = 'Failure message';
     
     document.getElementById('info-respcode').textContent = chargeStatus;
     document.getElementById('info-respdesc').textContent = payment.respDesc || payment.description || '-';
   } else {
     // 2C2P format (default)
-    if (respCodeLabelEl) respCodeLabelEl.textContent = 'Response Code';
-    if (respDescLabelEl) respDescLabelEl.textContent = 'Response Desc';
+    if (respCodeLabelEl) respCodeLabelEl.textContent = 'Response code';
+    if (respDescLabelEl) respDescLabelEl.textContent = 'Response desc';
     
     document.getElementById('info-respcode').textContent = payment.respCode || '-';
     document.getElementById('info-respdesc').textContent = payment.respDesc || '-';
@@ -607,7 +600,6 @@ function renderCallbackHistory() {
       : 'This payment has no callback URL, so there is nowhere to send one.';
     container.innerHTML = `
       <div class="empty-state" style="padding: 2rem;">
-        <div class="empty-state-icon">📭</div>
         <div class="empty-state-title">No callbacks sent yet</div>
         <p>${hint}</p>
       </div>
@@ -858,7 +850,7 @@ async function sendCustomCallback() {
   
   const btn = document.getElementById('btn-send-callback');
   const originalText = btn.innerHTML;
-  btn.innerHTML = '⏳ Sending...';
+  btn.innerHTML = 'Sending…';
   btn.disabled = true;
   
   try {
@@ -1032,7 +1024,7 @@ async function sendCallbackSequence() {
   
   const btn = document.getElementById('btn-send-callback');
   const originalText = btn.innerHTML;
-  btn.innerHTML = '⏳ Sending...';
+  btn.innerHTML = 'Sending…';
   btn.disabled = true;
   
   try {

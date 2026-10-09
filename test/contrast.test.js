@@ -7,8 +7,10 @@
  * in dark. This does the same arithmetic from the stylesheet itself, so a colour
  * changed later is checked without anyone remembering to.
  *
- * Alpha is composited over the card the badge sits on. WCAG 2 contrast, the
- * 4.5:1 threshold for text under 18px (or 14px bold).
+ * Alpha is composited over the surface the badge sits on: the card, and the row's
+ * hover colour, which is lighter in dark and darker in light and was missed at first
+ * (a FAILED badge was 4.22:1 under the pointer). WCAG 2 contrast, the 4.5:1 threshold
+ * for text under 18px (or 14px bold).
  */
 
 import { test, describe } from 'node:test';
@@ -94,11 +96,16 @@ describe('badges', () => {
     for (const [selector, themes] of Object.entries(rules)) {
       const { color, background } = themes[theme];
       if (!color || !background) continue;
-      test(`${selector}, ${theme}`, () => {
-        const card = parse(tokens['bg-card'], tokens);
-        const r = ratio(over(parse(color, tokens), over(parse(background, tokens), card)), over(parse(background, tokens), card));
-        assert.ok(r >= 4.5, `${color} on ${background}: ${r.toFixed(2)}:1`);
-      });
+      // A badge sits on a card, and in a table row it sits on the row's hover colour as well:
+      // its background is a tint with alpha, so what is behind it changes the contrast.
+      for (const surface of ['bg-card', 'bg-hover']) {
+        test(`${selector} on ${surface}, ${theme}`, () => {
+          const behind = parse(tokens[surface], tokens);
+          const fill = over(parse(background, tokens), behind);
+          const r = ratio(over(parse(color, tokens), fill), fill);
+          assert.ok(r >= 4.5, `${color} on ${background} over ${surface}: ${r.toFixed(2)}:1`);
+        });
+      }
     }
   }
 });

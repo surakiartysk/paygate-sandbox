@@ -644,11 +644,11 @@ function openStatusModal() {
   document.getElementById('new-status').value = payment.status;
   document.getElementById('send-callback-after').checked = false;
   onStatusChange(); // Update response code dropdown
-  modal.classList.add('active');
+  Dialog.open(modal);
 }
 
 function closeStatusModal() {
-  document.getElementById('status-modal').classList.remove('active');
+  Dialog.close(document.getElementById('status-modal'));
 }
 
 function onStatusChange() {
@@ -732,7 +732,7 @@ function openCallbackModal() {
   callbackMode = 'sequence';
   switchCallbackMode('sequence');
   
-  document.getElementById('callback-modal').classList.add('active');
+  Dialog.open(document.getElementById('callback-modal'));
 }
 
 function switchCallbackMode(mode) {
@@ -741,6 +741,8 @@ function switchCallbackMode(mode) {
   // Update button styles
   document.getElementById('callback-mode-sequence').classList.toggle('active', mode === 'sequence');
   document.getElementById('callback-mode-custom').classList.toggle('active', mode === 'custom');
+  document.getElementById('callback-mode-sequence').setAttribute('aria-selected', String(mode === 'sequence'));
+  document.getElementById('callback-mode-custom').setAttribute('aria-selected', String(mode === 'custom'));
   
   // Show/hide mode containers
   document.getElementById('callback-sequence-mode').style.display = mode === 'sequence' ? 'block' : 'none';
@@ -897,7 +899,7 @@ function handleCallbackSend() {
 }
 
 function closeCallbackModal() {
-  document.getElementById('callback-modal').classList.remove('active');
+  Dialog.close(document.getElementById('callback-modal'));
   resetCustomFields();
 }
 
@@ -1139,6 +1141,7 @@ function showToast(message, type = 'success') {
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
+  if (type !== 'success') toast.setAttribute('role', 'alert');
   toast.innerHTML = `
     <span class="toast-icon">${type === 'success' ? '✓' : '✕'}</span>
     <span>${escapeHtml(message)}</span>
@@ -1152,23 +1155,7 @@ function showToast(message, type = 'success') {
   }, 3000);
 }
 
-// Close modals on overlay click
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) {
-      overlay.classList.remove('active');
-    }
-  });
-});
-
-// Close modals on Escape key
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    document.querySelectorAll('.modal-overlay.active').forEach(modal => {
-      modal.classList.remove('active');
-    });
-  }
-});
+// Closing on a press outside a dialog, and on Escape, is in dialog.js.
 
 // Auto-refresh every 10 seconds
 setInterval(refreshPayment, 10000);

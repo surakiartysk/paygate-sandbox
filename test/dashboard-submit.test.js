@@ -43,6 +43,9 @@ function loadPage() {
 
   const context = vm.createContext({
     window: {},
+    // dialog.js is a second script on the page, like custom-fields.js; its focus handling is not what is
+    // under test here, so opening and closing a dialog stand in as what they did before it.
+    Dialog: { open: (el) => el.classList.add('active'), close: (el) => el.classList.remove('active') },
     localStorage: { getItem: () => null, removeItem() {}, setItem() {} },
     document: { hidden: false, addEventListener() {}, querySelectorAll: () => [], getElementById: element },
     fetch: (url, options = {}) => {

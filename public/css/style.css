@@ -1165,53 +1165,99 @@ a:hover {
 }
 
 .detail-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
   font-size: 22px;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.detail-title .mono {
+  font-family: var(--font-mono);
 }
 
 .detail-subtitle {
   color: var(--text-secondary);
-  font-family: var(--font-mono);
   font-size: 15px;
 }
 
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+/* A breadcrumb above the title: the way back to the list, where "Back to List" was a button. */
+.crumbs {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
 }
 
+.crumbs a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* The facts take the wider column and the history only what it needs. It used to be two
+   equal columns with the history stretched to the height of the facts. */
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  align-items: start;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* The facts are a list: a label above its value, a hairline between rows, no tile for each. */
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+  margin: 0;
 }
 
 .info-item {
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius);
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .info-label {
-  font-size: 12px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 0.25rem;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 0.125rem;
 }
 
 .info-value {
-  font-size: 16px;
+  margin: 0;
+  font-size: 15px;
   font-weight: 500;
   word-break: break-all;
 }
 
 .info-value.mono {
   font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+/* Delete is set apart from the actions that can be undone, and says what it does. */
+.danger-zone {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.danger-title {
   font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.danger-zone p {
+  max-width: 44ch;
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 
 /* Loading State */
@@ -2593,5 +2639,11 @@ a:hover {
   .pc-invoice a,
   .landing-footer-links a {
     min-height: 44px;
+  }
+}
+
+@media (max-width: 900px) {
+  .detail-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

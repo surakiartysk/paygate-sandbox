@@ -65,7 +65,7 @@ describe('a payment page on a narrow screen', () => {
    */
   test('does not span grid columns from inline styles', () => {
     assert.doesNotMatch(payment, /grid-column:\s*span 2/);
-    assert.equal((payment.match(/info-item-wide/g) || []).length, 6);
+    assert.equal((payment.match(/info-item-wide/g) || []).length, 7);
   });
 
   test('puts its information in one column on a phone, and the wide tiles in it', () => {

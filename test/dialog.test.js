@@ -179,6 +179,16 @@ describe('with the keyboard', () => {
     assert.equal(p.doc.activeElement, p.behind);
   });
 
+  test('a press on something inside the dialog that happens to be marked active does not close it', () => {
+    // The callback dialog holds a tab that is `active`; pressing it is not a press outside.
+    const p = opened();
+    const tab = control(p.doc, 'tab');
+    tab.classList.add('active');
+    p.listeners.click({ target: tab });
+    assert.ok(p.overlay.classList.contains('active'), 'the dialog stays open');
+    assert.ok(tab.classList.contains('active'), 'and the tab is still the active one');
+  });
+
   test('a press on the dimmed area closes it, and a press inside does not', () => {
     const p = opened();
     p.listeners.click({ target: p.close });

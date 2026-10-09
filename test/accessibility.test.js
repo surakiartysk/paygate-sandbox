@@ -115,11 +115,21 @@ describe('tabs', () => {
     }
   });
 
+  /** The body of a top-level function: from its first line to the closing brace at the start of a line. */
+  const bodyOf = (src, name) => new RegExp(`function ${name}\\([^)]*\\) \\{([\\s\\S]*?)\\n\\}\\n`).exec(src)?.[1] ?? '';
+
   test('the scripts keep aria-selected true to what is shown', () => {
-    assert.match(read('js/dashboard.js'), /function switchTab[\s\S]*?setAttribute\('aria-selected'/);
+    assert.match(bodyOf(read('js/dashboard.js'), 'switchTab'), /setAttribute\('aria-selected', String\(btn\.dataset\.tab === tab\)\)/);
     for (const script of ['dashboard.js', 'payment-detail.js']) {
-      assert.match(read(`js/${script}`), /function switchCallbackMode[\s\S]*?callback-mode-sequence'\)\.setAttribute\('aria-selected'[\s\S]*?callback-mode-custom'\)\.setAttribute\('aria-selected'/, script);
+      const body = bodyOf(read(`js/${script}`), 'switchCallbackMode');
+      assert.match(body, /callback-mode-sequence'\)\.setAttribute\('aria-selected', String\(mode === 'sequence'\)\)/, script);
+      assert.match(body, /callback-mode-custom'\)\.setAttribute\('aria-selected', String\(mode === 'custom'\)\)/, script);
     }
+  });
+
+  test('this test reads the function it names, not the rest of the file', () => {
+    assert.equal(bodyOf('function a(x) {\n  one\n}\nfunction b() {\n  two\n}\n', 'a').trim(), 'one');
+    assert.equal(bodyOf('function a(x) {\n  one\n}\n', 'missing'), '');
   });
 });
 

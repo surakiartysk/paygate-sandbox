@@ -33,6 +33,7 @@ one that was obvious.
 19. [The admin API answers no other origin, and a page says who may frame it](#19-the-admin-api-answers-no-other-origin-and-a-page-says-who-may-frame-it)
 20. [Escaping text is not the same as vetting an address](#20-escaping-text-is-not-the-same-as-vetting-an-address)
 21. [The pages share the portfolio's type, a neutral primary and one name](#21-the-pages-share-the-portfolios-type-a-neutral-primary-and-one-name)
+22. [Every control has a name, a dialog is a dialog, and what happens is announced](#22-every-control-has-a-name-a-dialog-is-a-dialog-and-what-happens-is-announced)
 
 ---
 
@@ -685,6 +686,50 @@ these, and each was proven able to fail by putting the old value back and watchi
 - **Not fixed here:** the `select` with no name on the payment page, the landing page's scrollable code
   block and small targets, the unlabelled number fields and the `×` buttons. They are the next step, and
   the long, boxed layout of the dashboard and the payment page is the one after.
+
+## 22. Every control has a name, a dialog is a dialog, and what happens is announced
+
+**Context.** After [decision 21](#21-the-pages-share-the-portfolios-type-a-neutral-primary-and-one-name),
+6 of the 24 axe runs (6 pages, two themes, two widths) still had findings: `select-name`, critical, on the
+payment page, and on the landing page at 375 px a code block that scrolled and could not be reached by
+keyboard, and two links under the minimum target size. axe does not see everything, so the dashboard was also
+probed in Chromium, which found: nine fields and six close buttons ("×") with no accessible name; six dialogs
+that were a `div` with a class and nothing else, so nothing told a screen reader a dialog had opened;
+tabs that were buttons; toasts nothing announced; and, measured, that after the status dialog opened
+`document.activeElement` was still the button behind it. Tab then walked on into the page under the dialog, and
+closing it left the focus nowhere. Row buttons were fifty copies of "Status" and "Callback". The login page's
+"Password" label was not tied to its field: the page passed axe only because a placeholder counts as a name
+there, and the placeholder is gone as soon as someone types. A test written for this step found that one.
+
+**Decision.** Every field has a name from a label tied to it (`for`), a label around it or `aria-label`, and
+`test/accessibility.test.js` reads every page for one. Each overlay holds `role="dialog" aria-modal="true"
+aria-labelledby` pointing at its own title, close buttons are `aria-label="Close"`, and a pictograph in a
+title is `aria-hidden`. `public/js/dialog.js` is the one place a dialog is opened and closed: the focus goes
+to the first field of the body (not the close button before it), Tab and Shift+Tab stay inside while it is open,
+and closing returns the focus to what opened it; Escape and a press on the dimmed area close the top dialog.
+The first version asked for the focus as the class was added and did nothing, because the overlay fades in over
+0.2 s and a hidden control cannot take focus, so it asks again, up to eight more times at 30 ms. Tabs are tabs
+(`role`, `aria-selected` kept true by the scripts, `aria-controls` and a labelled panel). The toast container
+is a polite live region and a failure toast is a `role="alert"`. A row's buttons say whose they are ("Change
+status of INV-1"). The landing page's code block can take focus and says what it is, and a link that is a
+target is at least 32 px tall, 44 px on a touch screen. axe afterwards: 24 runs, 0 with findings; keyboard
+probe in Chrome: focus enters the dialog, 14 Tabs leave it 0 times, Escape, a press outside and the Close
+button each close it and return the focus. 34 changes to the markup, scripts and stylesheet were each put back
+and each turned a test red; two of them first survived (a press on an `active` tab inside a dialog was never
+tried, and a regular expression for `switchTab` read the rest of the file), and each got a stronger test.
+
+**Trade-off.**
+
+- **Tabs have no arrow-key movement.** Each tab is a tab stop of its own, which works and is not what the
+  authoring practices ask for; Left and Right between tabs would be a next step.
+- **The page behind a dialog is not made inert.** Tab is held inside by hand and `aria-modal` tells a screen
+  reader the rest is out of play, but a screen reader's own cursor can still be moved onto the page behind in
+  a browser that does not honour `aria-modal`. `inert` on the page behind would close that and was not used.
+- **The row's "⋯" menu was not touched.** It is a button with `aria-haspopup` and now a name; its items have no
+  menu roles and no arrow keys.
+- **A toast still leaves after three seconds.** It is announced, but someone who needs longer to read it
+  does not get it. That is a decision about time limits, not about names.
+- **Checked in Chrome only,** by axe, by the probe above and by reading the markup; not with a screen reader.
 
 ---
 

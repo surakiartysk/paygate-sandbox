@@ -321,6 +321,11 @@ a:hover {
   letter-spacing: 0.5px;
 }
 
+/* A badge waiting for its value is not drawn: .badge sets a display, which would beat the attribute. */
+.badge[hidden] {
+  display: none;
+}
+
 .badge-pending {
   background: var(--pending-bg);
   color: var(--pending-text);
@@ -2677,7 +2682,8 @@ a:hover {
   justify-content: flex-end;
 }
 
-@media (max-width: 640px) {
+/* Two by two from 768px, where the stats already wrap to two columns. */
+@media (max-width: 768px) {
   .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2690,3 +2696,17 @@ a:hover {
     border-top: 1px solid var(--border);
   }
 }
+
+/* Between a phone and a laptop the filters are two columns, search across both: one column of four
+   full-width fields was 400px of form above the first payment at 700px wide. */
+@media (min-width: 481px) and (max-width: 768px) {
+  .filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-group-grow {
+    grid-column: 1 / -1;
+  }
+}
+

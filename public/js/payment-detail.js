@@ -323,6 +323,7 @@ function renderPayment() {
   const statusBadge = document.getElementById('status-badge');
   statusBadge.textContent = payment.status.toUpperCase();
   statusBadge.className = `badge badge-${payment.status}`;
+  statusBadge.hidden = false;
 
   // Info fields
   document.getElementById('info-amount').textContent = `${formatAmount(payment.amount)} ${payment.currencyCode}`;

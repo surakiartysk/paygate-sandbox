@@ -10,6 +10,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
 
 const read = (path) => readFileSync(new URL(`../public/${path}`, import.meta.url), 'utf8');
 const html = read('dashboard.html');
@@ -39,6 +40,63 @@ describe('the title', () => {
   });
 });
 
+describe('the heading of each section', () => {
+  const titles = /const SECTION_TITLES = (\{[\s\S]*?\n\});/.exec(script)?.[1] ?? '{}';
+  const sections = Function(`return ${titles}`)();
+  const body = /function switchTab\(tab\) \{([\s\S]*?)\n\}/.exec(script)?.[1] ?? '';
+
+  test('starts as what the page says for payments, word for word', () => {
+    assert.match(html, new RegExp(`<h1 class="page-title">${sections.payments.title}</h1>`));
+    assert.ok(html.includes(`<p class="page-lede">${sections.payments.lede}</p>`));
+  });
+
+  test('changes with the tab, so the owner reading the logs is not under a heading that says Payments', () => {
+    assert.equal(sections.logs.title, 'Request logs');
+    assert.match(body, /title\.textContent = section\.title/);
+    assert.match(body, /lede\.textContent = section\.lede/);
+    assert.match(body, /document\.title = `\$\{section\.title\} · Paygate Sandbox`/);
+  });
+});
+
+describe('switching sections, run against the page’s own script', () => {
+  function loadPage() {
+    const nodes = { '.page-title': { textContent: 'Payments' }, '.page-lede': { textContent: '' } };
+    const document = {
+      hidden: false,
+      title: 'Payments · Paygate Sandbox',
+      addEventListener() {},
+      querySelector: (selector) => nodes[selector] ?? null,
+      querySelectorAll: () => [],
+      // Switching to the logs loads them; what loading reads is a field with nothing in it.
+      getElementById: () => ({ value: '', textContent: '', innerHTML: '', style: {}, classList: { add() {}, remove() {}, toggle() {}, contains: () => false } }),
+    };
+    const context = vm.createContext({
+      window: {},
+      document,
+      localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+      fetch: () => new Promise(() => {}),
+      URLSearchParams,
+      setInterval: () => 1,
+      clearInterval() {},
+      setTimeout: () => 1,
+      console: { ...console, debug() {}, log() {} },
+    });
+    vm.runInContext(script, context);
+    return { context, document, nodes };
+  }
+
+  test('puts the logs’ name in the heading, its line under it, and the window’s title, and puts them back', () => {
+    const { context, document, nodes } = loadPage();
+    context.switchTab('logs');
+    assert.equal(nodes['.page-title'].textContent, 'Request logs');
+    assert.equal(nodes['.page-lede'].textContent, 'The requests the sandbox received and what it answered.');
+    assert.equal(document.title, 'Request logs · Paygate Sandbox');
+    context.switchTab('payments');
+    assert.equal(nodes['.page-title'].textContent, 'Payments');
+    assert.equal(document.title, 'Payments · Paygate Sandbox');
+  });
+});
+
 describe('the header', () => {
   test('says "Sign out" in words, not an icon with a title', () => {
     assert.match(html, /<button class="btn btn-secondary btn-sm" onclick="logout\(\)">Sign out<\/button>/);
@@ -56,8 +114,8 @@ describe('the stats', () => {
     assert.equal((html.match(/class="stat-card"/g) || []).length, 4);
   });
 
-  test('are two by two on a phone, with the rules where the cards meet', () => {
-    const phone = /@media \(max-width: 640px\) \{\s*\.stats-grid \{\s*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?\n\}\n/.exec(css)?.[0] ?? '';
+  test('are two by two from 768px, where they wrap, with the rules where the cards meet', () => {
+    const phone = /@media \(max-width: 768px\) \{\s*\.stats-grid \{\s*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?\n\}\n/.exec(css)?.[0] ?? '';
     assert.match(phone, /\.stat-card:nth-child\(odd\)\s*\{\s*border-left:\s*0/);
     assert.match(phone, /\.stat-card:nth-child\(n \+ 3\)\s*\{\s*border-top:\s*1px solid/);
   });
@@ -77,6 +135,12 @@ describe('the filters', () => {
 
   test('leave the owner’s Clear payments in a header of its own that a visitor does not see', () => {
     assert.match(html, /<div data-admin-only class="card-header card-header-end">\s*<button class="btn btn-danger btn-sm" onclick="openClearPaymentsModal\(\)">Clear payments<\/button>/);
+  });
+
+  test('are two columns between a phone and a laptop, with the search across both', () => {
+    const block = /@media \(min-width: 481px\) and \(max-width: 768px\) \{([\s\S]*?)\n\}/.exec(css)?.[1] ?? '';
+    assert.match(block, /\.filters \{\s*display: grid;\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+    assert.match(block, /\.filter-group-grow \{\s*grid-column: 1 \/ -1;/);
   });
 
   test('and the labels over the fields and the column heads are words, not capitals', () => {

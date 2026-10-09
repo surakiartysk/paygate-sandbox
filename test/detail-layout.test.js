@@ -30,6 +30,12 @@ describe('the title', () => {
     assert.equal((html.match(/<h1\b/g) || []).length, 1);
   });
 
+  test('does not draw the status badge until the script has a status for it', () => {
+    assert.match(html, /<span class="badge" id="status-badge" hidden>/);
+    assert.match(script, /statusBadge\.hidden = false;/);
+    assert.match(css, /\.badge\[hidden\] \{\s*display: none;/);
+  });
+
   test('has a breadcrumb back to the list, and the page no longer has a "Back to List" button', () => {
     assert.match(html, /<nav class="crumbs" aria-label="Breadcrumb">\s*<a href="\/dashboard">Payments<\/a>/);
     assert.doesNotMatch(html, /Back to List/);

@@ -188,8 +188,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ============ Tab Navigation ============
 
+/** What the page's one heading and its line say for each section. Only the owner can switch. */
+const SECTION_TITLES = {
+  payments: {
+    title: 'Payments',
+    lede: "Change a payment's status or send its callback to see what your integration receives.",
+  },
+  logs: {
+    title: 'Request logs',
+    lede: 'The requests the sandbox received and what it answered.',
+  },
+};
+
 function switchTab(tab) {
   currentTab = tab;
+
+  // The heading says which section is showing, and so does the window's title.
+  const section = SECTION_TITLES[tab] || SECTION_TITLES.payments;
+  const title = document.querySelector('.page-title');
+  const lede = document.querySelector('.page-lede');
+  if (title) title.textContent = section.title;
+  if (lede) lede.textContent = section.lede;
+  document.title = `${section.title} · Paygate Sandbox`;
   
   // Update tab buttons
   document.querySelectorAll('.tab-btn').forEach(btn => {

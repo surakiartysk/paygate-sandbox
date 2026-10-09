@@ -759,6 +759,15 @@ Delete is set apart at the foot with what it does. "Logout" and "Back to List" b
 breadcrumb, and the emoji went. At 1,280 px the payments page is 1,278 px tall (it was 1,404) and the payment
 page 1,718 (it was 1,979); at 375 px neither overflows sideways.
 
+**Found in the review of this change, before it was merged.** Four things, each fixed and held by a test:
+the stats strip drew its rules for four in a row between 641 and 768 px, where an older rule already put the
+counts two by two (a rule on the left of the third card, none above it); the heading stayed "Payments" when the
+owner switched to the logs, so `switchTab` now sets the heading, its line and the window's title from one
+table; the status badge was drawn empty ("-") beside "Loading…" until the payment arrived, and `.badge` sets a
+display that beat the `hidden` attribute, so it now has a rule of its own; and at 700 px the filters were one
+column of four full-width fields, 400 px of form above the first payment, so between 481 and 768 px they are
+two columns with the search across both.
+
 **Trade-off.**
 
 - **The owner's view was not looked at.** It is the same markup with the tabs and Clear payments shown, and the

@@ -34,6 +34,7 @@ one that was obvious.
 20. [Escaping text is not the same as vetting an address](#20-escaping-text-is-not-the-same-as-vetting-an-address)
 21. [The pages share the portfolio's type, a neutral primary and one name](#21-the-pages-share-the-portfolios-type-a-neutral-primary-and-one-name)
 22. [Every control has a name, a dialog is a dialog, and what happens is announced](#22-every-control-has-a-name-a-dialog-is-a-dialog-and-what-happens-is-announced)
+23. [The payments page is a title and a strip, and the payment page is a title and a list](#23-the-payments-page-is-a-title-and-a-strip-and-the-payment-page-is-a-title-and-a-list)
 
 ---
 
@@ -737,6 +738,41 @@ tried, and a regular expression for `switchTab` read the rest of the file), and 
   and the hover colour (34 pairs failed at first), and the text colours moved by a few steps of lightness,
   not by a change of hue. Hovering each row of the demo data in Chrome, light and dark, finds no contrast
   violation; the same check on the site before the fix finds 19 in dark.
+
+## 23. The payments page is a title and a strip, and the payment page is a title and a list
+
+**Context.** The mockups of decision 21 drew both pages tighter than they were built. Seen at 1,280 px with the
+demo's ten payments, the payments page was 1,404 px tall: a tab with one tab in it and the same word as a
+heading under it, four stat cards 130 px tall for four numbers, a provider and a method each in a box of
+its own, and labels in capitals. The payment page was 1,979 px: twelve facts as tiles in two equal columns, a
+status history stretched to the height of the tiles (a card of white space beside a single entry), five emoji
+in headings and buttons, and Delete in the row of actions that can be undone.
+
+**Decision.** The payments page is one h1 and a line saying what the page is for; the four counts are a strip
+with a rule between them (two by two on a phone); the filter row ends with Refresh; the table's provider and
+method are words and the status is the only thing in a row that is coloured; the column heads and the labels
+over the fields are words, not capitals; the tabs and the owner's Clear payments are for the owner only,
+because a visitor has one section. The payment page is a breadcrumb back to the list, the invoice number as the
+h1 with its status beside it, and one line saying provider, method and date; the facts are a description list
+(`dl`) with a hairline between rows, in the wider of two columns, with the history as tall as its content;
+Delete is set apart at the foot with what it does. "Logout" and "Back to List" became "Sign out" and a
+breadcrumb, and the emoji went. At 1,280 px the payments page is 1,278 px tall (it was 1,404) and the payment
+page 1,718 (it was 1,979); at 375 px neither overflows sideways.
+
+**Trade-off.**
+
+- **The owner's view was not looked at.** It is the same markup with the tabs and Clear payments shown, and the
+  tests read it, but signing in as the owner needs a password this work does not use, so the page with its two
+  tabs was not seen in a browser.
+- **The provider is no longer a colour.** The 2C2P and Omise badges told the two apart at a glance; the words
+  do, a little less quickly, and the status colour is no longer competing with them.
+- **Row actions were not touched.** Status and Callback still carry a dot and an icon, because below 900 px the
+  labels give way to them; taking them out means a different way to name the buttons there.
+- **The Logs tab, the dialogs, the inspector and the mock payment page were not redrawn.** They share the
+  stylesheet, so the table heads and filter labels changed in the logs; nothing else was looked at for this.
+- **Copy was left for its own pass.** "Total Payments", "Not paid" and the dialog texts are as they were.
+- **Checked in Chrome only,** at 1,280, 820 and 375 px, in both themes: axe has no violation on either page,
+  hovering every row finds no contrast failure, and the status dialog takes the focus.
 
 ---
 

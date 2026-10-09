@@ -819,11 +819,10 @@ function renderPayments() {
    */
   tbody.innerHTML = payments.map(payment => {
     const provider = payment.provider || '2c2p';
-    const providerBadge = provider === 'omise' 
-      ? '<span class="provider-badge badge-omise">Omise</span>'
-      : '<span class="provider-badge badge-2c2p">2C2P</span>';
+    // The provider and the method are words in the row: the status is the one thing that is coloured.
+    const providerName = provider === 'omise' ? 'Omise' : '2C2P';
     
-    // Payment method badge
+    // Payment method
     const paymentMethod = payment.paymentMethod || payment.channelCode || payment.paymentChannel?.[0] || '-';
     const methodLabels = {
       'CC': 'Card',
@@ -836,9 +835,7 @@ function renderPayments() {
       'WAP': 'Web',
       'APP': 'App'
     };
-    const methodBadge = methodLabels[paymentMethod] 
-      ? `<span class="method-badge" style="font-size: 12px; padding: 4px 8px; background: var(--bg-secondary); border-radius: 4px; font-weight: 500;">${methodLabels[paymentMethod]}</span>`
-      : `<span style="font-size: 12px; color: var(--text-secondary);">${escapeHtml(paymentMethod)}</span>`;
+    const methodName = methodLabels[paymentMethod] || escapeHtml(paymentMethod);
     
     const isTruncated = payment.invoiceNo && payment.invoiceNo.length > 25;
     const invoiceDisplay = truncateInvoiceNo(payment.invoiceNo);
@@ -859,8 +856,8 @@ function renderPayments() {
           ` : ''}
         </div>
       </td>
-      <td class="pc-provider">${providerBadge}</td>
-      <td class="pc-method">${methodBadge}</td>
+      <td class="pc-provider">${providerName}</td>
+      <td class="pc-method">${methodName}</td>
       <td class="pc-amount">
         <span class="cell-amount">${formatAmount(payment.amount)}<span class="cell-currency">${escapeHtml(payment.currencyCode)}</span></span>
       </td>

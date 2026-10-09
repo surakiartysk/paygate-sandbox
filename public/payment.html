@@ -252,7 +252,7 @@
         </p>
         <div class="info-grid" style="gap: 1rem;">
           <div class="form-group">
-            <label class="form-label">Behavior</label>
+            <label class="form-label" for="inquiry-behavior">Behavior</label>
             <select id="inquiry-behavior" class="form-select" onchange="onInquiryBehaviorChange()">
               <option value="normal">Normal - Return the current payment status</option>
               <option value="delay">Delay - Respond after specified time</option>
@@ -261,11 +261,11 @@
             </select>
           </div>
           <div class="form-group" id="inquiry-delay-group" style="display: none;">
-            <label class="form-label">Delay (milliseconds)</label>
+            <label class="form-label" for="inquiry-delay">Delay (milliseconds)</label>
             <input type="number" id="inquiry-delay" class="form-input" value="5000" min="0" step="1000" placeholder="5000">
           </div>
           <div class="form-group" id="inquiry-error-group" style="display: none;">
-            <label class="form-label">Error Code</label>
+            <label class="form-label" for="inquiry-error-code">Error Code</label>
             <select id="inquiry-error-code" class="form-select">
               <option value="0999">0999 - System temporarily unavailable</option>
               <option value="9999">9999 - System error</option>
@@ -285,16 +285,16 @@
 
   <!-- Callback Sequence Modal -->
   <div class="modal-overlay" id="callback-modal">
-    <div class="modal" style="max-width: 800px;">
+    <div class="modal" style="max-width: 800px;" role="dialog" aria-modal="true" aria-labelledby="callback-modal-title">
       <div class="modal-header">
-        <h3 class="modal-title">📤 Send Callback</h3>
-        <button class="modal-close" onclick="closeCallbackModal()">&times;</button>
+        <h3 id="callback-modal-title" class="modal-title"><span aria-hidden="true">📤</span> Send Callback</h3>
+        <button type="button" class="modal-close" onclick="closeCallbackModal()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <!-- Custom Callback Fields -->
         <div class="form-group" style="margin-bottom: 1rem;">
           <div class="custom-fields-header">
-            <label class="form-label">Custom Fields</label>
+            <label class="form-label" for="custom-field-preset">Custom Fields</label>
             <select id="custom-field-preset" class="form-input custom-field-preset" onchange="applyCustomFieldPreset(this.value)">
               <option value="">Presets…</option>
             </select>
@@ -307,17 +307,17 @@
           </p>
         </div>
         <!-- Mode Tabs -->
-        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border);">
-          <button id="callback-mode-sequence" class="callback-mode-btn active" onclick="switchCallbackMode('sequence')">
+        <div role="tablist" aria-label="Callback type" style="display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border);">
+          <button id="callback-mode-sequence" class="callback-mode-btn active" onclick="switchCallbackMode('sequence')" role="tab" aria-selected="true" aria-controls="callback-sequence-mode">
             Sequence
           </button>
-          <button id="callback-mode-custom" class="callback-mode-btn" onclick="switchCallbackMode('custom')">
+          <button id="callback-mode-custom" class="callback-mode-btn" onclick="switchCallbackMode('custom')" role="tab" aria-selected="false" aria-controls="callback-custom-mode">
             Custom Payload
           </button>
         </div>
         
         <!-- Sequence Mode -->
-        <div id="callback-sequence-mode" style="display: block;">
+        <div id="callback-sequence-mode" role="tabpanel" aria-labelledby="callback-mode-sequence" style="display: block;">
           <p style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 15px;">
             Configure and send callbacks to your system. Build a sequence to test different scenarios.
           </p>
@@ -339,7 +339,7 @@
         </div>
         
         <!-- Custom Payload Mode -->
-        <div id="callback-custom-mode" style="display: none;">
+        <div id="callback-custom-mode" role="tabpanel" aria-labelledby="callback-mode-custom" style="display: none;">
           <p style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 15px;">
             Edit the callback payload before sending to test invalid payload / amount mismatch scenarios.
           </p>
@@ -351,7 +351,7 @@
               <button class="btn btn-secondary btn-sm" onclick="loadCallbackPreview()">🔄 Load Preview</button>
             </div>
             <div id="callback-preview-container" style="position: relative;">
-              <textarea id="callback-payload-editor" class="form-input" rows="15" style="font-family: var(--font-mono); font-size: 13px; resize: vertical;" spellcheck="false"></textarea>
+              <textarea id="callback-payload-editor" aria-label="Callback payload (JSON)" class="form-input" rows="15" style="font-family: var(--font-mono); font-size: 13px; resize: vertical;" spellcheck="false"></textarea>
               <div id="callback-json-error" style="display: none; color: var(--error); font-size: 13px; margin-top: 0.25rem;"></div>
             </div>
           </div>
@@ -376,17 +376,17 @@
 
   <!-- Status Update Modal -->
   <div class="modal-overlay" id="status-modal">
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="status-modal-title">
       <div class="modal-header">
-        <h3 class="modal-title">Update Payment Status</h3>
-        <button class="modal-close" onclick="closeStatusModal()">&times;</button>
+        <h3 id="status-modal-title" class="modal-title">Update Payment Status</h3>
+        <button type="button" class="modal-close" onclick="closeStatusModal()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <p style="margin-bottom: 1rem; color: var(--text-secondary);">
           Current Status: <span class="badge" id="current-status-badge">-</span>
         </p>
         <div class="form-group">
-          <label class="form-label">New Status</label>
+          <label class="form-label" for="new-status">New Status</label>
           <select id="new-status" class="form-select" onchange="onStatusChange()">
             <option value="pending">Pending</option>
             <option value="success">Success</option>
@@ -396,7 +396,7 @@
           </select>
         </div>
         <div class="form-group" id="resp-code-group" style="display: none;">
-          <label class="form-label">Response Code (2C2P Error Code)</label>
+          <label class="form-label" for="resp-code">Response Code (2C2P Error Code)</label>
           <select id="resp-code" class="form-select">
             <!-- Populated dynamically -->
           </select>
@@ -417,8 +417,9 @@
   </div>
 
   <!-- Toast Container -->
-  <div class="toast-container" id="toast-container"></div>
+  <div class="toast-container" id="toast-container" role="status" aria-live="polite"></div>
 
+  <script src="/js/dialog.js"></script>
   <script src="/js/custom-fields.js"></script>
   <script src="/js/payment-detail.js"></script>
 </body>

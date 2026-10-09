@@ -194,6 +194,7 @@ function switchTab(tab) {
   // Update tab buttons
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tab);
+    btn.setAttribute('aria-selected', String(btn.dataset.tab === tab));
   });
   
   // Update tab content
@@ -617,11 +618,11 @@ async function deletePayment(invoiceNo) {
 }
 
 function openClearPaymentsModal() {
-  document.getElementById('clear-payments-modal').classList.add('active');
+  Dialog.open(document.getElementById('clear-payments-modal'));
 }
 
 function closeClearPaymentsModal() {
-  document.getElementById('clear-payments-modal').classList.remove('active');
+  Dialog.close(document.getElementById('clear-payments-modal'));
 }
 
 async function confirmClearPayments() {
@@ -749,11 +750,11 @@ async function loadLogs(page = null) {
 }
 
 function openClearLogsModal() {
-  document.getElementById('clear-logs-modal').classList.add('active');
+  Dialog.open(document.getElementById('clear-logs-modal'));
 }
 
 function closeClearLogsModal() {
-  document.getElementById('clear-logs-modal').classList.remove('active');
+  Dialog.close(document.getElementById('clear-logs-modal'));
 }
 
 async function confirmClearLogs() {
@@ -849,7 +850,7 @@ function renderPayments() {
             ${escapeHtml(invoiceDisplay)}
           </a>
           ${isTruncated ? `
-            <button onclick="copyInvoiceNo(${jsArg(payment.invoiceNo)}, event)" style="flex-shrink: 0; background: none; border: none; cursor: pointer; padding: 4px; display: inline-flex; align-items: center; color: var(--text-muted); opacity: 0.7; transition: opacity 0.2s;" title="Copy full invoice ID" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">
+            <button onclick="copyInvoiceNo(${jsArg(payment.invoiceNo)}, event)" aria-label="Copy invoice number ${escapeAttr(payment.invoiceNo)}" style="flex-shrink: 0; background: none; border: none; cursor: pointer; padding: 4px; display: inline-flex; align-items: center; color: var(--text-muted); opacity: 0.7; transition: opacity 0.2s;" title="Copy full invoice ID" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -878,13 +879,15 @@ function renderPayments() {
         <div class="action-buttons">
           <button class="row-action row-action-status"
                   onclick="openStatusModal(${jsArg(payment.invoiceNo)})"
-                  title="Change payment status">
+                  title="Change payment status"
+                  aria-label="Change status of ${escapeAttr(payment.invoiceNo)}">
             <span class="row-action-dot status-dot-${payment.status}"></span>
             <span>Status</span>
           </button>
           <button class="row-action row-action-primary"
                   onclick="openCallbackModal(${jsArg(payment.invoiceNo)})"
                   title="${payment.backendReturnUrl ? 'Send a callback to the merchant' : 'No callback URL configured for this payment'}"
+                  aria-label="Send a callback for ${escapeAttr(payment.invoiceNo)}"
                   ${!payment.backendReturnUrl ? 'disabled' : ''}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -894,7 +897,7 @@ function renderPayments() {
           </button>
           <div class="row-menu">
             <button class="row-action row-action-icon" onclick="toggleRowMenu(event, ${jsArg(payment.invoiceNo)})"
-                    title="More actions" aria-haspopup="true" aria-expanded="false">
+                    title="More actions" aria-label="More actions for ${escapeAttr(payment.invoiceNo)}" aria-haspopup="true" aria-expanded="false">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <circle cx="5" cy="12" r="1.6"></circle>
                 <circle cx="12" cy="12" r="1.6"></circle>
@@ -1325,11 +1328,11 @@ function handleStatusChange(invoiceNo, status) {
 
 async function openConfigModal() {
   await updateConfigForm();
-  document.getElementById('config-modal').classList.add('active');
+  Dialog.open(document.getElementById('config-modal'));
 }
 
 function closeConfigModal() {
-  document.getElementById('config-modal').classList.remove('active');
+  Dialog.close(document.getElementById('config-modal'));
 }
 
 async function openStatusModal(invoiceNo, preSelectStatus = null) {
@@ -1352,7 +1355,7 @@ async function openStatusModal(invoiceNo, preSelectStatus = null) {
       document.getElementById('new-status').value = preSelectStatus || data.payment.status || 'pending';
       document.getElementById('send-callback-after').checked = false;
       onStatusModalChange();
-      document.getElementById('status-modal').classList.add('active');
+      Dialog.open(document.getElementById('status-modal'));
     } else {
       throw new Error(data.error || 'Payment not found');
     }
@@ -1362,7 +1365,7 @@ async function openStatusModal(invoiceNo, preSelectStatus = null) {
 }
 
 function closeStatusModal() {
-  document.getElementById('status-modal').classList.remove('active');
+  Dialog.close(document.getElementById('status-modal'));
   currentInvoiceNo = null;
   currentPaymentForModal = null;
 }
@@ -1504,7 +1507,7 @@ async function openCallbackModal(invoiceNo) {
       switchCallbackMode('sequence');
       renderCallbackSequence();
       
-      document.getElementById('callback-modal').classList.add('active');
+      Dialog.open(document.getElementById('callback-modal'));
     } else {
       throw new Error(data.error || 'Payment not found');
     }
@@ -1514,7 +1517,7 @@ async function openCallbackModal(invoiceNo) {
 }
 
 function closeCallbackModal() {
-  document.getElementById('callback-modal').classList.remove('active');
+  Dialog.close(document.getElementById('callback-modal'));
   currentInvoiceNo = null;
   currentPaymentForModal = null;
   callbackSequence = [];
@@ -1527,6 +1530,8 @@ function switchCallbackMode(mode) {
   
   document.getElementById('callback-mode-sequence').classList.toggle('active', mode === 'sequence');
   document.getElementById('callback-mode-custom').classList.toggle('active', mode === 'custom');
+  document.getElementById('callback-mode-sequence').setAttribute('aria-selected', String(mode === 'sequence'));
+  document.getElementById('callback-mode-custom').setAttribute('aria-selected', String(mode === 'custom'));
   
   document.getElementById('callback-sequence-mode').style.display = mode === 'sequence' ? 'block' : 'none';
   document.getElementById('callback-custom-mode').style.display = mode === 'custom' ? 'block' : 'none';
@@ -1970,11 +1975,11 @@ function viewLogDetail(index) {
     ` : ''}
   `;
   
-  document.getElementById('log-modal').classList.add('active');
+  Dialog.open(document.getElementById('log-modal'));
 }
 
 function closeLogModal() {
-  document.getElementById('log-modal').classList.remove('active');
+  Dialog.close(document.getElementById('log-modal'));
 }
 
 // ============ Utilities ============
@@ -2099,6 +2104,7 @@ function showToast(message, type = 'success') {
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
+  if (type !== 'success') toast.setAttribute('role', 'alert');
   toast.innerHTML = `
     <span class="toast-icon">${type === 'success' ? '✓' : '✕'}</span>
     <span>${escapeHtml(message)}</span>
@@ -2112,20 +2118,4 @@ function showToast(message, type = 'success') {
   }, 3000);
 }
 
-// Close modals on overlay click
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) {
-      overlay.classList.remove('active');
-    }
-  });
-});
-
-// Close modals on Escape key
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    document.querySelectorAll('.modal-overlay.active').forEach(modal => {
-      modal.classList.remove('active');
-    });
-  }
-});
+// Closing on a press outside a dialog, and on Escape, is in dialog.js.

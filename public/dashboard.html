@@ -103,15 +103,15 @@
   <!-- Main Content -->
   <main class="container">
     <!-- Tab Navigation -->
-    <div class="tab-nav">
-      <button class="tab-btn active" data-tab="payments" onclick="switchTab('payments')">
+    <div class="tab-nav" role="tablist" aria-label="Dashboard sections">
+      <button class="tab-btn active" data-tab="payments" onclick="switchTab('payments')" role="tab" id="tab-btn-payments" aria-selected="true" aria-controls="tab-payments">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;">
           <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
           <line x1="1" y1="10" x2="23" y2="10"></line>
         </svg>
         Payments
       </button>
-      <button data-admin-only class="tab-btn" data-tab="logs" onclick="switchTab('logs')">
+      <button data-admin-only class="tab-btn" data-tab="logs" onclick="switchTab('logs')" role="tab" id="tab-btn-logs" aria-selected="false" aria-controls="tab-logs">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14 2 14 8 20 8"></polyline>
@@ -124,7 +124,7 @@
     </div>
 
     <!-- Payments Tab -->
-    <div class="tab-content active" id="tab-payments">
+    <div class="tab-content active" id="tab-payments" role="tabpanel" aria-labelledby="tab-btn-payments">
       <!-- Stats -->
       <div class="stats-grid" id="stats-grid">
         <div class="stat-card">
@@ -253,7 +253,7 @@
     </div><!-- End Payments Tab -->
 
     <!-- Logs Tab -->
-    <div data-admin-only class="tab-content" id="tab-logs">
+    <div data-admin-only class="tab-content" id="tab-logs" role="tabpanel" aria-labelledby="tab-btn-logs">
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">Request/Response Logs</h2>
@@ -301,7 +301,7 @@
               </div>
             </div>
             <div class="filter-group">
-              <input type="text" id="log-invoice-filter" class="form-input" 
+              <input type="text" id="log-invoice-filter" aria-label="Filter by invoice number" class="form-input" 
                      placeholder="Filter by invoice..." onkeyup="handleLogSearch(event)" style="width: 200px;">
             </div>
             <div class="filter-group">
@@ -350,10 +350,10 @@
 
   <!-- Config Modal -->
   <div class="modal-overlay" id="config-modal">
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="config-modal-title">
       <div class="modal-header">
-        <h3 class="modal-title">Global Configuration</h3>
-        <button class="modal-close" onclick="closeConfigModal()">&times;</button>
+        <h3 id="config-modal-title" class="modal-title">Global Configuration</h3>
+        <button type="button" class="modal-close" onclick="closeConfigModal()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <p style="color: var(--text-secondary); font-size: 15px; margin-bottom: 1.5rem;">
@@ -365,7 +365,7 @@
               <span class="config-item-title">Global Delay</span>
             </div>
             <div class="form-group" style="margin-bottom: 0;">
-              <input type="number" id="config-delay" class="form-input" 
+              <input type="number" id="config-delay" aria-label="Global delay in milliseconds" class="form-input" 
                      placeholder="Delay in ms" min="0" step="100">
               <small style="color: var(--text-muted); font-size: 12px;">
                 Add delay to all API responses (milliseconds)
@@ -379,7 +379,7 @@
             </div>
             <div class="form-group" style="margin-bottom: 0;">
               <div class="form-select-wrapper">
-                <select id="config-error-2c2p" class="form-select">
+                <select id="config-error-2c2p" aria-label="Error code for 2C2P" class="form-select">
                   <option value="">No error (normal response)</option>
                 </select>
               </div>
@@ -395,7 +395,7 @@
             </div>
             <div class="form-group" style="margin-bottom: 0;">
               <div class="form-select-wrapper">
-                <select id="config-error-omise" class="form-select">
+                <select id="config-error-omise" aria-label="Error code for Omise" class="form-select">
                   <option value="">No error (normal response)</option>
                 </select>
               </div>
@@ -410,7 +410,7 @@
               <span class="config-item-title">Failure Rate</span>
             </div>
             <div class="form-group" style="margin-bottom: 0;">
-              <input type="number" id="config-failure-rate" class="form-input" 
+              <input type="number" id="config-failure-rate" aria-label="Failure rate in percent" class="form-input" 
                      placeholder="Percentage (0-100)" min="0" max="100">
               <small style="color: var(--text-muted); font-size: 12px;">
                 Random failure percentage for requests
@@ -455,17 +455,17 @@
 
   <!-- Status Update Modal -->
   <div class="modal-overlay" id="status-modal">
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="status-modal-title">
       <div class="modal-header">
-        <h3 class="modal-title">Update Payment Status</h3>
-        <button class="modal-close" onclick="closeStatusModal()">&times;</button>
+        <h3 id="status-modal-title" class="modal-title">Update Payment Status</h3>
+        <button type="button" class="modal-close" onclick="closeStatusModal()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <p style="margin-bottom: 1rem; color: var(--text-secondary);">
           Invoice: <strong id="status-modal-invoice" style="color: var(--text-primary);"></strong>
         </p>
         <div class="form-group">
-          <label class="form-label">New Status</label>
+          <label class="form-label" for="new-status">New Status</label>
           <select id="new-status" class="form-select" onchange="onStatusModalChange()">
             <option value="pending">Pending</option>
             <option value="success">Success</option>
@@ -475,7 +475,7 @@
           </select>
         </div>
         <div class="form-group" id="resp-code-group" style="display: none;">
-          <label class="form-label">Response Code</label>
+          <label class="form-label" for="resp-code">Response Code</label>
           <select id="resp-code" class="form-select">
             <!-- Populated dynamically -->
           </select>
@@ -497,10 +497,10 @@
 
   <!-- Callback Modal -->
   <div class="modal-overlay" id="callback-modal">
-    <div class="modal" style="max-width: 800px;">
+    <div class="modal" style="max-width: 800px;" role="dialog" aria-modal="true" aria-labelledby="callback-modal-title">
       <div class="modal-header">
-        <h3 class="modal-title">📤 Send Callback</h3>
-        <button class="modal-close" onclick="closeCallbackModal()">&times;</button>
+        <h3 id="callback-modal-title" class="modal-title"><span aria-hidden="true">📤</span> Send Callback</h3>
+        <button type="button" class="modal-close" onclick="closeCallbackModal()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <p style="margin-bottom: 0.5rem; color: var(--text-secondary);">
@@ -509,7 +509,7 @@
         <!-- Custom Callback Fields -->
         <div class="form-group" style="margin-bottom: 1rem;">
           <div class="custom-fields-header">
-            <label class="form-label">Custom Fields</label>
+            <label class="form-label" for="custom-field-preset">Custom Fields</label>
             <select id="custom-field-preset" class="form-input custom-field-preset" onchange="applyCustomFieldPreset(this.value)">
               <option value="">Presets…</option>
             </select>
@@ -522,17 +522,17 @@
           </p>
         </div>
         <!-- Mode Tabs -->
-        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border);">
-          <button id="callback-mode-sequence" class="callback-mode-btn active" onclick="switchCallbackMode('sequence')">
+        <div role="tablist" aria-label="Callback type" style="display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border);">
+          <button id="callback-mode-sequence" class="callback-mode-btn active" onclick="switchCallbackMode('sequence')" role="tab" aria-selected="true" aria-controls="callback-sequence-mode">
             Sequence
           </button>
-          <button id="callback-mode-custom" class="callback-mode-btn" onclick="switchCallbackMode('custom')">
+          <button id="callback-mode-custom" class="callback-mode-btn" onclick="switchCallbackMode('custom')" role="tab" aria-selected="false" aria-controls="callback-custom-mode">
             Custom Payload
           </button>
         </div>
         
         <!-- Sequence Mode -->
-        <div id="callback-sequence-mode">
+        <div id="callback-sequence-mode" role="tabpanel" aria-labelledby="callback-mode-sequence">
           <p style="color: var(--text-secondary); font-size: 15px; margin-bottom: 1rem;">
             Configure and send callbacks to your system. Build a sequence to test different scenarios.
           </p>
@@ -546,12 +546,12 @@
         </div>
         
         <!-- Custom Payload Mode -->
-        <div id="callback-custom-mode" style="display: none;">
+        <div id="callback-custom-mode" role="tabpanel" aria-labelledby="callback-mode-custom" style="display: none;">
           <p style="color: var(--text-secondary); font-size: 15px; margin-bottom: 1rem;">
             Edit the callback payload before sending. Useful for testing invalid payloads or amount mismatches.
           </p>
           <div class="form-group">
-            <label class="form-label">Callback Payload (JSON)</label>
+            <label class="form-label" for="callback-payload-editor">Callback Payload (JSON)</label>
             <textarea id="callback-payload-editor" class="form-input" rows="15" style="font-family: var(--font-mono); font-size: 13px;"></textarea>
             <div id="callback-json-error" style="display: none; color: var(--error); font-size: 12px; margin-top: 0.5rem;"></div>
           </div>
@@ -574,10 +574,10 @@
 
   <!-- Log Detail Modal -->
   <div class="modal-overlay" id="log-modal">
-    <div class="modal modal-lg">
+    <div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="log-modal-title">
       <div class="modal-header">
-        <h3 class="modal-title">📋 Log Details</h3>
-        <button class="modal-close" onclick="closeLogModal()">&times;</button>
+        <h3 id="log-modal-title" class="modal-title"><span aria-hidden="true">📋</span> Log Details</h3>
+        <button type="button" class="modal-close" onclick="closeLogModal()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body" id="log-modal-body">
         <!-- Log details will be rendered here -->
@@ -590,10 +590,10 @@
 
   <!-- Clear Payments Confirmation Modal -->
   <div class="modal-overlay" id="clear-payments-modal">
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="clear-payments-modal-title">
       <div class="modal-header">
-        <h3 class="modal-title">⚠️ Clear All Payments</h3>
-        <button class="modal-close" onclick="closeClearPaymentsModal()">&times;</button>
+        <h3 id="clear-payments-modal-title" class="modal-title"><span aria-hidden="true">⚠️</span> Clear All Payments</h3>
+        <button type="button" class="modal-close" onclick="closeClearPaymentsModal()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <p style="margin-bottom: 1rem; color: var(--text-primary); font-size: 16px;">
@@ -612,10 +612,10 @@
 
   <!-- Clear Logs Confirmation Modal -->
   <div class="modal-overlay" id="clear-logs-modal">
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="clear-logs-modal-title">
       <div class="modal-header">
-        <h3 class="modal-title">⚠️ Clear All Logs</h3>
-        <button class="modal-close" onclick="closeClearLogsModal()">&times;</button>
+        <h3 id="clear-logs-modal-title" class="modal-title"><span aria-hidden="true">⚠️</span> Clear All Logs</h3>
+        <button type="button" class="modal-close" onclick="closeClearLogsModal()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <p style="margin-bottom: 1rem; color: var(--text-primary); font-size: 16px;">
@@ -633,8 +633,9 @@
   </div>
 
   <!-- Toast Container -->
-  <div class="toast-container" id="toast-container"></div>
+  <div class="toast-container" id="toast-container" role="status" aria-live="polite"></div>
 
+  <script src="/js/dialog.js"></script>
   <script src="/js/custom-fields.js"></script>
   <script src="/js/dashboard.js"></script>
 </body>

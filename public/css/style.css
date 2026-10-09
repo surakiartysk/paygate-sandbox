@@ -2574,3 +2574,22 @@ a:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/*
+ * A link that is a target. The invoice number in a row was 23 px tall, under the 24 px
+ * WCAG 2.2 sets as the least, and the links in the landing page's footer were smaller still
+ * on a phone; each is given the height of a line of controls, and a finger's 44 px on a
+ * touch screen.
+ */
+.pc-invoice a,
+.landing-footer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+}
+@media (pointer: coarse) {
+  .pc-invoice a,
+  .landing-footer-links a {
+    min-height: 44px;
+  }
+}

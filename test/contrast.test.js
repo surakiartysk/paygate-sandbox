@@ -109,3 +109,34 @@ describe('badges', () => {
     }
   }
 });
+
+/**
+ * The danger button: a tint with red text, and a filled red under the pointer. Found with the owner's
+ * view, which is the only one with Clear payments: red text on its tint was 4.11:1 in dark, and white on
+ * the filled red 3.35:1.
+ */
+describe('the danger button', () => {
+  const rule = (selector) => {
+    const start = css.indexOf(`\n${selector} {`);
+    assert.notEqual(start, -1, selector);
+    return css.slice(start, css.indexOf('}', start));
+  };
+  const prop = (body, name) => new RegExp(`(?:^|[;\\s])${name}:\\s*([^;]+);`).exec(body)?.[1];
+
+  for (const [theme, tokens] of [['dark', DARK], ['light', LIGHT]]) {
+    for (const surface of ['bg-primary', 'bg-card', 'bg-hover']) {
+      test(`reads at rest on ${surface}, ${theme}`, () => {
+        const body = rule('.btn-danger');
+        const fill = over(parse(prop(body, 'background'), tokens), parse(tokens[surface], tokens));
+        const r = ratio(parse(prop(body, 'color'), tokens), fill);
+        assert.ok(r >= 4.5, `${r.toFixed(2)}:1`);
+      });
+    }
+    test(`reads under the pointer, ${theme}`, () => {
+      const body = rule('.btn-danger:hover');
+      const r = ratio(parse(prop(body, 'color'), tokens), parse(prop(body, 'background'), tokens));
+      assert.ok(r >= 4.5, `${r.toFixed(2)}:1`);
+    });
+  }
+});
+

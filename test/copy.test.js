@@ -10,7 +10,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import vm from 'node:vm';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
@@ -134,5 +134,67 @@ describe('the callbacks in the callback dialog', () => {
       assert.match(item, /aria-label="Remove callback \$\{index \+ 1\}">\s*<span aria-hidden="true">✕<\/span>/);
     });
   }
+});
+
+describe('what the inquiry setting reaches', () => {
+  test('an Omise payment says its own charge lookup does not read the setting, which it does not', () => {
+    assert.match(payment, /<p class="form-hint inquiry-omise-note" id="inquiry-omise-note" hidden>/);
+    assert.match(payment, /<code>GET \/api\/omise\/charges\/\{id\}<\/code>, does not read\s+this setting; only the 2C2P inquiry does/);
+    assert.match(paymentJs, /getElementById\('inquiry-omise-note'\)\.hidden = payment\.provider !== 'omise';/);
+    assert.match(read('lib/inquiryHandler.js'), /payment\.inquiryBehavior/);
+    const omise = readdirSync(new URL('../api/omise/', import.meta.url), { recursive: true }).filter((f) => f.endsWith('.js'));
+    assert.ok(omise.length >= 2, omise.join());
+    for (const file of omise) assert.doesNotMatch(read(`api/omise/${file}`), /inquiryBehavior|inquiryDelay|inquiryErrorCode/, file);
+  });
+});
+
+describe('the wait after a callback', () => {
+  for (const [name, source] of [['dashboard.js', dashboardJs], ['payment-detail.js', paymentJs]]) {
+    test(`shows its unit beside the number, in ${name}`, () => {
+      assert.match(source, /<span class="sequence-item-wait">\s*<input type="number" aria-label="Wait after callback[^>]*>\s*<span aria-hidden="true">ms<\/span>\s*<\/span>/);
+    });
+  }
+});
+
+/**
+ * Found with the owner's view, which had no payments locally: the empty row kept the width of eight
+ * columns on a phone (491px in a 341px box, so the box scrolled and axe asked for it to be focusable),
+ * its column span was 7 of 8 and the error row's 6, the error message went into the page unescaped,
+ * and both had an emoji for an icon.
+ */
+describe('the rows that are not payments', () => {
+  const rows = [...dashboardJs.matchAll(/<td colspan="(\d+)">\s*<div class="empty-state">([\s\S]*?)<\/td>/g)];
+
+  test('span the eight columns of either table', () => {
+    assert.ok(rows.length >= 4, `${rows.length} rows`);
+    for (const [, span] of rows) assert.equal(span, '8');
+  });
+
+  test('escape the error they show, and draw no emoji', () => {
+    for (const [, , body] of rows) {
+      assert.doesNotMatch(body, /\$\{error\.message\}/);
+      assert.deepEqual(body.match(/\p{Extended_Pictographic}/gu) || [], []);
+    }
+    assert.equal((dashboardJs.match(/<p>\$\{escapeHtml\(error\.message\)\}<\/p>/g) || []).length, 2);
+  });
+
+  test('are as wide as a phone, not as the columns the phone does not show', () => {
+    const css = read('public/css/style.css');
+    assert.match(css, /\.payments-table,\s*\.payments-table tbody,\s*\.payments-table tbody tr:not\(\.payment-row\),\s*\.payments-table tbody tr:not\(\.payment-row\) td \{\s*display: block;\s*width: auto;[^}]*white-space: normal;/);
+  });
+});
+
+/**
+ * The settings warned of "Vercel rate limits (100 requests/hour on Hobby plan)", and the script's comment
+ * said the same. Vercel's limits page (https://vercel.com/docs/limits, read 10 Oct 2026) names no hourly cap
+ * on requests for a Hobby plan; its hundreds are limits on Vercel's own REST API. The warning now says what
+ * the page itself does, which the script's constant holds.
+ */
+describe('the warning about refreshing by itself', () => {
+  test('says what the page does, once a minute, and names no hourly cap it cannot show', () => {
+    assert.equal(Number(/const POLL_INTERVAL_MS = (\d+);/.exec(dashboardJs)?.[1]), 60000);
+    assert.match(dashboard, /Each open dashboard asks once a minute, 60 requests an hour\./);
+    for (const source of [dashboard, dashboardJs]) assert.doesNotMatch(source, /100 requests\/hour|Hobby plan's 100/);
+  });
 });
 

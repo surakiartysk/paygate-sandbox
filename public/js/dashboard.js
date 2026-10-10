@@ -18,7 +18,8 @@ let callbackMode = 'sequence';
 let callbackPreviewPayload = null;
 let autoRefreshInterval = null;
 let lastPaymentCount = 0;
-// How often auto-refresh asks: a minute, 60 requests an hour, inside a Hobby plan's 100.
+// How often auto-refresh asks: a minute, so 60 requests an hour for each open dashboard. Vercel's
+// limits page names no hourly cap on requests for a Hobby plan; they count towards its monthly usage.
 const POLL_INTERVAL_MS = 60000;
 // Counts the list requests asked for; only the newest one's answer is used.
 let paymentsRequestSeq = 0;
@@ -387,11 +388,10 @@ async function loadPayments(page = null) {
     console.error('Error loading payments:', error);
     tbody.innerHTML = `
       <tr>
-        <td colspan="6">
+        <td colspan="8">
           <div class="empty-state">
-            <div class="empty-state-icon">❌</div>
-            <div class="empty-state-title">Error loading payments</div>
-            <p>${error.message}</p>
+            <div class="empty-state-title">Couldn't load the payments</div>
+            <p>${escapeHtml(error.message)}</p>
           </div>
         </td>
       </tr>
@@ -745,9 +745,8 @@ async function loadLogs(page = null) {
       <tr>
         <td colspan="8">
           <div class="empty-state">
-            <div class="empty-state-icon">❌</div>
-            <div class="empty-state-title">Error loading logs</div>
-            <p>${error.message}</p>
+            <div class="empty-state-title">Couldn't load the logs</div>
+            <p>${escapeHtml(error.message)}</p>
           </div>
         </td>
       </tr>
@@ -809,11 +808,10 @@ function renderPayments() {
   if (payments.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7">
+        <td colspan="8">
           <div class="empty-state">
-            <div class="empty-state-icon">📭</div>
             <div class="empty-state-title">No payments yet</div>
-            <p>Payments will appear here when your system creates them</p>
+            <p>Payments your system creates appear here.</p>
           </div>
         </td>
       </tr>
@@ -973,7 +971,7 @@ function renderLogs() {
               </svg>
             </div>
             <div class="empty-state-title">No logs yet</div>
-            <p>Request/response logs will appear here when your system makes API calls</p>
+            <p>Each API call your system makes appears here.</p>
           </div>
         </td>
       </tr>
@@ -1666,9 +1664,12 @@ function renderCallbackSequence() {
       <select aria-label="Response code of callback ${index + 1}" onchange="updateSequenceItem(${index}, 'respCode', this.value)">
         ${getResponseCodeOptions(item.status, item.respCode)}
       </select>
-      <input type="number" aria-label="Wait after callback ${index + 1}, in ms" value="${item.delayAfter}" min="0" step="500" placeholder="Delay (ms)"
+      <span class="sequence-item-wait">
+        <input type="number" aria-label="Wait after callback ${index + 1}, in ms" value="${item.delayAfter}" min="0" step="500" placeholder="Delay (ms)"
              onchange="updateSequenceItem(${index}, 'delayAfter', parseInt(this.value) || 0)"
              title="Delay after this callback before next (ms). Note: Delay on last callback won't be applied.">
+        <span aria-hidden="true">ms</span>
+      </span>
       <button class="sequence-item-remove" onclick="removeCallbackFromSequence(${index})" title="Remove" aria-label="Remove callback ${index + 1}">
         <span aria-hidden="true">✕</span>
       </button>

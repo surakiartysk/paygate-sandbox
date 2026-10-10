@@ -198,3 +198,17 @@ describe('the warning about refreshing by itself', () => {
   });
 });
 
+/**
+ * The landing page's footer links were text with no underline, told from the dots between them by a
+ * colour that decision 21 made neutral: on the page they read as plain text. Underlined now, as the
+ * invoice links are.
+ */
+describe("the landing page's footer links", () => {
+  test('are underlined, at rest and not only under the pointer', () => {
+    const css = read('public/css/style.css');
+    const rule = /\n\.landing-footer-links a \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    assert.match(rule, /text-decoration: underline;/);
+    assert.doesNotMatch(rule, /text-decoration: none/);
+  });
+});
+

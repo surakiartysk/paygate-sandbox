@@ -198,8 +198,9 @@
       </div>
     </div>
 
-    <!-- Inquiry Simulation -->
-    <div class="card" style="margin-top: 1.5rem;">
+    <!-- Inquiry Simulation: a 2C2P payment's only. The setting is read by /api/2c2p/inquiry and by
+         nothing an Omise integration calls, so on an Omise payment it would be a control that does nothing. -->
+    <div class="card" id="inquiry-card" style="margin-top: 1.5rem;">
       <div class="card-header">
         <h2 class="card-title">Inquiry simulation</h2>
         <span class="badge" id="inquiry-behavior-badge">NORMAL</span>
@@ -207,10 +208,6 @@
       <div class="card-body">
         <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 15px;">
           How <code>/api/2c2p/inquiry</code> answers when your system asks about this payment.
-        </p>
-        <p class="form-hint inquiry-omise-note" id="inquiry-omise-note" hidden>
-          This is an Omise payment. Its charge lookup, <code>GET /api/omise/charges/{id}</code>, does not read
-          this setting; only the 2C2P inquiry does.
         </p>
         <div class="info-grid" style="gap: 1rem;">
           <div class="form-group">

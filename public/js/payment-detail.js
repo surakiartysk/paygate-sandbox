@@ -451,8 +451,9 @@ function renderPayment() {
 let inquiryFormFilledFrom = null;
 
 function renderInquiryConfig() {
-  // Only the 2C2P inquiry reads this setting; an Omise integration looks a charge up another way.
-  document.getElementById('inquiry-omise-note').hidden = payment.provider !== 'omise';
+  // Only the 2C2P inquiry reads this setting; an Omise integration looks a charge up another way, so
+  // an Omise payment is not offered it at all.
+  document.getElementById('inquiry-card').hidden = payment.provider === 'omise';
 
   // Update badge
   const badge = document.getElementById('inquiry-behavior-badge');

@@ -2742,8 +2742,8 @@ a:hover {
   min-width: 0;
 }
 
-.inquiry-omise-note {
-  margin-bottom: 1rem;
+.card[hidden] {
+  display: none;
 }
 
 /* A toast leaves by fading out; its dismiss button is a 24px target. */

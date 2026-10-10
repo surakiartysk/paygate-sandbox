@@ -2306,6 +2306,14 @@ a:hover {
    Three groups instead of a row of identical icons: the status
    control, the primary action (send a callback), and an overflow
    menu holding navigation and the destructive action.
+
+   Status and Callback name themselves in words at every width. Below
+   900px the words used to give way to a coloured dot and an icon "before
+   the table starts scrolling", but the table scrolls from 1024px down
+   either way: the words cost 92px more of a scroll that was already
+   there, and without them Status was a 7px dot that did not say what it
+   did. The dot went with them: it repeated the status badge in the same
+   row, in colour alone.
    ============================================================ */
 
 .row-action {
@@ -2350,19 +2358,6 @@ a:hover {
   justify-content: center;
 }
 
-/* A coloured dot shows the current status without opening anything. */
-.row-action-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background: var(--text-muted);
-}
-
-.status-dot-success  { background: var(--success); }
-.status-dot-pending  { background: var(--pending); }
-.status-dot-failed   { background: var(--error); }
-.status-dot-cancelled { background: var(--warning); }
 .status-dot-expired  { background: var(--text-muted); }
 
 /* --- Overflow menu --- */
@@ -2415,18 +2410,6 @@ a:hover {
 .row-menu-item-danger:hover {
   background: var(--error-bg);
   color: var(--error);
-}
-
-@media (max-width: 900px) {
-  /* Labels give way to icons before the table starts scrolling. */
-  .row-action-status span:last-child,
-  .row-action-primary span:last-child {
-    display: none;
-  }
-  .row-action-status,
-  .row-action-primary {
-    padding: 0 0.5rem;
-  }
 }
 
 /* Demo visitors: controls that only the admin may use are hidden, and a
@@ -2523,18 +2506,6 @@ a:hover {
   .payments-table .pc-actions .action-buttons {
     justify-content: flex-start;
     flex-wrap: wrap;
-  }
-
-  /* Labels come back: the 900px rule hides them to stop the table scrolling,
-     but a card has the whole width, and a lone coloured dot does not say
-     "change status". */
-  .payments-table .pc-actions .row-action-status span:last-child,
-  .payments-table .pc-actions .row-action-primary span:last-child {
-    display: inline;
-  }
-  .payments-table .pc-actions .row-action-status,
-  .payments-table .pc-actions .row-action-primary {
-    padding: 0 0.75rem;
   }
 }
 

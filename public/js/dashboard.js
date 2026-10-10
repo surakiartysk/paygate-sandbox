@@ -896,7 +896,6 @@ function renderPayments() {
                   onclick="openStatusModal(${jsArg(payment.invoiceNo)})"
                   title="Change payment status"
                   aria-label="Change status of ${escapeAttr(payment.invoiceNo)}">
-            <span class="row-action-dot status-dot-${payment.status}"></span>
             <span>Status</span>
           </button>
           <button class="row-action row-action-primary"

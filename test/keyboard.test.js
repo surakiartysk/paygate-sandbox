@@ -141,6 +141,43 @@ describe('the arrow keys in a row of tabs', () => {
     assert.ok(event.prevented);
   });
 
+  /** A tab list whose tabs keep the attributes they are given. */
+  function tabList(selected) {
+    const tabs = ['one', 'two', 'three'].map((name) => ({ name, attrs: { 'aria-selected': String(name === selected) }, setAttribute(a, v) { this.attrs[a] = String(v); }, getAttribute(a) { return a in this.attrs ? this.attrs[a] : null; } }));
+    const list = { querySelectorAll: () => tabs };
+    tabs.forEach((t) => { t.closest = (s) => (s === '[role="tablist"]' ? list : null); });
+    return { tabs, list };
+  }
+  const stops = (tabs) => tabs.map((t) => t.attrs.tabindex).join(' ');
+
+  test('make a row of tabs one Tab stop: the chosen tab, or the first if none is', () => {
+    const { tabs, list } = tabList('two');
+    root.Tabs.rove(list);
+    assert.equal(stops(tabs), '-1 0 -1');
+    const none = tabList(null);
+    root.Tabs.rove(none.list);
+    assert.equal(stops(none.tabs), '0 -1 -1');
+  });
+
+  test('set the Tab stop on every tab list when the page loads, and move it when a script chooses another tab', () => {
+    const { tabs, list } = tabList('one');
+    let watch;
+    const doc = { addEventListener() {}, documentElement: {}, querySelectorAll: (s) => (s === '[role="tablist"]' ? [list] : []) };
+    class MutationObserver {
+      constructor(fn) { this.fn = fn; }
+      observe(node, options) { watch = { fn: this.fn, node, options }; }
+    }
+    const r = { document: doc, MutationObserver };
+    vm.runInContext(read('js/tabs.js'), vm.createContext({ window: r, globalThis: r }));
+    assert.equal(stops(tabs), '0 -1 -1');
+    assert.equal(watch.node, doc.documentElement);
+    assert.equal(JSON.stringify(watch.options), JSON.stringify({ attributes: true, attributeFilter: ['aria-selected'], subtree: true }));
+    tabs[0].setAttribute('aria-selected', 'false');
+    tabs[2].setAttribute('aria-selected', 'true');
+    watch.fn([{ target: tabs[0] }, { target: tabs[2] }]);
+    assert.equal(stops(tabs), '-1 -1 0');
+  });
+
   test('are loaded by both pages that have tabs, after dialog.js and before the page script', () => {
     for (const page of ['dashboard.html', 'payment.html']) {
       const html = read(page);
@@ -217,5 +254,26 @@ describe("the row's ⋯", () => {
 
   test('gives the focus back to its button on Escape', () => {
     assert.match(src, /const open = document\.querySelector\('\.row-menu-panel:not\(\[hidden\]\)'\);\s*closeAllRowMenus\(\);\s*if \(open\) open\.previousElementSibling\?\.focus\(\);/);
+  });
+});
+
+/**
+ * The row's Status and Callback said what they did only at 900px and wider; below that, Status was a
+ * 7px coloured dot. The words were hidden "before the table starts scrolling", and the table scrolls
+ * from 1024px down either way (decision 26).
+ */
+describe("the row's Status and Callback", () => {
+  const css = readFileSync(new URL('../public/css/style.css', import.meta.url), 'utf8');
+  const js = readFileSync(new URL('../public/js/dashboard.js', import.meta.url), 'utf8');
+
+  test('say what they do in words at every width', () => {
+    assert.match(js, /aria-label="Change status of \$\{escapeAttr\(payment\.invoiceNo\)\}">\s*<span>Status<\/span>\s*<\/button>/);
+    assert.match(js, /<\/svg>\s*<span>Callback<\/span>\s*<\/button>/);
+    assert.doesNotMatch(css, /\.row-action-(status|primary) span[^{]*\{[^}]*display:\s*none/);
+  });
+
+  test('draw no dot for a status the row already shows in its badge', () => {
+    assert.doesNotMatch(js, /row-action-dot|status-dot-/);
+    assert.match(js, /<span class="badge badge-\$\{payment\.status\}">/);
   });
 });

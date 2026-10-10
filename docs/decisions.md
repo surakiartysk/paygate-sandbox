@@ -615,12 +615,6 @@ showed as text and none ran.
   lookahead) and would disagree on `:name`. A test pins the outcome for every admin, API and page
   path, so a pattern the two read differently fails there rather than in production.
 
-
-**Later: the landing page's footer links.** Decision 21 made the accent neutral and underlined the invoice links
-and the banner's, and left the four links in the landing page's footer as they were: no underline, told from the
-dots between them by colour alone, so they read as text. They are underlined now, at rest and not only under the
-pointer, and a test holds it.
-
 ---
 
 ## 20. Escaping text is not the same as vetting an address
@@ -834,6 +828,12 @@ other claim about the plan in the code, twelve functions a deployment, is on Ver
   were looked at; a full list as the owner was not.
 - **Two names stay for the same method in two places.** The table and filter say "Card"; the payment page says
   "Credit card (non-3DS)". The page has the room to say more.
+
+
+**Later: the landing page's footer links.** Decision 21 made the accent neutral and underlined the invoice links
+and the banner's, and left the four links in the landing page's footer as they were: no underline, told from the
+dots between them by colour alone, so they read as text. They are underlined now, at rest and not only under the
+pointer, and a test holds it.
 
 ## 25. A toast stays to be read, tabs take the arrow keys, and the page behind a dialog is inert
 

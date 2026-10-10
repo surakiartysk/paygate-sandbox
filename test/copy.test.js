@@ -137,10 +137,11 @@ describe('the callbacks in the callback dialog', () => {
 });
 
 describe('what the inquiry setting reaches', () => {
-  test('an Omise payment says its own charge lookup does not read the setting, which it does not', () => {
-    assert.match(payment, /<p class="form-hint inquiry-omise-note" id="inquiry-omise-note" hidden>/);
-    assert.match(payment, /<code>GET \/api\/omise\/charges\/\{id\}<\/code>, does not read\s+this setting; only the 2C2P inquiry does/);
-    assert.match(paymentJs, /getElementById\('inquiry-omise-note'\)\.hidden = payment\.provider !== 'omise';/);
+  test('is offered on a 2C2P payment only, because nothing an Omise integration calls reads it', () => {
+    assert.match(payment, /<div class="card" id="inquiry-card"/);
+    assert.match(paymentJs, /getElementById\('inquiry-card'\)\.hidden = payment\.provider === 'omise';/);
+    assert.match(read('public/css/style.css'), /\.card\[hidden\] \{\s*display: none;/);
+    assert.doesNotMatch(payment, /inquiry-omise-note/);
     assert.match(read('lib/inquiryHandler.js'), /payment\.inquiryBehavior/);
     const omise = readdirSync(new URL('../api/omise/', import.meta.url), { recursive: true }).filter((f) => f.endsWith('.js'));
     assert.ok(omise.length >= 2, omise.join());

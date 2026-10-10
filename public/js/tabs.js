@@ -6,6 +6,11 @@
  * Left and Right move to the tab beside, round from the end to the start, Home and End to the
  * first and the last, and the tab moved to is chosen, as the WAI-ARIA tabs pattern does with
  * automatic activation. Choosing is the tab's own click, so whatever it switches is what switches.
+ *
+ * And a row of tabs is one Tab stop, as the pattern asks: the chosen tab has tabindex 0 and the
+ * others -1, so Tab goes from the chosen tab to what follows the row rather than through every tab.
+ * The pages' own scripts choose a tab by setting aria-selected; this file watches that attribute and
+ * sets tabindex to match, so those scripts did not have to learn about it.
  */
 (function (root) {
   const shown = (el) => !el.disabled && (el.offsetParent !== null || el.getClientRects().length > 0);
@@ -21,6 +26,25 @@
     return null;
   }
 
+  /** Make the chosen tab of `list` its one Tab stop; the first tab, if none is chosen. */
+  function rove(list) {
+    const tabs = [...list.querySelectorAll('[role="tab"]')];
+    const chosen = tabs.find((tab) => tab.getAttribute('aria-selected') === 'true') || tabs[0];
+    for (const tab of tabs) tab.setAttribute('tabindex', tab === chosen ? '0' : '-1');
+  }
+
+  function roveAll() {
+    if (root.document.querySelectorAll) root.document.querySelectorAll('[role="tablist"]').forEach(rove);
+  }
+
+  roveAll();
+  if (typeof root.MutationObserver === 'function' && root.document.documentElement) {
+    new root.MutationObserver((changes) => {
+      const lists = new Set(changes.map((change) => change.target.closest && change.target.closest('[role="tablist"]')));
+      lists.forEach((list) => list && rove(list));
+    }).observe(root.document.documentElement, { attributes: true, attributeFilter: ['aria-selected'], subtree: true });
+  }
+
   root.document.addEventListener('keydown', (event) => {
     const tab = event.target && event.target.closest ? event.target.closest('[role="tab"]') : null;
     if (!tab) return;
@@ -34,5 +58,5 @@
     next.click();
   });
 
-  root.Tabs = { target };
+  root.Tabs = { target, rove };
 })(typeof window !== 'undefined' ? window : globalThis);

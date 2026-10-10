@@ -37,6 +37,7 @@ one that was obvious.
 23. [The payments page is a title and a strip, and the payment page is a title and a list](#23-the-payments-page-is-a-title-and-a-strip-and-the-payment-page-is-a-title-and-a-list)
 24. [The words: one name for one thing, sentence case, and nothing the page cannot do](#24-the-words-one-name-for-one-thing-sentence-case-and-nothing-the-page-cannot-do)
 25. [A toast stays to be read, tabs take the arrow keys, and the page behind a dialog is inert](#25-a-toast-stays-to-be-read-tabs-take-the-arrow-keys-and-the-page-behind-a-dialog-is-inert)
+26. [A row of tabs is one Tab stop, and the row's buttons say what they do at every width](#26-a-row-of-tabs-is-one-tab-stop-and-the-rows-buttons-say-what-they-do-at-every-width)
 
 ---
 
@@ -779,6 +780,7 @@ two columns with the search across both.
   do, a little less quickly, and the status colour is no longer competing with them.
 - **Row actions were not touched.** Status and Callback still carry a dot and an icon, because below 900 px the
   labels give way to them; taking them out means a different way to name the buttons there.
+  *Later:* the labels stay at every width and the dot is gone (decision 26).
 - **The Logs tab, the dialogs, the inspector and the mock payment page were not redrawn.** They share the
   stylesheet, so the table heads and filter labels changed in the logs; nothing else was looked at for this.
 - **Copy was left for its own pass.** "Total Payments", "Not paid" and the dialog texts are as they were.
@@ -870,10 +872,49 @@ dialog.
 - **The tabs keep every tab as its own Tab stop.** The pattern asks for one stop with the arrows moving inside; the
   arrows are added and the stops left, because the tabs' own scripts set `aria-selected` and would have to set
   `tabindex` as well.
+  *Later:* one stop per row, set by `tabs.js` from `aria-selected`, so those scripts were not touched (decision 26).
 - **A failure that stays has to be dismissed,** and three of them fill the corner until it is. Three is the cap so
   they cannot fill the side of the page.
 - **`inert` is a browser feature.** A browser without it gets what it had: the focus held by hand and `aria-modal`.
 
+
+---
+
+## 26. A row of tabs is one Tab stop, and the row's buttons say what they do at every width
+
+**Context.** Two things decisions 23 and 25 left. Every tab was its own Tab stop: the arrow keys moved between tabs,
+but Tab also went through each of them before reaching what followed. And below 900 px the row's Status and
+Callback lost their words, "before the table starts scrolling" as the stylesheet put it, which left Status as a 7 px
+coloured dot.
+
+Measured before changing it, in Chrome with the demo's payments: the table scrolls from 1,024 px down whether the
+words are there or not. At 820 px it was 293 px wider than its box without them and 385 px with them. The words
+were not stopping the scroll; they were 92 px of it.
+
+**Decision.**
+
+- **One Tab stop per row of tabs.** The chosen tab has `tabindex="0"` and the others `-1` (the first, if none is
+  chosen), as the WAI-ARIA tabs pattern asks. `tabs.js` sets it when the page loads and again whenever an
+  `aria-selected` changes, through a `MutationObserver`, so the scripts that choose a tab still only set
+  `aria-selected`.
+- **Status and Callback keep their words at every width.** The rule that hid them below 900 px, and the one that
+  brought them back on a phone's cards, are gone.
+- **The dot is gone.** It repeated, in colour alone, the status the row's badge already gives in words.
+
+Checked in Chrome: Tab from the chosen tab goes to the next control after the row (the payments page's section
+tabs as the owner, and the callback dialog on both pages); ArrowRight moves the stop with the choice, and Shift+Tab
+then Tab comes back to the newly chosen tab. The buttons read "Status" and "Callback" at 1,280, 820, 700 and
+390 px, with no page overflow and no axe violation. axe once reported low contrast inside the callback dialog when
+it ran within 0.2 s of the dialog opening: the overlay was still fading in (opacity 0.58). After the fade it
+reported none, twice. Eight mutations, each failing a test in `keyboard.test.js`.
+
+**Trade-off.**
+
+- **Between 641 and 900 px the table scrolls 92 px further** than it did. It already scrolled there, so this
+  is more of a scroll a visitor already has, not a new one. Above 900 px it scrolls 14 px less, the dot's width.
+- **The status is no longer beside the button that changes it.** It is two columns to the left, in the badge.
+- **The Tab stop depends on `MutationObserver`.** Without it, the stop is set once when the page loads and does not
+  follow a change of tab; the arrows still work.
 ---
 
 ## How to add a decision

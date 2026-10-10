@@ -1135,22 +1135,9 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+/** How long a toast stays, and how it is dismissed, is in toast.js. */
 function showToast(message, type = 'success') {
-  const container = document.getElementById('toast-container');
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  if (type !== 'success') toast.setAttribute('role', 'alert');
-  toast.innerHTML = `
-    <span class="toast-icon">${type === 'success' ? '✓' : '✕'}</span>
-    <span>${escapeHtml(message)}</span>
-  `;
-  container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(100%)';
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
+  window.Toast.show(message, type);
 }
 
 // Closing on a press outside a dialog, and on Escape, is in dialog.js.

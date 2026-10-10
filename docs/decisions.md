@@ -36,6 +36,7 @@ one that was obvious.
 22. [Every control has a name, a dialog is a dialog, and what happens is announced](#22-every-control-has-a-name-a-dialog-is-a-dialog-and-what-happens-is-announced)
 23. [The payments page is a title and a strip, and the payment page is a title and a list](#23-the-payments-page-is-a-title-and-a-strip-and-the-payment-page-is-a-title-and-a-list)
 24. [The words: one name for one thing, sentence case, and nothing the page cannot do](#24-the-words-one-name-for-one-thing-sentence-case-and-nothing-the-page-cannot-do)
+25. [A toast stays to be read, tabs take the arrow keys, and the page behind a dialog is inert](#25-a-toast-stays-to-be-read-tabs-take-the-arrow-keys-and-the-page-behind-a-dialog-is-inert)
 
 ---
 
@@ -827,6 +828,41 @@ other claim about the plan in the code, twelve functions a deployment, is on Ver
   were looked at; a full list as the owner was not.
 - **Two names stay for the same method in two places.** The table and filter say "Card"; the payment page says
   "Credit card (non-3DS)". The page has the room to say more.
+
+## 25. A toast stays to be read, tabs take the arrow keys, and the page behind a dialog is inert
+
+**Context.** Decision 22 named four things and left them: tabs with no arrow keys, the page behind a dialog not
+made inert, the row's "⋯" announced as a menu it did not behave as, and a toast that left after three seconds,
+a failure included.
+
+**Decision.**
+
+- **Toasts** come from one file, `toast.js`, for both pages (each page had its own copy). A failure stays until it
+  is dismissed; a confirmation stays five seconds, and not while the pointer or the focus is on it. Each has a
+  24px "Dismiss" button, at most three are on the screen (the oldest leaves first), and the message is set as
+  text, never markup.
+- **Tabs** (`tabs.js`): Left and Right move to the tab beside, round from the end, Home and End to the first and
+  the last, and the tab moved to is chosen by its own click, as the WAI-ARIA tabs pattern does with automatic
+  activation.
+- **Dialogs** (`dialog.js`): while one is open, everything under `<body>` that is not a dialog or the toasts is
+  `inert`, and it comes back when the last dialog closes. Only what the file made inert is given back.
+- **The row's "⋯"** is a disclosure: `aria-expanded` and `aria-controls`, no `aria-haspopup`; opening it puts the
+  focus on its first item, and Escape closes it and gives the focus back to the button.
+
+Checked in Chrome: opening "⋯" with Enter focuses "View details" and Escape returns to the button; with the callback
+dialog open the banner, header and main are inert and nothing is after it closes; ArrowRight on "Sequence" chooses
+"Custom payload" and shows its panel, Home goes back; after six seconds a failure toast is still there and a
+success has gone; the dismiss button is 24 by 24 and removes it. axe has no violation on either page or in either
+dialog.
+
+**Trade-off.**
+
+- **The tabs keep every tab as its own Tab stop.** The pattern asks for one stop with the arrows moving inside; the
+  arrows are added and the stops left, because the tabs' own scripts set `aria-selected` and would have to set
+  `tabindex` as well.
+- **A failure that stays has to be dismissed,** and three of them fill the corner until it is. Three is the cap so
+  they cannot fill the side of the page.
+- **`inert` is a browser feature.** A browser without it gets what it had: the focus held by hand and `aria-modal`.
 
 ---
 

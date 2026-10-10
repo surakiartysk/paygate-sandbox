@@ -2743,3 +2743,32 @@ a:hover {
   margin-bottom: 1rem;
 }
 
+/* A toast leaves by fading out; its dismiss button is a 24px target. */
+.toast {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast.leaving {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.toast-text {
+  flex: 1;
+}
+
+.toast-close {
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.toast-close:hover {
+  color: var(--text-primary);
+}
+

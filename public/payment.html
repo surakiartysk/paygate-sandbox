@@ -208,6 +208,10 @@
         <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 15px;">
           How <code>/api/2c2p/inquiry</code> answers when your system asks about this payment.
         </p>
+        <p class="form-hint inquiry-omise-note" id="inquiry-omise-note" hidden>
+          This is an Omise payment. Its charge lookup, <code>GET /api/omise/charges/{id}</code>, does not read
+          this setting; only the 2C2P inquiry does.
+        </p>
         <div class="info-grid" style="gap: 1rem;">
           <div class="form-group">
             <label class="form-label" for="inquiry-behavior">Behavior</label>

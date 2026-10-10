@@ -25,6 +25,7 @@
   --error: #f85149;
   --error-bg: rgba(248, 81, 73, 0.15);
   --error-text: #fa7973;
+  --on-error: #0a0e14;
   --pending: #58a6ff;
   --pending-bg: rgba(88, 166, 255, 0.15);
   --pending-text: #62abff;
@@ -68,6 +69,7 @@
   --error: #cf222e;
   --error-bg: rgba(207, 34, 46, 0.1);
   --error-text: #c3202c;
+  --on-error: #ffffff;
   --pending: #0969da;
   --pending-bg: rgba(9, 105, 218, 0.1);
   --pending-text: #0862cc;
@@ -279,13 +281,14 @@ a:hover {
 
 .btn-danger {
   background: var(--error-bg);
-  color: var(--error);
+  color: var(--error-text);
   border-color: var(--error);
 }
 
+/* White on the dark theme's red is 3.35:1; the text on a filled red is the theme's own. */
 .btn-danger:hover {
   background: var(--error);
-  color: white;
+  color: var(--on-error);
 }
 
 .btn-success {
@@ -569,7 +572,7 @@ a:hover {
 /* Callback Sequence Builder */
 .sequence-item {
   display: grid;
-  grid-template-columns: 30px 1fr 1fr 100px 32px;
+  grid-template-columns: 30px 1fr 1fr 120px 32px;
   gap: 0.5rem;
   align-items: center;
   padding: 0.75rem;
@@ -2461,6 +2464,18 @@ a:hover {
     display: none;
   }
 
+  /* The table and its body are blocks, so a row that is not a payment (none yet, or an error) is as
+     wide as the screen instead of keeping the width of the eight columns it no longer shows. */
+  .payments-table,
+  .payments-table tbody,
+  .payments-table tbody tr:not(.payment-row),
+  .payments-table tbody tr:not(.payment-row) td {
+    display: block;
+    width: auto;
+    /* Table cells do not wrap; the sentence under "No payments yet" has to. */
+    white-space: normal;
+  }
+
   .payments-table tbody tr.payment-row {
     display: grid;
     /* The first column is as wide for every row, so the callbacks and the method line up down the list
@@ -2708,5 +2723,23 @@ a:hover {
   .filter-group-grow {
     grid-column: 1 / -1;
   }
+}
+
+/* The wait after a callback says its unit: once the placeholder is gone the field is a bare number. */
+.sequence-item-wait {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.sequence-item-wait input {
+  width: 100%;
+  min-width: 0;
+}
+
+.inquiry-omise-note {
+  margin-bottom: 1rem;
 }
 

@@ -451,6 +451,9 @@ function renderPayment() {
 let inquiryFormFilledFrom = null;
 
 function renderInquiryConfig() {
+  // Only the 2C2P inquiry reads this setting; an Omise integration looks a charge up another way.
+  document.getElementById('inquiry-omise-note').hidden = payment.provider !== 'omise';
+
   // Update badge
   const badge = document.getElementById('inquiry-behavior-badge');
   const behavior = payment.inquiryBehavior || 'normal';
@@ -959,9 +962,12 @@ function renderCallbackSequence() {
       <select aria-label="Response code of callback ${index + 1}" onchange="updateSequenceItem(${index}, 'respCode', this.value)">
         ${getResponseCodeOptions(item.status, item.respCode)}
       </select>
-      <input type="number" aria-label="Wait after callback ${index + 1}, in ms" value="${item.delayAfter}" min="0" step="500" placeholder="Delay (ms)"
+      <span class="sequence-item-wait">
+        <input type="number" aria-label="Wait after callback ${index + 1}, in ms" value="${item.delayAfter}" min="0" step="500" placeholder="Delay (ms)"
              onchange="updateSequenceItem(${index}, 'delayAfter', parseInt(this.value) || 0)"
              title="Delay after this callback (ms)">
+        <span aria-hidden="true">ms</span>
+      </span>
       <button class="sequence-item-remove" onclick="removeCallbackFromSequence(${index})" title="Remove" aria-label="Remove callback ${index + 1}">
         <span aria-hidden="true">✕</span>
       </button>

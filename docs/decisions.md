@@ -808,16 +808,25 @@ form. "Global Configuration" is "Settings", which is what the demo banner alread
 named "✕" in the list of callbacks the scripts write. The accessibility pass of decision 22 ran axe with the
 dialogs closed, so it never saw them. They are named by the callback's number now.
 
+**Then, before merging, the four things this entry first left open.** An Omise payment now says that its
+charge lookup, `GET /api/omise/charges/{id}`, does not read the inquiry setting; only the 2C2P inquiry does
+(a test reads every Omise handler for the setting's fields). The wait in a callback row says "ms" beside the
+number. The owner's view was signed into on a local server with the development password from
+`.env.example`, and axe found four things the visitor's view does not have: the danger button's red on its tint
+was 4.11:1 in dark and white on the filled red 3.35:1, both now on the theme's own text colours and held by the
+contrast test; and with no payments the empty row kept the width of eight columns on a phone, so the table
+scrolled (it is a block now, and its sentence wraps), its span was 7 of 8 and the error row's 6, and the error
+message went into the page unescaped. The settings' warning of "Vercel rate limits (100 requests/hour on Hobby
+plan)" was checked against Vercel's limits page, which names no hourly cap on requests for Hobby; it now says
+what the page does, once a minute, 60 requests an hour, and that this counts towards the plan's usage. The
+other claim about the plan in the code, twelve functions a deployment, is on Vercel's runtimes page and stays.
+
 **Trade-off.**
 
-- **The inquiry note still names the 2C2P endpoint on an Omise payment.** It says what the code does; whether
-  an Omise payment should offer it is a question about behaviour, not words.
-- **The wait in a callback row is a bare number.** It now has a name for a screen reader, but a sighted
-  reader sees "0" with no unit once the placeholder is gone.
-- **The owner's settings were rewritten without being seen.** They are behind the password; the tests read
-  them.
-- **The Vercel rate-limit warning in the settings was kept as it was,** emoji aside. It is a claim about a
-  hosting plan that this change did not check.
+- **The owner's view was seen only on a local server with no payments of its own.** The empty and error rows
+  were looked at; a full list as the owner was not.
+- **Two names stay for the same method in two places.** The table and filter say "Card"; the payment page says
+  "Credit card (non-3DS)". The page has the room to say more.
 
 ---
 

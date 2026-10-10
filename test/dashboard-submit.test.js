@@ -137,7 +137,7 @@ describe('Update Status pressed twice', () => {
     const first = page.run('confirmUpdateStatus()');
     page.fail(new Error('network down'));
     await first;
-    assert.match(page.toasts().join('\n'), /Failed to update status: network down/);
+    assert.match(page.toasts().join('\n'), /Couldn't change the status: network down/);
 
     openStatusModalFor(page, 'INV-1');
     const again = page.run('confirmUpdateStatus()');

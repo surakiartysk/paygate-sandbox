@@ -35,6 +35,7 @@ one that was obvious.
 21. [The pages share the portfolio's type, a neutral primary and one name](#21-the-pages-share-the-portfolios-type-a-neutral-primary-and-one-name)
 22. [Every control has a name, a dialog is a dialog, and what happens is announced](#22-every-control-has-a-name-a-dialog-is-a-dialog-and-what-happens-is-announced)
 23. [The payments page is a title and a strip, and the payment page is a title and a list](#23-the-payments-page-is-a-title-and-a-strip-and-the-payment-page-is-a-title-and-a-list)
+24. [The words: one name for one thing, sentence case, and nothing the page cannot do](#24-the-words-one-name-for-one-thing-sentence-case-and-nothing-the-page-cannot-do)
 
 ---
 
@@ -782,6 +783,41 @@ two columns with the search across both.
 - **Copy was left for its own pass.** "Total Payments", "Not paid" and the dialog texts are as they were.
 - **Checked in Chrome only,** at 1,280, 820 and 375 px, in both themes: axe has no violation on either page,
   hovering every row finds no contrast failure, and the status dialog takes the focus.
+
+## 24. The words: one name for one thing, sentence case, and nothing the page cannot do
+
+**Context.** Every visible string of the payments page, the payment page, their dialogs, toasts and empty
+states was read against the code. One was untrue: the callback dialog told the owner to set presets in
+"Settings → Custom field presets", and there is no such screen; presets are a key of the config API. One
+method had three names (the table's "Machine", the filter's "Self Service", the page's "Self Service
+Machine"), and the action that changes a status was "Update status", "Update Status", "Update Payment
+Status" and "Status". The rest was register: Title Case on some labels and not others, "Yes, Clear All
+Payments", "Failed to …" beside "Callback failed: …", "payment(s)", three emoji.
+
+**Decision.** Sentence case everywhere. A status change is "Change status" on the page's button, the
+dialog's title and its button. The method filter offers each method by the name the table shows (Card, 3DS
+card, QR, Wallet, Counter, Kiosk, Banking); the payment page keeps the long name, which says more. A toast
+that reports a failure says what could not be done ("Couldn't change the status: …"); none says "Please" or
+"successfully". A destructive dialog asks a question in its title and names the action on its button
+("Clear all payments?" / "Clear all payments"). The count under the list is "10 payments", "1 payment" or
+"21–40 of 45 payments". The delete confirmation says the callback history goes too, which it does: the
+history is on the payment's record. The presets note names the key and the endpoint and says there is no
+form. "Global Configuration" is "Settings", which is what the demo banner already called it.
+
+**Found on the way.** With the callback dialog open, axe found two selects with no name and a remove button
+named "✕" in the list of callbacks the scripts write. The accessibility pass of decision 22 ran axe with the
+dialogs closed, so it never saw them. They are named by the callback's number now.
+
+**Trade-off.**
+
+- **The inquiry note still names the 2C2P endpoint on an Omise payment.** It says what the code does; whether
+  an Omise payment should offer it is a question about behaviour, not words.
+- **The wait in a callback row is a bare number.** It now has a name for a screen reader, but a sighted
+  reader sees "0" with no unit once the placeholder is gone.
+- **The owner's settings were rewritten without being seen.** They are behind the password; the tests read
+  them.
+- **The Vercel rate-limit warning in the settings was kept as it was,** emoji aside. It is a claim about a
+  hosting plan that this change did not check.
 
 ---
 

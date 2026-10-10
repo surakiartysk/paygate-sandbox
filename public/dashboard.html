@@ -83,7 +83,7 @@
             <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
           </svg>
         </button>
-        <button data-admin-only class="btn btn-secondary" onclick="openConfigModal()" title="Global Configuration" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+        <button data-admin-only class="btn btn-secondary" onclick="openConfigModal()" title="Settings" aria-label="Settings" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -116,7 +116,7 @@
           <line x1="16" y1="17" x2="8" y2="17"></line>
           <polyline points="10 9 9 9 8 9"></polyline>
         </svg>
-        Request Logs
+        Request logs
       </button>
     </div>
 
@@ -126,19 +126,19 @@
       <div class="stats-grid" id="stats-grid">
         <div class="stat-card">
           <div class="stat-value stat-total" id="stat-total">-</div>
-          <div class="stat-label">Total Payments</div>
+          <div class="stat-label">payments</div>
         </div>
         <div class="stat-card">
           <div class="stat-value stat-pending" id="stat-pending">-</div>
-          <div class="stat-label">Pending</div>
+          <div class="stat-label">pending</div>
         </div>
         <div class="stat-card">
           <div class="stat-value stat-success" id="stat-success">-</div>
-          <div class="stat-label">Success</div>
+          <div class="stat-label">success</div>
         </div>
         <div class="stat-card">
           <div class="stat-value stat-failed" id="stat-failed">-</div>
-          <div class="stat-label">Not paid</div>
+          <div class="stat-label">not paid</div>
         </div>
       </div>
 
@@ -160,7 +160,7 @@
             <label for="provider-filter">Provider</label>
             <div class="form-select-wrapper">
               <select id="provider-filter" class="form-select" onchange="handleProviderFilterChange()">
-                <option value="all">All Providers</option>
+                <option value="all">All providers</option>
                 <option value="2c2p">2C2P</option>
                 <option value="omise">Omise</option>
               </select>
@@ -170,14 +170,14 @@
             <label for="method-filter">Method</label>
             <div class="form-select-wrapper">
               <select id="method-filter" class="form-select" onchange="handleMethodFilterChange()">
-                <option value="all">All Methods</option>
-                <option value="CC">Credit Card</option>
-                <option value="3DS">3D Secure</option>
-                <option value="QR">QR Payment</option>
-                <option value="DPAY">Digital Wallet</option>
-                <option value="PC">Pay at Counter</option>
-                <option value="SSM">Self Service</option>
-                <option value="IB">Internet Banking</option>
+                <option value="all">All methods</option>
+                <option value="CC">Card</option>
+                <option value="3DS">3DS card</option>
+                <option value="QR">QR</option>
+                <option value="DPAY">Wallet</option>
+                <option value="PC">Counter</option>
+                <option value="SSM">Kiosk</option>
+                <option value="IB">Banking</option>
               </select>
             </div>
           </div>
@@ -185,7 +185,7 @@
             <label for="status-filter">Status</label>
             <div class="form-select-wrapper">
               <select id="status-filter" class="form-select" onchange="handleStatusFilterChange()">
-                <option value="all">All Status</option>
+                <option value="all">All statuses</option>
                 <option value="pending">Pending</option>
                 <option value="success">Success</option>
                 <option value="failed">Failed</option>
@@ -212,7 +212,7 @@
         <table class="table payments-table">
           <thead>
             <tr>
-              <th>Invoice No</th>
+              <th>Invoice</th>
               <th>Provider</th>
               <th>Method</th>
               <th>Amount</th>
@@ -227,7 +227,7 @@
               <td colspan="8">
                 <div class="loading">
                   <div class="spinner"></div>
-                  Loading payments...
+                  Loading payments…
                 </div>
               </td>
             </tr>
@@ -237,7 +237,7 @@
       
       <!-- Payments Pagination -->
       <div class="pagination-container" id="payments-pagination">
-        <div class="pagination-info">Loading...</div>
+        <div class="pagination-info">Loading…</div>
       </div>
     </div>
     </div><!-- End Payments Tab -->
@@ -246,7 +246,7 @@
     <div data-admin-only class="tab-content" id="tab-logs" role="tabpanel" aria-labelledby="tab-btn-logs">
       <div class="card">
         <div class="card-header">
-          <h2 class="card-title">Request/Response Logs</h2>
+          <h2 class="card-title">Requests and responses</h2>
           <div class="header-actions">
             <button id="refresh-logs-btn" class="btn btn-secondary btn-sm" onclick="refreshLogs()" title="Refresh logs" style="gap: 0.25rem;">
               <svg id="refresh-logs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
@@ -261,7 +261,7 @@
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
               </svg>
-              Clear Logs
+              Clear logs
             </button>
           </div>
         </div>
@@ -273,14 +273,14 @@
               <label for="log-type-filter">Type</label>
               <div class="form-select-wrapper">
                 <select id="log-type-filter" class="form-select" onchange="handleLogTypeFilterChange()">
-                  <option value="all">All Types</option>
+                  <option value="all">All types</option>
                   <optgroup label="2C2P">
                     <option value="token">Token</option>
                     <option value="inquiry">Inquiry</option>
                   </optgroup>
                   <optgroup label="Omise">
-                    <option value="omise-charge">Charge (Create)</option>
-                    <option value="omise-charge-get">Charge (Get)</option>
+                    <option value="omise-charge">Charge (create)</option>
+                    <option value="omise-charge-get">Charge (get)</option>
                     <option value="omise-token">Token</option>
                     <option value="omise-source">Source</option>
                   </optgroup>
@@ -322,7 +322,7 @@
                 <td colspan="8">
                   <div class="loading">
                     <div class="spinner"></div>
-                    Loading logs...
+                    Loading logs…
                   </div>
                 </td>
               </tr>
@@ -332,7 +332,7 @@
         
         <!-- Logs Pagination -->
         <div class="pagination-container" id="logs-pagination">
-          <div class="pagination-info">Loading...</div>
+          <div class="pagination-info">Loading…</div>
         </div>
       </div>
     </div><!-- End Logs Tab -->
@@ -342,95 +342,95 @@
   <div class="modal-overlay" id="config-modal">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="config-modal-title">
       <div class="modal-header">
-        <h3 id="config-modal-title" class="modal-title">Global Configuration</h3>
+        <h3 id="config-modal-title" class="modal-title">Settings</h3>
         <button type="button" class="modal-close" onclick="closeConfigModal()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <p style="color: var(--text-secondary); font-size: 15px; margin-bottom: 1.5rem;">
-          Configure global simulation settings that apply to all API requests across the gateway.
+          These apply to every API request the sandbox receives.
         </p>
         <div class="config-panel">
           <div class="config-item">
             <div class="config-item-header">
-              <span class="config-item-title">Global Delay</span>
+              <span class="config-item-title">Delay on every response</span>
             </div>
             <div class="form-group" style="margin-bottom: 0;">
               <input type="number" id="config-delay" aria-label="Global delay in milliseconds" class="form-input" 
                      placeholder="Delay in ms" min="0" step="100">
               <small style="color: var(--text-muted); font-size: 12px;">
-                Add delay to all API responses (milliseconds)
+                Milliseconds added to every API response.
               </small>
             </div>
           </div>
           
           <div class="config-item">
             <div class="config-item-header">
-              <span class="config-item-title">Force Error (2C2P)</span>
+              <span class="config-item-title">Force an error (2C2P)</span>
             </div>
             <div class="form-group" style="margin-bottom: 0;">
               <div class="form-select-wrapper">
                 <select id="config-error-2c2p" aria-label="Error code for 2C2P" class="form-select">
-                  <option value="">No error (normal response)</option>
+                  <option value="">No error</option>
                 </select>
               </div>
               <small style="color: var(--text-muted); font-size: 12px;">
-                Force all 2C2P requests to return this error code
+                Every 2C2P request answers with this code.
               </small>
             </div>
           </div>
           
           <div class="config-item">
             <div class="config-item-header">
-              <span class="config-item-title">Force Error (Omise)</span>
+              <span class="config-item-title">Force an error (Omise)</span>
             </div>
             <div class="form-group" style="margin-bottom: 0;">
               <div class="form-select-wrapper">
                 <select id="config-error-omise" aria-label="Error code for Omise" class="form-select">
-                  <option value="">No error (normal response)</option>
+                  <option value="">No error</option>
                 </select>
               </div>
               <small style="color: var(--text-muted); font-size: 12px;">
-                Force all Omise requests to return this error code
+                Every Omise request answers with this code.
               </small>
             </div>
           </div>
           
           <div class="config-item">
             <div class="config-item-header">
-              <span class="config-item-title">Failure Rate</span>
+              <span class="config-item-title">Failure rate</span>
             </div>
             <div class="form-group" style="margin-bottom: 0;">
               <input type="number" id="config-failure-rate" aria-label="Failure rate in percent" class="form-input" 
                      placeholder="Percentage (0-100)" min="0" max="100">
               <small style="color: var(--text-muted); font-size: 12px;">
-                Random failure percentage for requests
+                The share of requests that fail at random, in percent.
               </small>
             </div>
           </div>
           
           <div class="config-item">
             <div class="config-item-header">
-              <span class="config-item-title">Duplicate Callbacks</span>
+              <span class="config-item-title">Duplicate callbacks</span>
             </div>
             <label class="form-checkbox">
               <input type="checkbox" id="config-duplicate">
               <span>Send callbacks twice</span>
             </label>
             <small style="color: var(--text-muted); font-size: 12px; display: block; margin-top: 0.5rem;">
-              Test idempotency by sending duplicate callbacks
+              To test that your system acts on a repeated callback once.
             </small>
           </div>
           
           <div class="config-item" style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
             <div class="config-item-header">
-              <span class="config-item-title">Auto-Refresh Payments</span>
+              <span class="config-item-title">Refresh the list by itself</span>
             </div>
             <label class="form-checkbox">
               <input type="checkbox" id="config-auto-refresh" onchange="toggleAutoRefresh()">
-              <span>Automatically check for new payments</span>
+              <span>Check for new payments every 60 seconds</span>
             </label>
             <small style="color: var(--text-muted); font-size: 12px; display: block; margin-top: 0.5rem;">
-              ⚠️ With multiple team members, disable this to prevent exceeding Vercel rate limits (100 requests/hour on Hobby plan). 
+              With multiple team members, disable this to prevent exceeding Vercel rate limits (100 requests/hour on Hobby plan). 
               <br>When enabled, polls every 60 seconds (60 requests/hour per user).
             </small>
           </div>
@@ -438,7 +438,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeConfigModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveConfig()">Save Global Config</button>
+        <button class="btn btn-primary" onclick="saveConfig()">Save settings</button>
       </div>
     </div>
   </div>
@@ -447,7 +447,7 @@
   <div class="modal-overlay" id="status-modal">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="status-modal-title">
       <div class="modal-header">
-        <h3 id="status-modal-title" class="modal-title">Update Payment Status</h3>
+        <h3 id="status-modal-title" class="modal-title">Change status</h3>
         <button type="button" class="modal-close" onclick="closeStatusModal()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
@@ -455,7 +455,7 @@
           Invoice: <strong id="status-modal-invoice" style="color: var(--text-primary);"></strong>
         </p>
         <div class="form-group">
-          <label class="form-label" for="new-status">New Status</label>
+          <label class="form-label" for="new-status">New status</label>
           <select id="new-status" class="form-select" onchange="onStatusModalChange()">
             <option value="pending">Pending</option>
             <option value="success">Success</option>
@@ -465,22 +465,22 @@
           </select>
         </div>
         <div class="form-group" id="resp-code-group" style="display: none;">
-          <label class="form-label" for="resp-code">Response Code</label>
+          <label class="form-label" for="resp-code">Response code</label>
           <select id="resp-code" class="form-select">
             <!-- Populated dynamically -->
           </select>
           <small style="color: var(--text-muted); font-size: 12px; margin-top: 0.5rem; display: block;">
-            Select specific error code to test how your system handles different failure scenarios
+            The response code the payment will carry, and its callback with it.
           </small>
         </div>
         <label class="form-checkbox" style="margin-top: 1rem;">
           <input type="checkbox" id="send-callback-after">
-          <span>Send callback after status update</span>
+          <span>Send a callback after the change</span>
         </label>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeStatusModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="confirmUpdateStatus()">Update Status</button>
+        <button class="btn btn-primary" onclick="confirmUpdateStatus()">Change status</button>
       </div>
     </div>
   </div>
@@ -489,7 +489,7 @@
   <div class="modal-overlay" id="callback-modal">
     <div class="modal" style="max-width: 800px;" role="dialog" aria-modal="true" aria-labelledby="callback-modal-title">
       <div class="modal-header">
-        <h3 id="callback-modal-title" class="modal-title"><span aria-hidden="true">📤</span> Send Callback</h3>
+        <h3 id="callback-modal-title" class="modal-title">Send callback</h3>
         <button type="button" class="modal-close" onclick="closeCallbackModal()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
@@ -499,16 +499,16 @@
         <!-- Custom Callback Fields -->
         <div class="form-group" style="margin-bottom: 1rem;">
           <div class="custom-fields-header">
-            <label class="form-label" for="custom-field-preset">Custom Fields</label>
+            <label class="form-label" for="custom-field-preset">Custom fields</label>
             <select id="custom-field-preset" class="form-input custom-field-preset" onchange="applyCustomFieldPreset(this.value)">
               <option value="">Presets…</option>
             </select>
           </div>
           <div id="custom-fields-list" class="custom-fields-list"></div>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="addCustomField()">+ Add field</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addCustomField()">Add field</button>
           <p class="form-hint">
             Merged into the callback payload alongside the provider's own fields.
-            <span data-admin-only>Configure reusable presets in <strong>Settings → Custom field presets</strong>.</span>
+            <span data-admin-only>Presets are set with <code>customFieldPresets</code> through <code>POST /api/admin/config</code>; there is no form for them yet.</span>
           </p>
         </div>
         <!-- Mode Tabs -->
@@ -517,18 +517,18 @@
             Sequence
           </button>
           <button id="callback-mode-custom" class="callback-mode-btn" onclick="switchCallbackMode('custom')" role="tab" aria-selected="false" aria-controls="callback-custom-mode">
-            Custom Payload
+            Custom payload
           </button>
         </div>
         
         <!-- Sequence Mode -->
         <div id="callback-sequence-mode" role="tabpanel" aria-labelledby="callback-mode-sequence">
           <p style="color: var(--text-secondary); font-size: 15px; margin-bottom: 1rem;">
-            Configure and send callbacks to your system. Build a sequence to test different scenarios.
+            Send one callback or several in a row, each with its own status and wait.
           </p>
           <div id="callback-sequence-list"></div>
           <button class="btn btn-secondary btn-sm" onclick="addCallbackToSequence()" style="margin-top: 1rem;">
-            + Add Callback
+            Add callback
           </button>
           <p style="color: var(--text-muted); font-size: 12px; margin-top: 1rem;">
             Tip: Add multiple callbacks to test idempotency, status changes, or retry patterns.
@@ -538,16 +538,16 @@
         <!-- Custom Payload Mode -->
         <div id="callback-custom-mode" role="tabpanel" aria-labelledby="callback-mode-custom" style="display: none;">
           <p style="color: var(--text-secondary); font-size: 15px; margin-bottom: 1rem;">
-            Edit the callback payload before sending. Useful for testing invalid payloads or amount mismatches.
+            Edit the payload before it is sent, to see how your system handles a wrong amount or a broken field.
           </p>
           <div class="form-group">
-            <label class="form-label" for="callback-payload-editor">Callback Payload (JSON)</label>
+            <label class="form-label" for="callback-payload-editor">Payload (JSON)</label>
             <textarea id="callback-payload-editor" class="form-input" rows="15" style="font-family: var(--font-mono); font-size: 13px;"></textarea>
             <div id="callback-json-error" style="display: none; color: var(--error); font-size: 12px; margin-top: 0.5rem;"></div>
           </div>
           <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-            <button class="btn btn-secondary btn-sm" onclick="loadCallbackPreview()">Load Preview</button>
-            <button class="btn btn-secondary btn-sm" onclick="resetCallbackPayload()">Reset to Default</button>
+            <button class="btn btn-secondary btn-sm" onclick="loadCallbackPreview()">Load preview</button>
+            <button class="btn btn-secondary btn-sm" onclick="resetCallbackPayload()">Reset to default</button>
             <button class="btn btn-secondary btn-sm" onclick="formatCallbackPayload()">Format JSON</button>
           </div>
           <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius); font-size: 13px; color: var(--text-muted); margin-top: 1rem;">
@@ -557,7 +557,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeCallbackModal()">Cancel</button>
-        <button id="callback-send-btn" class="btn btn-primary" onclick="handleCallbackSend()">Send Sequence</button>
+        <button id="callback-send-btn" class="btn btn-primary" onclick="handleCallbackSend()">Send callbacks</button>
       </div>
     </div>
   </div>
@@ -566,7 +566,7 @@
   <div class="modal-overlay" id="log-modal">
     <div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="log-modal-title">
       <div class="modal-header">
-        <h3 id="log-modal-title" class="modal-title"><span aria-hidden="true">📋</span> Log Details</h3>
+        <h3 id="log-modal-title" class="modal-title">Log details</h3>
         <button type="button" class="modal-close" onclick="closeLogModal()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body" id="log-modal-body">
@@ -582,20 +582,20 @@
   <div class="modal-overlay" id="clear-payments-modal">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="clear-payments-modal-title">
       <div class="modal-header">
-        <h3 id="clear-payments-modal-title" class="modal-title"><span aria-hidden="true">⚠️</span> Clear All Payments</h3>
+        <h3 id="clear-payments-modal-title" class="modal-title">Clear all payments?</h3>
         <button type="button" class="modal-close" onclick="closeClearPaymentsModal()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <p style="margin-bottom: 1rem; color: var(--text-primary); font-size: 16px;">
-          Are you sure you want to delete <strong>all payments</strong>?
+          Every payment is deleted, with its status history and callback history.
         </p>
         <p style="color: var(--text-secondary); font-size: 15px;">
-          This action cannot be undone. All payment records, status history, and callback history will be permanently deleted.
+          This cannot be undone.
         </p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeClearPaymentsModal()">Cancel</button>
-        <button class="btn btn-danger" onclick="confirmClearPayments()">Yes, Clear All Payments</button>
+        <button class="btn btn-danger" onclick="confirmClearPayments()">Clear all payments</button>
       </div>
     </div>
   </div>
@@ -604,20 +604,20 @@
   <div class="modal-overlay" id="clear-logs-modal">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="clear-logs-modal-title">
       <div class="modal-header">
-        <h3 id="clear-logs-modal-title" class="modal-title"><span aria-hidden="true">⚠️</span> Clear All Logs</h3>
+        <h3 id="clear-logs-modal-title" class="modal-title">Clear all logs?</h3>
         <button type="button" class="modal-close" onclick="closeClearLogsModal()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <p style="margin-bottom: 1rem; color: var(--text-primary); font-size: 16px;">
-          Are you sure you want to delete <strong>all request logs</strong>?
+          Every request and response in the log is deleted.
         </p>
         <p style="color: var(--text-secondary); font-size: 15px;">
-          This action cannot be undone. All API request and response logs will be permanently deleted.
+          This cannot be undone.
         </p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeClearLogsModal()">Cancel</button>
-        <button class="btn btn-danger" onclick="confirmClearLogs()">Yes, Clear All Logs</button>
+        <button class="btn btn-danger" onclick="confirmClearLogs()">Clear all logs</button>
       </div>
     </div>
   </div>

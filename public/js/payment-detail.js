@@ -230,7 +230,7 @@ async function updatePaymentStatus(status, respCode = null) {
     const data = await safeParseJson(response);
 
     if (data.success) {
-      showToast(data.message || `Status updated to ${status}`, 'success');
+      showToast(data.message || `Status changed to ${status}`, 'success');
       
       // Check if should send callback
       if (document.getElementById('send-callback-after').checked) {
@@ -242,7 +242,7 @@ async function updatePaymentStatus(status, respCode = null) {
       throw new Error(data.error);
     }
   } catch (error) {
-    showToast('Failed to update status: ' + error.message, 'error');
+    showToast("Couldn't change the status: " + error.message, 'error');
   }
 }
 
@@ -263,7 +263,7 @@ async function sendCallback() {
     const data = await safeParseJson(response);
 
     if (data.success) {
-      showToast(`Callback sent successfully (${data.result.responseTime}ms)`, 'success');
+      showToast(`Callback sent (${data.result.responseTime} ms)`, 'success');
     } else {
       showToast('Callback failed: ' + (data.error || data.result?.error || 'Unknown error'), 'error');
     }
@@ -271,7 +271,7 @@ async function sendCallback() {
     loadPayment();
 
   } catch (error) {
-    showToast('Failed to send callback: ' + error.message, 'error');
+    showToast("Couldn't send the callback: " + error.message, 'error');
   } finally {
     btn.innerHTML = originalText;
     btn.disabled = false;
@@ -279,7 +279,7 @@ async function sendCallback() {
 }
 
 async function deletePaymentAndRedirect() {
-  if (!confirm(`Are you sure you want to delete payment "${invoiceNo}"? This cannot be undone.`)) {
+  if (!confirm(`Delete payment ${invoiceNo} and its callback history? This cannot be undone.`)) {
     return;
   }
 
@@ -303,7 +303,7 @@ async function deletePaymentAndRedirect() {
       throw new Error(data.error);
     }
   } catch (error) {
-    showToast('Failed to delete payment: ' + error.message, 'error');
+    showToast("Couldn't delete the payment: " + error.message, 'error');
   }
 }
 
@@ -408,7 +408,7 @@ function renderPayment() {
   } else {
     // 2C2P format (default)
     if (respCodeLabelEl) respCodeLabelEl.textContent = 'Response code';
-    if (respDescLabelEl) respDescLabelEl.textContent = 'Response desc';
+    if (respDescLabelEl) respDescLabelEl.textContent = 'Response description';
     
     document.getElementById('info-respcode').textContent = payment.respCode || '-';
     document.getElementById('info-respdesc').textContent = payment.respDesc || '-';
@@ -501,13 +501,13 @@ async function saveInquiryConfig() {
     const data = await safeParseJson(response);
     
     if (data.success) {
-      showToast(`Inquiry behavior set to: ${behavior}`, 'success');
+      showToast(`Inquiry set to ${behavior}`, 'success');
       loadPayment();
     } else {
       throw new Error(data.error);
     }
   } catch (error) {
-    showToast('Failed to save inquiry config: ' + error.message, 'error');
+    showToast("Couldn't save the inquiry setting: " + error.message, 'error');
   }
 }
 
@@ -528,13 +528,13 @@ async function resetInquiryConfig() {
     const data = await safeParseJson(response);
     
     if (data.success) {
-      showToast('Inquiry behavior reset to normal', 'success');
+      showToast('Inquiry set back to normal', 'success');
       loadPayment();
     } else {
       throw new Error(data.error);
     }
   } catch (error) {
-    showToast('Failed to reset inquiry config: ' + error.message, 'error');
+    showToast("Couldn't reset the inquiry setting: " + error.message, 'error');
   }
 }
 
@@ -596,7 +596,7 @@ function renderCallbackHistory() {
     // Says why when nothing can be sent, rather than pointing at a button
     // that is disabled for want of a callback URL.
     const hint = payment.backendReturnUrl
-      ? 'Send one with Send Callback and it will appear here.'
+      ? 'Callbacks you send appear here.'
       : 'This payment has no callback URL, so there is nowhere to send one.';
     container.innerHTML = `
       <div class="empty-state" style="padding: 2rem;">
@@ -742,7 +742,7 @@ function switchCallbackMode(mode) {
   
   // Update send button text
   const sendBtn = document.getElementById('callback-send-btn');
-  sendBtn.textContent = mode === 'sequence' ? 'Send Sequence' : 'Send Custom Payload';
+  sendBtn.textContent = mode === 'sequence' ? 'Send callbacks' : 'Send payload';
   
   // Load preview when switching to custom mode
   if (mode === 'custom' && !callbackPreviewPayload) {
@@ -761,7 +761,7 @@ async function loadCallbackPreview() {
   
   try {
     editor.disabled = true;
-    editor.value = 'Loading preview...';
+    editor.value = 'Loading preview…';
     if (errorDiv) errorDiv.style.display = 'none';
     
     const response = await fetch(`/api/admin/payments/${encodeURIComponent(invoiceNo)}?preview=callback`, {
@@ -791,7 +791,7 @@ async function loadCallbackPreview() {
       errorDiv.textContent = 'Error loading preview: ' + error.message;
       errorDiv.style.display = 'block';
     }
-    showToast('Failed to load preview: ' + error.message, 'error');
+    showToast("Couldn't load the preview: " + error.message, 'error');
   } finally {
     editor.disabled = false;
   }
@@ -842,7 +842,7 @@ async function sendCustomCallback() {
   const payload = validateCallbackPayload();
   
   if (!payload) {
-    showToast('Please fix JSON errors before sending', 'error');
+    showToast('The payload is not valid JSON. Fix it before sending.', 'error');
     return;
   }
   
@@ -867,7 +867,7 @@ async function sendCustomCallback() {
     if (data.success) {
       const result = data.result;
       const responseTime = result?.responseTime || result?.historyEntry?.responseTime || 0;
-      showToast(`Custom callback sent successfully (${responseTime}ms)`, 'success');
+      showToast(`Callback sent (${responseTime} ms)`, 'success');
     } else {
       showToast('Callback failed: ' + (data.error || 'Unknown error'), 'error');
     }
@@ -875,7 +875,7 @@ async function sendCustomCallback() {
     loadPayment();
     
   } catch (error) {
-    showToast('Failed to send callback: ' + error.message, 'error');
+    showToast("Couldn't send the callback: " + error.message, 'error');
   } finally {
     btn.innerHTML = originalText;
     btn.disabled = false;
@@ -950,20 +950,20 @@ function renderCallbackSequence() {
   container.innerHTML = callbackSequence.map((item, index) => `
     <div class="sequence-item">
       <div class="sequence-item-num">#${index + 1}</div>
-      <select onchange="updateSequenceItem(${index}, 'status', this.value)">
+      <select aria-label="Status of callback ${index + 1}" onchange="updateSequenceItem(${index}, 'status', this.value)">
         <option value="success" ${item.status === 'success' ? 'selected' : ''}>Success</option>
         <option value="failed" ${item.status === 'failed' ? 'selected' : ''}>Failed</option>
         <option value="pending" ${item.status === 'pending' ? 'selected' : ''}>Pending</option>
         <option value="cancelled" ${item.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
       </select>
-      <select onchange="updateSequenceItem(${index}, 'respCode', this.value)">
+      <select aria-label="Response code of callback ${index + 1}" onchange="updateSequenceItem(${index}, 'respCode', this.value)">
         ${getResponseCodeOptions(item.status, item.respCode)}
       </select>
-      <input type="number" value="${item.delayAfter}" min="0" step="500" placeholder="Delay (ms)"
+      <input type="number" aria-label="Wait after callback ${index + 1}, in ms" value="${item.delayAfter}" min="0" step="500" placeholder="Delay (ms)"
              onchange="updateSequenceItem(${index}, 'delayAfter', parseInt(this.value) || 0)"
              title="Delay after this callback (ms)">
-      <button class="sequence-item-remove" onclick="removeCallbackFromSequence(${index})" title="Remove">
-        ✕
+      <button class="sequence-item-remove" onclick="removeCallbackFromSequence(${index})" title="Remove" aria-label="Remove callback ${index + 1}">
+        <span aria-hidden="true">✕</span>
       </button>
     </div>
   `).join('');
@@ -1013,7 +1013,7 @@ function getResponseCodeOptions(status, selectedCode) {
 
 async function sendCallbackSequence() {
   if (callbackSequence.length === 0) {
-    showToast('Please add at least one callback to the sequence', 'error');
+    showToast('Add at least one callback first.', 'error');
     return;
   }
   
@@ -1050,7 +1050,7 @@ async function sendCallbackSequence() {
       const totalResponseTime = results.reduce((sum, r) => {
         return sum + (r.responseTime || r.historyEntry?.responseTime || 0);
       }, 0);
-      showToast(`Callback sequence sent: ${count} callback(s) in ${totalResponseTime}ms`, 'success');
+      showToast(`Sent ${count} ${count === 1 ? 'callback' : 'callbacks'} in ${totalResponseTime} ms`, 'success');
     } else {
       showToast('Callback failed: ' + (data.error || 'Unknown error'), 'error');
     }
@@ -1058,7 +1058,7 @@ async function sendCallbackSequence() {
     loadPayment();
     
   } catch (error) {
-    showToast('Failed to send callback: ' + error.message, 'error');
+    showToast("Couldn't send the callback: " + error.message, 'error');
   } finally {
     btn.innerHTML = originalText;
     btn.disabled = false;

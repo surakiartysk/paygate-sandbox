@@ -87,7 +87,7 @@
         <p class="detail-subtitle" id="detail-summary"></p>
       </div>
       <div class="detail-actions">
-        <button class="btn btn-secondary" id="btn-update-status" onclick="openStatusModal()">Update status</button>
+        <button class="btn btn-secondary" id="btn-update-status" onclick="openStatusModal()">Change status</button>
         <button class="btn btn-primary" id="btn-send-callback" onclick="openCallbackModal()">Send callback</button>
       </div>
     </div>
@@ -126,7 +126,7 @@
               <dd class="info-value mono" id="info-respcode">-</dd>
             </div>
             <div class="info-item info-item-wide">
-              <dt class="info-label" id="resp-desc-label">Response desc</dt>
+              <dt class="info-label" id="resp-desc-label">Response description</dt>
               <dd class="info-value" id="info-respdesc">-</dd>
             </div>
             <div class="info-item info-item-wide">
@@ -193,7 +193,7 @@
       <div class="card-body" id="callback-history">
         <div class="empty-state">
             <div class="empty-state-title">No callbacks sent yet</div>
-          <p>Send one with Send Callback and it will appear here.</p>
+          <p>Callbacks you send appear here.</p>
         </div>
       </div>
     </div>
@@ -206,29 +206,29 @@
       </div>
       <div class="card-body">
         <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 15px;">
-          Control how the <code>/api/2c2p/inquiry</code> API responds when your system asks about this payment.
+          How <code>/api/2c2p/inquiry</code> answers when your system asks about this payment.
         </p>
         <div class="info-grid" style="gap: 1rem;">
           <div class="form-group">
             <label class="form-label" for="inquiry-behavior">Behavior</label>
             <select id="inquiry-behavior" class="form-select" onchange="onInquiryBehaviorChange()">
-              <option value="normal">Normal - Return the current payment status</option>
-              <option value="delay">Delay - Respond after specified time</option>
-              <option value="error">Error - Return specific error code</option>
-              <option value="timeout">Timeout - Never respond (hang forever)</option>
+              <option value="normal">Normal: answer with the current status</option>
+              <option value="delay">Delay: answer after a wait</option>
+              <option value="error">Error: answer with an error code</option>
+              <option value="timeout">Timeout: never answer</option>
             </select>
           </div>
           <div class="form-group" id="inquiry-delay-group" style="display: none;">
-            <label class="form-label" for="inquiry-delay">Delay (milliseconds)</label>
+            <label class="form-label" for="inquiry-delay">Delay (ms)</label>
             <input type="number" id="inquiry-delay" class="form-input" value="5000" min="0" step="1000" placeholder="5000">
           </div>
           <div class="form-group" id="inquiry-error-group" style="display: none;">
-            <label class="form-label" for="inquiry-error-code">Error Code</label>
+            <label class="form-label" for="inquiry-error-code">Error code</label>
             <select id="inquiry-error-code" class="form-select">
               <option value="0999">0999 - System temporarily unavailable</option>
               <option value="9999">9999 - System error</option>
               <option value="5002">5002 - Timeout</option>
-              <option value="5998">5998 - Internal Error</option>
+              <option value="5998">5998 - Internal error</option>
               <option value="2002">2002 - Transaction not found</option>
             </select>
           </div>
@@ -260,16 +260,16 @@
         <!-- Custom Callback Fields -->
         <div class="form-group" style="margin-bottom: 1rem;">
           <div class="custom-fields-header">
-            <label class="form-label" for="custom-field-preset">Custom Fields</label>
+            <label class="form-label" for="custom-field-preset">Custom fields</label>
             <select id="custom-field-preset" class="form-input custom-field-preset" onchange="applyCustomFieldPreset(this.value)">
               <option value="">Presets…</option>
             </select>
           </div>
           <div id="custom-fields-list" class="custom-fields-list"></div>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="addCustomField()">+ Add field</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addCustomField()">Add field</button>
           <p class="form-hint">
             Merged into the callback payload alongside the provider's own fields.
-            <span data-admin-only>Configure reusable presets in <strong>Settings → Custom field presets</strong>.</span>
+            <span data-admin-only>Presets are set with <code>customFieldPresets</code> through <code>POST /api/admin/config</code>; there is no form for them yet.</span>
           </p>
         </div>
         <!-- Mode Tabs -->
@@ -278,21 +278,21 @@
             Sequence
           </button>
           <button id="callback-mode-custom" class="callback-mode-btn" onclick="switchCallbackMode('custom')" role="tab" aria-selected="false" aria-controls="callback-custom-mode">
-            Custom Payload
+            Custom payload
           </button>
         </div>
         
         <!-- Sequence Mode -->
         <div id="callback-sequence-mode" role="tabpanel" aria-labelledby="callback-mode-sequence" style="display: block;">
           <p style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 15px;">
-            Configure and send callbacks to your system. Build a sequence to test different scenarios.
+            Send one callback or several in a row, each with its own status and wait.
           </p>
           
           <!-- Callback Sequence Builder -->
           <div id="callback-sequence-container">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-              <label class="form-label" style="margin: 0;">Callback Sequence</label>
-              <button class="btn btn-secondary btn-sm" onclick="addCallbackToSequence()">+ Add</button>
+              <label class="form-label" style="margin: 0;">Callbacks</label>
+              <button class="btn btn-secondary btn-sm" onclick="addCallbackToSequence()">Add callback</button>
             </div>
             <div id="callback-sequence-list" style="max-height: 300px; overflow-y: auto;">
               <!-- Sequence items added dynamically -->
@@ -307,13 +307,13 @@
         <!-- Custom Payload Mode -->
         <div id="callback-custom-mode" role="tabpanel" aria-labelledby="callback-mode-custom" style="display: none;">
           <p style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 15px;">
-            Edit the callback payload before sending to test invalid payload / amount mismatch scenarios.
+            Edit the payload before it is sent, to see how your system handles a wrong amount or a broken field.
           </p>
           
           <!-- Preview Section -->
           <div style="margin-bottom: 1rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <label class="form-label" style="margin: 0;">Callback Payload Preview</label>
+              <label class="form-label" style="margin: 0;">Payload (JSON)</label>
               <button class="btn btn-secondary btn-sm" onclick="loadCallbackPreview()">Load preview</button>
             </div>
             <div id="callback-preview-container" style="position: relative;">
@@ -335,7 +335,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeCallbackModal()">Cancel</button>
-        <button id="callback-send-btn" class="btn btn-primary" onclick="handleCallbackSend()">Send Sequence</button>
+        <button id="callback-send-btn" class="btn btn-primary" onclick="handleCallbackSend()">Send callbacks</button>
       </div>
     </div>
   </div>
@@ -344,15 +344,15 @@
   <div class="modal-overlay" id="status-modal">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="status-modal-title">
       <div class="modal-header">
-        <h3 id="status-modal-title" class="modal-title">Update Payment Status</h3>
+        <h3 id="status-modal-title" class="modal-title">Change status</h3>
         <button type="button" class="modal-close" onclick="closeStatusModal()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <p style="margin-bottom: 1rem; color: var(--text-secondary);">
-          Current Status: <span class="badge" id="current-status-badge">-</span>
+          Current status: <span class="badge" id="current-status-badge">-</span>
         </p>
         <div class="form-group">
-          <label class="form-label" for="new-status">New Status</label>
+          <label class="form-label" for="new-status">New status</label>
           <select id="new-status" class="form-select" onchange="onStatusChange()">
             <option value="pending">Pending</option>
             <option value="success">Success</option>
@@ -362,22 +362,22 @@
           </select>
         </div>
         <div class="form-group" id="resp-code-group" style="display: none;">
-          <label class="form-label" for="resp-code">Response Code (2C2P Error Code)</label>
+          <label class="form-label" for="resp-code">Response code</label>
           <select id="resp-code" class="form-select">
             <!-- Populated dynamically -->
           </select>
           <small style="color: var(--text-muted); font-size: 12px; margin-top: 0.5rem; display: block;">
-            Select specific error code to test how your system handles different failure scenarios
+            The response code the payment will carry, and its callback with it.
           </small>
         </div>
         <label class="form-checkbox" style="margin-top: 1rem;">
           <input type="checkbox" id="send-callback-after">
-          <span>Send callback after status update</span>
+          <span>Send a callback after the change</span>
         </label>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeStatusModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="confirmUpdateStatus()">Update Status</button>
+        <button class="btn btn-primary" onclick="confirmUpdateStatus()">Change status</button>
       </div>
     </div>
   </div>

@@ -912,7 +912,7 @@ function renderPayments() {
           </button>
           <div class="row-menu">
             <button class="row-action row-action-icon" onclick="toggleRowMenu(event, ${jsArg(payment.invoiceNo)})"
-                    title="More actions" aria-label="More actions for ${escapeAttr(payment.invoiceNo)}" aria-haspopup="true" aria-expanded="false">
+                    title="More actions" aria-label="More actions for ${escapeAttr(payment.invoiceNo)}" aria-expanded="false" aria-controls="menu-${escapeAttr(payment.invoiceNo)}">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <circle cx="5" cy="12" r="1.6"></circle>
                 <circle cx="12" cy="12" r="1.6"></circle>
@@ -1314,6 +1314,9 @@ function toggleRowMenu(event, invoiceNo) {
   if (!wasOpen) {
     panel.hidden = false;
     panel.previousElementSibling?.setAttribute('aria-expanded', 'true');
+    // A disclosure that opens with the keyboard puts the focus on its first item, so Tab does not
+    // have to walk past the rest of the row to reach what it opened.
+    panel.querySelector('a, button')?.focus();
   }
 }
 
@@ -1327,10 +1330,14 @@ function closeAllRowMenus() {
   });
 }
 
-// A click anywhere else, or Escape, dismisses an open menu.
+// A click anywhere else, or Escape, dismisses an open menu. Escape gives the focus back to the
+// button that opened it: closing a panel the focus was in left the focus nowhere.
 document.addEventListener('click', closeAllRowMenus);
 document.addEventListener('keydown', event => {
-  if (event.key === 'Escape') closeAllRowMenus();
+  if (event.key !== 'Escape') return;
+  const open = document.querySelector('.row-menu-panel:not([hidden])');
+  closeAllRowMenus();
+  if (open) open.previousElementSibling?.focus();
 });
 
 function handleStatusChange(invoiceNo, status) {
@@ -2118,22 +2125,9 @@ function formatJson(obj) {
   }
 }
 
+/** How long a toast stays, and how it is dismissed, is in toast.js. */
 function showToast(message, type = 'success') {
-  const container = document.getElementById('toast-container');
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  if (type !== 'success') toast.setAttribute('role', 'alert');
-  toast.innerHTML = `
-    <span class="toast-icon">${type === 'success' ? '✓' : '✕'}</span>
-    <span>${escapeHtml(message)}</span>
-  `;
-  container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(100%)';
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
+  window.Toast.show(message, type);
 }
 
 // Closing on a press outside a dialog, and on Escape, is in dialog.js.

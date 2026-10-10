@@ -138,8 +138,10 @@ describe('announcements', () => {
     for (const page of ['dashboard.html', 'payment.html']) {
       assert.match(read(page), /id="toast-container" role="status" aria-live="polite"/, page);
     }
+    // Both pages' toasts come from one file now, toast.js; both pages load it.
+    assert.match(read('js/toast.js'), /if \(type !== 'success'\) toast\.setAttribute\('role', 'alert'\)/);
     for (const script of ['dashboard.js', 'payment-detail.js']) {
-      assert.match(read(`js/${script}`), /if \(type !== 'success'\) toast\.setAttribute\('role', 'alert'\)/, script);
+      assert.match(read(`js/${script}`), /function showToast\(message, type = 'success'\) \{\s*window\.Toast\.show\(message, type\);/, script);
     }
   });
 });

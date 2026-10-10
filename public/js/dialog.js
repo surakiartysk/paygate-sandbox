@@ -18,6 +18,32 @@
   /** What opened each dialog, to go back to. */
   const openers = new Map();
 
+  /**
+   * The page behind an open dialog is inert: aria-modal tells a screen reader the rest is out of
+   * play, but a browser that does not honour it let the reading cursor wander onto the page behind
+   * (decision 22 named it and left it). Only what this file made inert is given back, so an element
+   * inert for its own reason stays so.
+   */
+  const madeInert = new Set();
+  function pageBehind() {
+    const body = root.document.body;
+    if (!body || !body.children) return [];
+    return [...body.children].filter(
+      (el) => !(el.classList && el.classList.contains('modal-overlay')) && el.id !== 'toast-container' && el.tagName !== 'SCRIPT'
+    );
+  }
+  function holdPage() {
+    for (const el of pageBehind()) {
+      if (el.inert) continue;
+      el.inert = true;
+      madeInert.add(el);
+    }
+  }
+  function releasePage() {
+    for (const el of madeInert) el.inert = false;
+    madeInert.clear();
+  }
+
   const shown = (element) => element.offsetParent !== null || element.getClientRects().length > 0;
   const focusablesIn = (container) => [...container.querySelectorAll(FOCUSABLE)].filter(shown);
 
@@ -55,6 +81,7 @@
   function open(overlay) {
     openers.set(overlay, root.document.activeElement);
     overlay.classList.add('active');
+    holdPage();
     const start = startingPoint(overlay);
     if (!start.hasAttribute('tabindex') && start.tagName === 'DIV') start.setAttribute('tabindex', '-1');
     focusWhenShown(start, 8);
@@ -62,6 +89,9 @@
 
   function close(overlay) {
     overlay.classList.remove('active');
+    // The page comes back only when no dialog is left open over it; the focus goes back after,
+    // since an inert element cannot take it.
+    if (root.document.querySelectorAll('.modal-overlay.active').length === 0) releasePage();
     const back = openers.get(overlay);
     openers.delete(overlay);
     if (back && back.isConnected !== false && typeof back.focus === 'function') back.focus();

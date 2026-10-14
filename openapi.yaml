@@ -621,7 +621,8 @@ components:
       properties:
         invoiceNo:
           type: string
-          description: Your reference; must be unique.
+          maxLength: 50
+          description: Your reference; must be unique. Anything other than a string is refused with 9004.
         amount:
           type: number
           description: Major units, e.g. 1500 for ฿1,500.00.

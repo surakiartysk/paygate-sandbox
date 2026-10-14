@@ -855,7 +855,7 @@ function renderPayments() {
     };
     const methodName = methodLabels[paymentMethod] || escapeHtml(paymentMethod);
     
-    const isTruncated = payment.invoiceNo && payment.invoiceNo.length > 25;
+    const isTruncated = payment.invoiceNo && String(payment.invoiceNo).length > 25;
     const invoiceDisplay = truncateInvoiceNo(payment.invoiceNo);
     return `
     <tr class="payment-row">
@@ -992,7 +992,7 @@ function renderLogs() {
       </td>
       <td style="max-width: 200px;">
         ${log.invoiceNo ? (() => {
-          const isTruncated = log.invoiceNo.length > 25;
+          const isTruncated = String(log.invoiceNo).length > 25;
           const invoiceDisplay = truncateInvoiceNo(log.invoiceNo);
           return `
             <div style="display: flex; align-items: center; gap: 0.5rem; max-width: 100%;">
@@ -2086,10 +2086,13 @@ function truncatePath(path) {
 
 function truncateInvoiceNo(invoiceNo) {
   if (!invoiceNo) return '-';
+  // A string whatever arrived: the API once stored numbers, and `.slice` on
+  // one threw and took the whole table with it.
+  const text = String(invoiceNo);
   // Show full invoice if 25 chars or less, otherwise truncate
-  if (invoiceNo.length <= 25) return invoiceNo;
+  if (text.length <= 25) return text;
   // Show first 20 chars + ...
-  return invoiceNo.slice(0, 20) + '...';
+  return text.slice(0, 20) + '...';
 }
 
 function copyInvoiceNo(invoiceNo, event) {

@@ -145,6 +145,7 @@ Everything is optional; the defaults give a working local instance.
 | `MOCK_MAX_DELAY_MS` | `30000` | Ceiling on a delay a caller requests by header or per-payment setting |
 | `DEMO_TTL_SECONDS` | `86400` | How long a demo visitor and their sample payments last |
 | `DEMO_MAX_LIVE_PAYMENTS` | `2000` | Live visitor payments before demo sign-in answers `503` |
+| `PAYMENT_TTL_SECONDS` | `604800` | How long a payment is kept after it is first saved (a week) |
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | — | Use Vercel KV instead of local JSON files |
 | `DATA_DIR` | `./data` | Where the local JSON files live (ignored when KV is configured) |
 | `PORT` | `3000` | Port of the local dev server (`npm run dev`) |

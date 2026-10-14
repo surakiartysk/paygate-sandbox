@@ -21,7 +21,7 @@ data is fake.
 
 ## The pattern this repo keeps producing
 
-Twelve bugs here have had the same shape: **a defence that is present, correct
+Thirteen bugs here have had the same shape: **a defence that is present, correct
 and documented, sitting beside a path that goes around it.** An SSRF guard that
 missed one spelling of the metadata address. A `fetch` that followed redirects
 past the guard its comment called the single choke point. A rate limit keyed on

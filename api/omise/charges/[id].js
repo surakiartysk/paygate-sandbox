@@ -3,7 +3,7 @@
  * Explicit route for GET requests with charge ID (Vercel catch-all doesn't work for multi-segment GET)
  */
 
-import { getAllPayments } from '../../../lib/storage.js';
+import { getOmiseCharge } from '../../../lib/storage.js';
 import { logRequest } from '../../../lib/logger.js';
 import { generateReferenceNo } from '../../../lib/tokenGenerator.js';
 import { rewriteUrl, omiseAuthorizeUri } from '../../../lib/urlUtils.js';
@@ -97,10 +97,7 @@ export default async function handler(request, response) {
   
   try {
     // Find payment by Omise charge ID or invoiceNo
-    const payments = await getAllPayments();
-    const payment = payments.find(p => 
-      (p.provider === 'omise' && (p.omiseChargeId === chargeId || p.invoiceNo === chargeId))
-    );
+    const payment = await getOmiseCharge(chargeId);
     
     if (!payment) {
       return logAndRespond(404, {

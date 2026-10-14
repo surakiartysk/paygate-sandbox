@@ -78,7 +78,7 @@ export default async function handler(request, response) {
       if (search) {
         const searchLower = search.toLowerCase();
         filtered = filtered.filter(p => 
-          p.invoiceNo.toLowerCase().includes(searchLower) ||
+          String(p.invoiceNo).toLowerCase().includes(searchLower) ||
           p.description?.toLowerCase().includes(searchLower)
         );
       }

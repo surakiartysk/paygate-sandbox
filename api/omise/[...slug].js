@@ -9,13 +9,14 @@
  * Provider is automatically set to 'omise' for all payments created through this handler
  */
 
-import { savePayment, getPayment, getAllPayments } from '../../lib/storage.js';
+import { savePayment, getPayment, getOmiseCharge } from '../../lib/storage.js';
 import { generateOmiseChargeId, generateOmiseTokenId, generateOmiseSourceId, generateTranRef, generateReferenceNo } from '../../lib/tokenGenerator.js';
 import { applyDelay, checkForceError, getErrorResponse, getOmiseErrorResponse } from '../../lib/simulation.js';
 import { logRequest } from '../../lib/logger.js';
 import { rewriteUrl, omiseAuthorizeUri, publicOrigin } from '../../lib/urlUtils.js';
 import { renderMockQr } from '../../lib/qrImage.js';
 import { enforceRateLimit } from '../../lib/rateLimit.js';
+import { invoiceNoProblem, isOversizedPaymentRequest, MAX_PAYMENT_REQUEST_BYTES } from '../../lib/paymentInput.js';
 
 const OMISE_STATUS_MAP = {
   pending: 'pending',
@@ -524,6 +525,23 @@ export default async function handler(request, response) {
  */
 async function handleCreateCharge(request, response, logAndRespond) {
   const body = request.body;
+
+  // Checked before the invoice number is used for anything, logging included.
+  if (isOversizedPaymentRequest(body)) {
+    return logAndRespond(413, {
+      object: 'error',
+      code: 'request_too_large',
+      message: `request body must be at most ${MAX_PAYMENT_REQUEST_BYTES} bytes`
+    }, 'OVERSIZED_REQUEST');
+  }
+  const invoiceProblem = body?.metadata?.invoiceNo ? invoiceNoProblem(body.metadata.invoiceNo) : null;
+  if (invoiceProblem) {
+    return logAndRespond(400, {
+      object: 'error',
+      code: 'bad_request',
+      message: `metadata.${invoiceProblem}`
+    }, 'INVALID_INVOICE');
+  }
   
   // Parse amount as integer (Omise sends amount as integer in smallest currency unit)
   const amountInt = typeof body.amount === 'string' ? parseInt(body.amount, 10) : Math.floor(Number(body.amount)) || 0;
@@ -682,10 +700,7 @@ async function handleCreateCharge(request, response, logAndRespond) {
  */
 async function handleGetCharge(request, response, chargeId, logAndRespond) {
   // Find payment by Omise charge ID or invoiceNo
-  const payments = await getAllPayments();
-  const payment = payments.find(p => 
-    (p.provider === 'omise' && (p.omiseChargeId === chargeId || p.invoiceNo === chargeId))
-  );
+  const payment = await getOmiseCharge(chargeId);
   
   if (!payment) {
     return logAndRespond(404, {

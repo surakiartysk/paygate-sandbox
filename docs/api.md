@@ -103,7 +103,7 @@ Creates a payment and returns a token plus the URL a customer would be redirecte
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `invoiceNo` | string | **Required.** Your reference; must be unique |
+| `invoiceNo` | string | **Required.** Your reference; must be unique. At most 50 characters; anything other than a string is `9004` |
 | `amount` | number | **Required.** Major units, e.g. `1500` for ฿1,500.00 |
 | `currencyCode` | string | Defaults to `THB` |
 | `description` | string | Free text |
@@ -113,6 +113,8 @@ Creates a payment and returns a token plus the URL a customer would be redirecte
 | `paymentExpiry` | string | `YYYY-MM-DD HH:mm:ss` or ISO 8601 |
 | `merchantID` | string | Defaults to `MOCK_MERCHANT` |
 | `locale` | string | Defaults to `en` |
+
+A body over 16 KB is refused with `413`. The payment is kept for a week, then dropped.
 
 ```bash
 curl -X POST http://localhost:3000/api/2c2p/token \

@@ -5,7 +5,7 @@
 
 import http from 'http';
 import { readFileSync, existsSync } from 'fs';
-import { join, extname } from 'path';
+import { join, extname, resolve, sep } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { headersFor } from './lib/vercelHeaders.js';
@@ -19,6 +19,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 loadDotEnv();
 
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '127.0.0.1';
 
 /**
  * Read .env into process.env, without overwriting variables already set.
@@ -139,8 +140,18 @@ function createMockReqRes(req, res, body, query) {
 }
 
 // Serve static files
+const PUBLIC_DIR = join(__dirname, 'public');
+
 function serveStatic(res, filePath) {
-  const fullPath = join(__dirname, 'public', filePath);
+  // The raw request path, `..` and all: `url.split('?')` does not normalise,
+  // so `/../.env` reached `join` as it was and served the repository's own
+  // .env. Anything that resolves outside public/ is answered as missing.
+  const fullPath = resolve(PUBLIC_DIR, `.${filePath.startsWith('/') ? filePath : `/${filePath}`}`);
+  if (fullPath !== PUBLIC_DIR && !fullPath.startsWith(PUBLIC_DIR + sep)) {
+    res.writeHead(404);
+    res.end('Not Found');
+    return;
+  }
   // Every static file is a page-side path, so it gets the page rules.
   const pageHeaders = headersFor(filePath.startsWith('/') ? filePath : `/${filePath}`);
   
@@ -393,7 +404,9 @@ async function start() {
   
   const server = http.createServer(handleRequest);
   
-  server.listen(PORT, () => {
+  // Loopback only, unless HOST says otherwise. On every interface, anyone on
+  // the same network reached a sandbox whose admin password is in the README.
+  server.listen(PORT, HOST, () => {
     console.log(`
 ╔══════════════════════════════════════════════════════════════╗
 ║  Paygate Sandbox                                             ║

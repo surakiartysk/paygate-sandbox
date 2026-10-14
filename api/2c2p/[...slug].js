@@ -276,7 +276,7 @@ async function handleOptionDetails(request, response) {
     console.error('Payment option details error:', error);
     return logAndRespond(200, {
       respCode: '0999',
-      respDesc: 'System error: ' + error.message
+      respDesc: 'System error'
     }, null);
   }
 }

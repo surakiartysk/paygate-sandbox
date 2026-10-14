@@ -9,6 +9,7 @@
  * Provider is automatically set to 'omise' for all payments created through this handler
  */
 
+import { randomBytes } from 'node:crypto';
 import { savePayment, getPayment, getOmiseCharge } from '../../lib/storage.js';
 import { generateOmiseChargeId, generateOmiseTokenId, generateOmiseSourceId, generateTranRef, generateReferenceNo } from '../../lib/tokenGenerator.js';
 import { applyDelay, checkForceError, getErrorResponse, getOmiseErrorResponse } from '../../lib/simulation.js';
@@ -515,7 +516,7 @@ export default async function handler(request, response) {
     console.error('Omise API error:', error);
     return logAndRespond(500, {
       object: 'error',
-      message: 'System error: ' + error.message
+      message: 'System error'
     });
   }
 }
@@ -590,7 +591,10 @@ async function handleCreateCharge(request, response, logAndRespond) {
   
   // Build mock payment URL
   const serverUrl = publicOrigin(request);
-  const paymentToken = `omise_token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // From the same source as 2C2P's tokens. Whoever holds a payment token can
+  // pay or cancel the payment on its mock-pay page, so it must not be
+  // guessable — and `Date.now()` with nine characters of Math.random was.
+  const paymentToken = `omise_token_${randomBytes(24).toString('base64url')}`;
   const returnUri = body.return_uri ? rewriteUrl(body.return_uri) : null;
   
   // Process webhook_endpoints with URL replacement

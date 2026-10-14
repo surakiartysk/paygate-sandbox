@@ -120,6 +120,6 @@ export default async function handler(request, response) {
     
   } catch (error) {
     console.error('Payment API error:', error);
-    return respondWithJson(500, { success: false, error: error.message });
+    return respondWithJson(500, { success: false, error: 'Internal error' });
   }
 }

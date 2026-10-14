@@ -100,8 +100,7 @@ export default async function handler(request, response) {
   } catch (error) {
     console.error('Logs API error:', error);
     return response.status(500).json({
-      error: 'Failed to process logs request',
-      message: error.message
+      error: 'Failed to process logs request'
     });
   }
 }

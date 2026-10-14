@@ -27,6 +27,7 @@ import { sendCallback } from '../../lib/callback.js';
 import { rewriteUrl, publicOrigin } from '../../lib/urlUtils.js';
 import { RESP_CODES, getRespCodeForStatus } from '../../lib/constants.js';
 import { enforceRateLimit } from '../../lib/rateLimit.js';
+import { invoiceNoProblem, isOversizedPaymentRequest, MAX_PAYMENT_REQUEST_BYTES } from '../../lib/paymentInput.js';
 
 // ============================================================================
 // Constants
@@ -138,6 +139,22 @@ export default async function handler(request, response) {
     return response.status(statusCode).json(responseBody);
   };
   
+  // Checked before anything else reads the body, so no later step — the
+  // forced-error path included — logs or stores what fails here.
+  if (isOversizedPaymentRequest(body)) {
+    return logAndRespond(413, {
+      respCode: '9004',
+      respDesc: `The request value is not valid: larger than ${MAX_PAYMENT_REQUEST_BYTES} bytes`
+    }, 'OVERSIZED_REQUEST');
+  }
+  const invoiceProblem = body?.invoiceNo ? invoiceNoProblem(body.invoiceNo) : null;
+  if (invoiceProblem) {
+    return logAndRespond(200, {
+      respCode: '9004',
+      respDesc: `The invoiceNo value is not valid: ${invoiceProblem}`
+    }, 'INVALID_INVOICE');
+  }
+
   try {
     // Apply simulation delay
     await applyDelay(request);

@@ -115,16 +115,20 @@ credentials on the attacker's behalf.
 
 So the policy is deny-by-default on anything that is not publicly routable: cloud metadata endpoints
 (blocked unconditionally), loopback, RFC 1918 ranges, link-local, carrier-grade NAT, and non-HTTP
-schemes. IPv4-mapped IPv6 addresses are decoded and judged by the address they embed, because
-`::ffff:7f00:1` is `127.0.0.1` wearing a hat.
+schemes. IPv6 addresses are parsed and checked by mask, and those that carry an IPv4 address
+(IPv4-mapped, NAT64, 6to4) are judged by the address they carry, because `::ffff:7f00:1` is
+`127.0.0.1` wearing a hat. Names are resolved before sending, and every address a name has is
+judged the same way, so `169.254.169.254.nip.io` is the metadata address it points at
+(decision 28).
 
 Local development needs the opposite behaviour — posting to `http://localhost:3001` is the entire
 point — so loopback and private ranges are permitted unless `ALLOW_PRIVATE_CALLBACKS=false`. Metadata
 endpoints are blocked in both modes.
 
-**Scope:** this validates the URL, not what DNS resolves it to. A hostname pointing at a private
-address (DNS rebinding) would pass. Closing that requires resolving and pinning the address at
-connect time, which is more machinery than a sandbox whose worst case is an unwanted POST justifies.
+**Scope:** the address is checked, not pinned. `fetch` resolves the name again when it connects, so a
+name that answers a public address to the check and a private one a moment later (DNS rebinding)
+would pass. Closing that requires connecting to the checked address, which is more machinery than a
+sandbox whose worst case is an unwanted POST justifies.
 
 ## Simulation
 

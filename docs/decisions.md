@@ -38,6 +38,8 @@ one that was obvious.
 24. [The words: one name for one thing, sentence case, and nothing the page cannot do](#24-the-words-one-name-for-one-thing-sentence-case-and-nothing-the-page-cannot-do)
 25. [A toast stays to be read, tabs take the arrow keys, and the page behind a dialog is inert](#25-a-toast-stays-to-be-read-tabs-take-the-arrow-keys-and-the-page-behind-a-dialog-is-inert)
 26. [A row of tabs is one Tab stop, and the row's buttons say what they do at every width](#26-a-row-of-tabs-is-one-tab-stop-and-the-rows-buttons-say-what-they-do-at-every-width)
+27. [What an anonymous caller stores has a size, a type and an end](#27-what-an-anonymous-caller-stores-has-a-size-a-type-and-an-end)
+28. [A name is judged by where it points](#28-a-name-is-judged-by-where-it-points)
 
 ---
 
@@ -428,7 +430,7 @@ forcing an error for everything would pass.
 
 ## 16. The pattern all of this keeps producing
 
-Twelve bugs here have had the same shape: **a defence that is present, correct and documented,
+Thirteen bugs here have had the same shape: **a defence that is present, correct and documented,
 sitting beside a path that goes around it.**
 
 | The defence | The path around it |
@@ -445,6 +447,7 @@ sitting beside a path that goes around it.**
 | A limit of ten sign-in guesses a minute | Every admin route took the password in a header, uncounted |
 | Decoding an encoded invoice number on both sides of the admin API | The payment page read it back out of its own URL undecoded |
 | One table of 2C2P descriptions, so no code is described three ways | The status route kept tables of its own, and stored "Unknown" for the rest |
+| The metadata address refused in every spelling | A name that resolves to it, such as `169.254.169.254.nip.io` |
 
 Most were found not by reading but by a probe against a running server, asking whether
 the thing the comment claimed was actually true — which is why `CLAUDE.md` says to go and check a
@@ -452,7 +455,7 @@ claimed protection rather than believe it, and why the numbers in this repositor
 messages are measurements rather than estimates.
 
 **Trade-off.** Probing costs more than reading and does not scale: it finds what you thought to
-ask about, and the audit is only as good as the questions. Six of the twelve were found while
+ask about, and the audit is only as good as the questions. Six of the first twelve were found while
 looking for something else.
 
 ---
@@ -495,7 +498,8 @@ after a day. The token, never the shared password, is the credential after that.
   routes is held to the provider APIs' limit, and the instance refuses new visitors past 2,000
   live visitor payments. Each seeded payment measured 0.83–1.06 KB serialised, about 9.2 KB a
   visitor, so the ceiling is about 1.8 MB before any callback history. Expired visitors' payments
-  are swept on the next demo sign-in, the one event that adds more.
+  carry their visitor's expiry and the store drops them at it (decision 27); they used to be
+  swept by the next demo sign-in, which read every payment to find them.
 - **The admin password can never be `demo`.** Refused everywhere, not only when deployed: nothing
   depends on it locally, and the failure it prevents is the published password opening the admin
   surface.
@@ -915,6 +919,86 @@ reported none, twice. Eight mutations, each failing a test in `keyboard.test.js`
 - **The status is no longer beside the button that changes it.** It is two columns to the left, in the badge.
 - **The Tab stop depends on `MutationObserver`.** Without it, the stop is set once when the page loads and does not
   follow a change of tab; the arrows still work.
+---
+
+## 27. What an anonymous caller stores has a size, a type and an end
+
+**Context.** The provider APIs are unauthenticated on purpose (decision 3), and a security review on
+14 October 2026 found three ways that cost the admin, none of which needed a sign-in:
+
+- **A type.** `"invoiceNo": 12345` was stored as a number. The dashboard's Payments and Logs tabs called
+  `.slice` on it and stopped rendering, and the admin search called `.toLowerCase` on it and answered 500,
+  until the row was deleted by hand.
+- **A size.** Every field was stored at whatever length it arrived. One request could hold megabytes.
+- **An end.** Nothing was ever dropped. And the routes that look a payment up by something other than
+  its key, the 2C2P payment page by token and the Omise charge routes by charge id, read every payment
+  to do it, one KV request each. So every anonymous request cost more for as long as the instance lived.
+  Demo sign-in read the whole store twice: once to delete expired visitors' payments one at a time, once
+  to count the live ones. On the deployed instance one demo sign-in took 10.5 seconds, and three more
+  had no answer within 30.
+
+**Decision.**
+
+- **Type and size are checked first.** `invoiceNo` must be a string of at most 50 characters (2C2P's own
+  limit) with no control characters, and a request body over 16 KB is refused with 413. Both checks run
+  before anything else reads the body, so the forced-error path cannot log what they refuse. Records
+  stored before this are read back with the invoice number as a string, log entries are written that
+  way, and the dashboard turns what it is given into a string before shortening it.
+- **Every payment has a deadline, a week after it is first saved** (`PAYMENT_TTL_SECONDS`). It is
+  absolute, like the inspector's (decision 10): later saves keep it. KV is told to drop the key then.
+  The local store leaves it out of every read. A demo visitor's payments take their visitor's expiry.
+- **Lookups do not read every payment.** KV keeps a `payref:` key per payment token and Omise charge id,
+  written beside the payment and expiring with it. Payments saved before the index existed are added
+  to it by the first lookup that misses, once. After that a miss is an answer. Reading every payment,
+  which the admin list still does, fetches 200 keys a request instead of one each.
+- **Demo sign-in counts visitors, not payments**, from a sorted set scored by expiry. The sweep is gone.
+
+Tested against an in-memory stand-in for the KV client (`test/storage-kv.test.js`), because every other
+test runs on local files and the KV half, the half that is deployed, had no test at all. Twenty-one
+mutations across this decision and the next, each failing its test.
+
+**Trade-off.**
+
+- **A payment needed for longer than a week has to be created again.** For a sandbox that is cheap, and
+  the alternative was a store that only grows.
+- **Payments stored before this have no deadline** and stay until deleted, as before. Only a later
+  save gives them one.
+- **Visitors signed in before the index are not counted**, so for one day after deploying the ceiling
+  can admit up to that many more.
+- **50 characters and 16 KB are this sandbox's limits.** A test suite that sends longer invoice numbers
+  than 2C2P accepts will now hear about it here, which is the earlier place to hear it.
+
+---
+
+## 28. A name is judged by where it points
+
+**Context.** Decision 5 made the guard match the metadata address in every spelling. It still judged
+only spellings. `169.254.169.254.nip.io` is a public DNS name that answers with the address written in
+it, and it went through in every mode, beside a comment and a doc saying the metadata address is refused
+"regardless of mode". So did `localtest.me`, which answers 127.0.0.1, on a deployment that refuses
+loopback. So did `localhost.` and `metadata.google.internal.` with their trailing dots, and IPv6 forms the
+prefix checks did not know: `fe90::1` (link-local runs from fe80 to febf, and the check was
+`startsWith('fe80')`), `64:ff9b::a9fe:a9fe` (NAT64) and `2002:a9fe:a9fe::1` (6to4), the last two
+both carrying the metadata address. The finding came from running the guard against those inputs, not
+from sending anything.
+
+**Decision.** Before a callback is sent, its host's name is resolved, and every address it has is judged
+by the same rules as an address written in the URL. Trailing dots are removed before any check. IPv6
+literals are parsed into their eight groups, and the ranges are checked by mask. NAT64, 6to4,
+IPv4-mapped and IPv4-compatible addresses are judged by the IPv4 address they carry. Teredo,
+documentation and site-local addresses are refused where private ones are. A name that does not resolve
+is reported as a failed callback, not a blocked one.
+
+**Trade-off.**
+
+- **The address is not pinned.** `fetch` resolves the name again when it connects, so a name that
+  answers a public address to the check and a private one a moment later (DNS rebinding) still gets
+  through. Pinning means connecting to the checked address, which the built-in `fetch` cannot do
+  without another dependency. The worst case left is a POST whose answer is never shown. That limit is
+  stated in `lib/urlGuard.js` and in docs/architecture.md, not implied away.
+- **Every callback to a name costs a lookup first**, a few milliseconds that the connection would have
+  spent anyway.
+
 ---
 
 ## How to add a decision

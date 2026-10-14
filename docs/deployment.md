@@ -133,13 +133,13 @@ is safe to publish for that reason — see decision 17.
 
 Inspector sessions expire 24 hours after they are created — absolutely, not sliding, so an active
 session expires on schedule too. Each holds at most fifty captures of at most 64 KB. Request logs expire after `logTTLDays`
-(7 by default). Payments persist until deleted — through the dashboard, `DELETE
-/api/admin/payments/:invoiceNo`, or `POST /api/admin/payments/clear`.
+(7 by default). Payments expire a week after they are first saved (`PAYMENT_TTL_SECONDS`), and can
+be deleted sooner through the dashboard, `DELETE /api/admin/payments/:invoiceNo`, or
+`POST /api/admin/payments/clear`. Payments stored before retention existed have no deadline and stay
+until deleted.
 
-Demo visitors and their sample payments are the exception: they expire after `DEMO_TTL_SECONDS`
-(a day by default). The visitor record expires on its own; its payments are deleted by the next
-demo sign-in, so they can outlive their visitor until someone else signs in, invisible to both the
-admin's list and every visitor's.
+Demo visitors and their sample payments expire sooner, after `DEMO_TTL_SECONDS` (a day by default),
+and both are dropped by the store at that time (decision 27).
 
 For a public demo, clearing payments periodically keeps the dashboard readable. An empty instance
 re-seeds itself with sample data on the next `POST /api/demo/seed`.

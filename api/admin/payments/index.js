@@ -127,7 +127,7 @@ export default async function handler(request, response) {
     console.error('Payments API error:', error);
     return response.status(500).json({
       success: false,
-      error: error.message
+      error: 'Internal error'
     });
   }
 }

@@ -149,6 +149,7 @@ Everything is optional; the defaults give a working local instance.
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | — | Use Vercel KV instead of local JSON files |
 | `DATA_DIR` | `./data` | Where the local JSON files live (ignored when KV is configured) |
 | `PORT` | `3000` | Port of the local dev server (`npm run dev`) |
+| `HOST` | `127.0.0.1` | Address the local dev server listens on. Set `0.0.0.0` to reach it from another machine |
 
 See [.env.example](.env.example) for the annotated version.
 

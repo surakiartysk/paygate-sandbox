@@ -40,6 +40,7 @@ one that was obvious.
 26. [A row of tabs is one Tab stop, and the row's buttons say what they do at every width](#26-a-row-of-tabs-is-one-tab-stop-and-the-rows-buttons-say-what-they-do-at-every-width)
 27. [What an anonymous caller stores has a size, a type and an end](#27-what-an-anonymous-caller-stores-has-a-size-a-type-and-an-end)
 28. [A name is judged by where it points](#28-a-name-is-judged-by-where-it-points)
+29. [The review's lows: ids, error text, the dev server and the log write](#29-the-reviews-lows-ids-error-text-the-dev-server-and-the-log-write)
 
 ---
 
@@ -998,6 +999,47 @@ is reported as a failed callback, not a blocked one.
   stated in `lib/urlGuard.js` and in docs/architecture.md, not implied away.
 - **Every callback to a name costs a lookup first**, a few milliseconds that the connection would have
   spent anyway.
+
+---
+
+## 29. The review's lows: ids, error text, the dev server and the log write
+
+**Context.** The 14 October review's low findings, after decisions 27 and 28 had taken its mediums:
+
+- **Two capabilities came from `Math.random`.** An Omise payment token is what the mock-pay page acts on, so
+  whoever holds it can pay or cancel the payment. An inspector session id is all that stands between a stranger and
+  what it captured. Both were the time plus nine or six characters of `Math.random`. The comment above the inspector
+  said its ids had "enough entropy".
+- **Answers carried the error's own text.** `'System error: ' + error.message` and its relatives, in eleven places,
+  told any caller what had broken inside.
+- **The dev server served any path.** It took the path as sent, `..` and all, so `/../.env` answered with the
+  repository's own `.env`, which holds the admin password. It listened on every interface too.
+- **Every logged answer waited on four KV calls in a row**: `set`, `zadd`, a `zscore` to check the `zadd`, and a
+  `zcard` to decide on cleanup. On the deployed instance an answer refused before any other work still took 1.3 to
+  2 seconds.
+
+**Decision.**
+
+- **Both ids come from `randomBytes`**: 192 bits for the Omise token, as 2C2P's already had, and 128 for an
+  inspector session.
+- **An answer says `System error` or `Internal error`**, and the message goes to the server's log. A test scans every
+  route for an error's message outside a `console` call.
+- **The dev server resolves each path inside `public/`** and answers 404 to anything that resolves outside it. It
+  listens on `127.0.0.1` unless `HOST` says otherwise.
+- **A log write is `set` and `zadd` together**, one round trip. One write in twenty also trims the index back to
+  500, deleting the trimmed entries with it.
+
+Nine mutations, each failing its test. One survived at first: putting the `zscore` back went unnoticed because the
+KV stand-in had no `zscore`, so the call failed quietly inside the log write's own error handling. The stand-in has
+one now, and the mutation fails.
+
+**Trade-off.**
+
+- **Between trims the log index can run a few entries over 500.** Each entry still expires after seven days.
+- **A failed index write is logged, not checked.** The `zscore` that checked it cost a round trip on every answer.
+- **A caller who hits a 500 learns less.** The server's log has what the answer used to say.
+- **The dev server is not reachable from another machine by default.** Running it in a container, or for a phone on
+  the same network, needs `HOST=0.0.0.0`.
 
 ---
 

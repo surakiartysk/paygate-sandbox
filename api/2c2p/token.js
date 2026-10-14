@@ -185,7 +185,7 @@ export default async function handler(request, response) {
     console.error('Payment token error:', error);
     const errorResp = {
       respCode: '0999',
-      respDesc: 'System error: ' + error.message
+      respDesc: 'System error'
     };
     return logAndRespond(200, errorResp, body?.invoiceNo);
   }

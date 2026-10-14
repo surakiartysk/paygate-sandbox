@@ -240,7 +240,7 @@ export default async function handler(request, response) {
     return logAndRespond(500, {
       object: 'error',
       code: 'server_error',
-      message: error.message
+      message: 'System error'
     }, null);
   }
 }

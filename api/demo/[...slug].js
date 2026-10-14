@@ -58,7 +58,7 @@ export default async function handler(request, response) {
     });
   } catch (error) {
     console.error('Demo error:', error);
-    return response.status(500).json({ error: 'Internal error', message: error.message });
+    return response.status(500).json({ error: 'Internal error' });
   }
 }
 

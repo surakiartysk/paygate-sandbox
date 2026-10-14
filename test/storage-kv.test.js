@@ -22,7 +22,9 @@ import {
   getPayment,
   getPaymentByToken,
   saveDemoVisitor,
+  saveLog,
   savePayment,
+  trimLogIndex,
   updatePayment,
   useKvClientForTests
 } from '../lib/storage.js';
@@ -130,6 +132,22 @@ class FakeKv {
   async zcard(key) {
     this.calls.push('zcard');
     return this.zsets.get(key)?.size ?? 0;
+  }
+
+  async zrange(key, start, stop) {
+    this.calls.push('zrange');
+    const members = [...(this.zsets.get(key) ?? new Map())].sort((a, b) => a[1] - b[1]).map(([m]) => m);
+    return members.slice(start, stop < 0 ? members.length + stop + 1 : stop + 1);
+  }
+
+  async zscore(key, member) {
+    this.calls.push('zscore');
+    return this.zsets.get(key)?.get(member) ?? null;
+  }
+
+  async zrem(key, ...members) {
+    this.calls.push('zrem');
+    members.forEach(m => this.zsets.get(key)?.delete(m));
   }
 }
 
@@ -261,3 +279,24 @@ test('live demo visitors are counted from their own index', async () => {
   assert.equal(await countLiveDemoVisitors(), 2);
   assert.equal(kv.count('smembers') + kv.count('mget'), 0);
 });
+
+describe('a log write costs one round trip', () => {
+  test('writes the entry and its index entry, and checks nothing else on the way', async (t) => {
+    t.mock.method(Math, 'random', () => 0.99);
+    await saveLog({ id: 'L-1', type: 'token', timestamp: new Date().toISOString() });
+
+    assert.deepEqual([...kv.calls].sort(), ['set', 'zadd']);
+  });
+
+  test('trimming keeps the newest five hundred, and drops the entries with their index members', async () => {
+    for (let i = 0; i < 503; i++) {
+      kv.plant(`log:${i}:x`, '{}');
+      await kv.zadd('logs:list', { score: i, member: `log:${i}:x` });
+    }
+
+    assert.equal(await trimLogIndex(), 3);
+    assert.equal(kv.zsets.get('logs:list').size, 500);
+    assert.deepEqual(['log:0:x', 'log:1:x', 'log:2:x', 'log:3:x'].map(k => kv.values.has(k)), [false, false, false, true]);
+  });
+});
+

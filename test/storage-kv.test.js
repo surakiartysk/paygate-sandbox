@@ -28,6 +28,7 @@ import {
   updatePayment,
   useKvClientForTests
 } from '../lib/storage.js';
+import { applyDelay, checkForceError } from '../lib/simulation.js';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -297,6 +298,24 @@ describe('a log write costs one round trip', () => {
     assert.equal(await trimLogIndex(), 3);
     assert.equal(kv.zsets.get('logs:list').size, 500);
     assert.deepEqual(['log:0:x', 'log:1:x', 'log:2:x', 'log:3:x'].map(k => kv.values.has(k)), [false, false, false, true]);
+  });
+});
+
+describe('the simulation reads its config once a request', () => {
+  test('the delay and the forced-error check share one read', async () => {
+    const request = { headers: {} };
+    await applyDelay(request);
+    await checkForceError(request, 'omise');
+
+    assert.equal(kv.count('get'), 1, `calls: ${kv.calls.join(', ')}`);
+  });
+
+  test('the next request reads it again, so a change takes effect at once', async () => {
+    await kv.set('config:simulation', JSON.stringify({ forceErrorOmise: null }));
+    assert.equal(await checkForceError({ headers: {} }, 'omise'), null);
+
+    await kv.set('config:simulation', JSON.stringify({ forceErrorOmise: 'failed_processing' }));
+    assert.equal(await checkForceError({ headers: {} }, 'omise'), 'failed_processing');
   });
 });
 

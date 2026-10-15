@@ -1028,6 +1028,12 @@ is reported as a failed callback, not a blocked one.
   listens on `127.0.0.1` unless `HOST` says otherwise.
 - **A log write is `set` and `zadd` together**, one round trip. One write in twenty also trims the index back to
   500, deleting the trimmed entries with it.
+- **The simulation config is read once a request** (15 October). `applyDelay` and `checkForceError` each read it,
+  two round trips in a row at the top of every provider route. That is why Omise stayed about half a second slower
+  than 2C2P after the change above: a refused 2C2P request is turned away before either read, and an Omise one is
+  not. Measured on the deployed instance by sending `X-Mock-Delay: 1`, which skips one read: the median Omise answer
+  over ten went from 1.19 s to 0.86 s. The read is shared within a request and not across them, so a config change
+  still applies to the next request.
 
 Nine mutations, each failing its test. One survived at first: putting the `zscore` back went unnoticed because the
 KV stand-in had no `zscore`, so the call failed quietly inside the log write's own error handling. The stand-in has

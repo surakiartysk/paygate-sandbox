@@ -41,17 +41,28 @@
       margin-bottom: 0.5rem;
     }
     
-    .login-demo {
+    .login-demo-note {
+      margin: 0.75rem 0 0;
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    .login-owner {
       margin-top: 1.5rem;
       padding-top: 1.25rem;
       border-top: 1px solid var(--border);
     }
 
-    .login-demo p {
-      margin: 0 0 0.75rem;
+    .login-owner summary {
+      cursor: pointer;
       font-size: 15px;
-      line-height: 1.5;
       color: var(--text-secondary);
+    }
+
+    .login-owner[open] summary {
+      margin-bottom: 1rem;
     }
 
     .login-subtitle {
@@ -131,19 +142,31 @@
         </div>
       </div>
       
-      <p class="login-subtitle">Enter password to access the dashboard</p>
+      <p class="login-subtitle">A sandbox of your own for a day: ten sample payments to settle, decline
+        and send callbacks for.</p>
       
       <div class="login-error" id="login-error">
         <div class="login-error-icon" id="login-error-icon"></div>
         <span id="login-error-text"></span>
       </div>
       
+      <!--
+        The demo is the front door. This page used to open on a password field,
+        with the demo a secondary button under it, so a visitor's first sight
+        was a lock they had no key to. The owner's sign-in is still here, folded
+        away: a self-hosted copy needs it, and a visitor does not.
+      -->
+      <button type="button" class="btn btn-primary" id="demo-signin" style="width: 100%;" onclick="signInAsDemo()">Log in to demo</button>
+      <p class="login-demo-note">No password. Settings and the request log stay with the owner.</p>
+
+      <details class="login-owner">
+        <summary>Owner sign-in</summary>
       <form id="login-form" onsubmit="handleLogin(event)">
         <div class="form-group">
           <label class="form-label" for="password">Password</label>
           <div class="password-input-wrapper">
             <input type="password" id="password" class="form-input" 
-                   placeholder="Enter password" autofocus required>
+                   placeholder="Enter password" required>
             <button type="button" class="password-toggle" id="password-toggle" onclick="togglePasswordVisibility()" title="Show/Hide password">
               <svg id="password-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -153,16 +176,11 @@
           </div>
         </div>
         
-        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
-          Login
+        <button type="submit" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;">
+          Sign in
         </button>
       </form>
-
-      <div class="login-demo">
-        <p>Just looking? The password <code>demo</code> gives you ten sample payments of your own for a day.
-          Change their status and send their callbacks; settings and logs stay with the owner.</p>
-        <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="signInAsDemo()">Try the demo</button>
-      </div>
+      </details>
       
     </div>
   </div>
@@ -177,9 +195,11 @@
       window.location.href = '/dashboard';
     }
 
+    // The demo is signed in with the published password, sent from here
+    // rather than typed: the API still takes it (docs/api.md), and a visitor
+    // never has to know it exists.
     function signInAsDemo() {
-      document.getElementById('password').value = 'demo';
-      document.getElementById('login-form').requestSubmit();
+      signIn('demo');
     }
 
     /**
@@ -213,10 +233,12 @@
       }
     }
     
-    async function handleLogin(event) {
+    function handleLogin(event) {
       event.preventDefault();
-      
-      const password = document.getElementById('password').value;
+      signIn(document.getElementById('password').value);
+    }
+
+    async function signIn(password) {
       const errorEl = document.getElementById('login-error');
       
       try {
@@ -242,7 +264,7 @@
               const errorIcon = document.getElementById('login-error-icon');
               const errorText = document.getElementById('login-error-text');
               if (errorIcon) errorIcon.innerHTML = '';
-              if (errorText) errorText.textContent = 'Wrong password. Check it and try again, or try the demo below.';
+              if (errorText) errorText.textContent = 'Wrong password. Check it and try again, or log in to demo above.';
               errorEl.classList.add('show');
               document.getElementById('password').select();
               return;
@@ -305,7 +327,7 @@
           const errorIcon = document.getElementById('login-error-icon');
           const errorText = document.getElementById('login-error-text');
           if (errorIcon) errorIcon.innerHTML = '';
-          if (errorText) errorText.textContent = 'Wrong password. Check it and try again, or try the demo below.';
+          if (errorText) errorText.textContent = 'Wrong password. Check it and try again, or log in to demo above.';
           errorEl.classList.add('show');
           document.getElementById('password').select();
         }

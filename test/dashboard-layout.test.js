@@ -33,10 +33,21 @@ describe('the title', () => {
     assert.match(html, /<p class="page-lede">[^<]+<\/p>/);
   });
 
-  test('has no tabs for a visitor, who has one section; the owner has two', () => {
-    assert.match(html, /<div data-admin-only class="tab-nav" role="tablist"/);
-    const tabs = /<div data-admin-only class="tab-nav"[\s\S]*?<\/div>/.exec(html)?.[0] ?? '';
+  // Decision 31: a visitor has a request log of their own, so the same two
+  // sections as the owner. Clearing the log is still the owner's alone.
+  test('has the same two tabs for a visitor and the owner, and only the owner may clear the log', () => {
+    assert.match(html, /<div class="tab-nav" role="tablist"/);
+    const tabs = /<div class="tab-nav"[\s\S]*?<\/div>/.exec(html)?.[0] ?? '';
     assert.equal((tabs.match(/role="tab"/g) || []).length, 2);
+    assert.doesNotMatch(tabs, /data-admin-only/);
+    assert.match(html, /<div class="tab-content" id="tab-logs"/);
+    assert.match(html, /<button data-admin-only [^>]*onclick="openClearLogsModal\(\)"/);
+  });
+
+  test('offers a visitor the settings, and tells them whose they are', () => {
+    assert.match(html, /<button class="btn btn-secondary" onclick="openConfigModal\(\)"/);
+    assert.match(html, /<p data-demo-only[^>]*>[\s\S]*?These are yours[\s\S]*?X-Demo-Token/);
+    assert.match(css, /body:not\(\.is-demo\) \[data-demo-only\] \{\s*display: none !important;/);
   });
 });
 

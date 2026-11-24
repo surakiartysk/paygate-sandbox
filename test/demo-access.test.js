@@ -112,19 +112,20 @@ describe('demo visitors', () => {
     assert.equal(opened.status, 200);
   });
 
-  test('a visitor may read the config but not change it, and may not read logs or clear payments', async () => {
+  test('a visitor may not clear payments or the log, or read the instance\'s own settings', async () => {
     const visitor = await signInDemo(sandbox.baseUrl);
     const headers = demoHeaders(visitor.token);
 
-    assert.equal((await call(`${sandbox.baseUrl}/api/admin/config`, headers)).status, 200);
+    // The owner's settings, set to something no default would be.
+    await postJson(`${sandbox.baseUrl}/api/admin/config`, { failureRate: 37 }, adminHeaders());
+    const mine = (await call(`${sandbox.baseUrl}/api/admin/config`, headers)).body;
+    assert.equal(mine.scope, 'visitor');
+    assert.equal(mine.config.failureRate, 0, 'a visitor was shown the owner\'s settings');
+    assert.equal(mine.config.logTTLDays, undefined, 'retention is the owner\'s alone');
+    await postJson(`${sandbox.baseUrl}/api/admin/config`, { failureRate: 0 }, adminHeaders());
+
     assert.equal((await call(`${sandbox.baseUrl}/api/admin/response-codes`, headers)).status, 200);
-
-    const write = await postJson(`${sandbox.baseUrl}/api/admin/config`, { globalDelay: 5000 }, headers);
-    assert.equal(write.status, 403);
-    const config = (await call(`${sandbox.baseUrl}/api/admin/config`, adminHeaders())).body.config;
-    assert.equal(config.globalDelay, 0);
-
-    assert.equal((await call(`${sandbox.baseUrl}/api/admin/logs`, headers)).status, 403);
+    assert.equal((await call(`${sandbox.baseUrl}/api/admin/logs`, headers, 'DELETE')).status, 403);
 
     const clear = await postJson(`${sandbox.baseUrl}/api/admin/payments/clear`, {}, headers);
     assert.equal(clear.status, 403);
@@ -175,8 +176,9 @@ describe('the published demo password can never be the admin password', () => {
     const asAdmin = await call(`${sandbox.baseUrl}/api/admin/logs`, { 'X-Admin-Password': 'demo' });
     assert.equal(asAdmin.status, 401);
 
+    // Still a visitor, not the admin: the log answers, but clearing it does not.
     const visitor = await signInDemo(sandbox.baseUrl);
-    assert.equal((await call(`${sandbox.baseUrl}/api/admin/logs`, demoHeaders(visitor.token))).status, 403);
+    assert.equal((await call(`${sandbox.baseUrl}/api/admin/logs`, demoHeaders(visitor.token), 'DELETE')).status, 403);
   });
 });
 

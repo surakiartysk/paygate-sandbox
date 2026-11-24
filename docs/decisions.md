@@ -41,6 +41,7 @@ one that was obvious.
 27. [What an anonymous caller stores has a size, a type and an end](#27-what-an-anonymous-caller-stores-has-a-size-a-type-and-an-end)
 28. [A name is judged by where it points](#28-a-name-is-judged-by-where-it-points)
 29. [The review's lows: ids, error text, the dev server and the log write](#29-the-reviews-lows-ids-error-text-the-dev-server-and-the-log-write)
+30. [The demo is the front door, and the owner's sign-in is folded away](#30-the-demo-is-the-front-door-and-the-owners-sign-in-is-folded-away)
 
 ---
 
@@ -1046,6 +1047,38 @@ one now, and the mutation fails.
 - **A caller who hits a 500 learns less.** The server's log has what the answer used to say.
 - **The dev server is not reachable from another machine by default.** Running it in a container, or for a phone on
   the same network, needs `HOST=0.0.0.0`.
+
+## 30. The demo is the front door, and the owner's sign-in is folded away
+
+**Context.** The login page opened on a password field with the focus in it, and under that, a secondary "Try the
+demo" button and a sentence giving the password `demo`. Almost everyone who reaches that page from the portfolio is a
+visitor, and the first thing they met was a lock they had no key to. The companion run dashboard had just moved to a
+single "Log in to demo" button for the same audience, so the two portfolio apps also disagreed about how to get in.
+
+**Decision.**
+
+- **"Log in to demo" is the page's primary button, first under the title.** It signs in with the published password
+  from the page itself; a visitor never types or reads it. The API is unchanged: `POST /api/admin/login` still takes
+  `{"password":"demo"}` (docs/api.md), so a script that uses it keeps working.
+- **The owner's password form sits in a `<details>` labelled "Owner sign-in", shut by default**, with no autofocus.
+  Its button is secondary.
+- **The admin password stays.** The run dashboard removed its real roles altogether, because it is only ever a demo.
+  This is a tool people deploy for themselves (docs/deployment.md), and on their copy the admin password is what
+  guards the config, the request log and clearing every payment. On the public instance it is the owner's way in to
+  run it.
+
+Five mutations, each failing its test in `test/login-page.test.js`: the demo button moved under the form, made
+secondary, the form opened by default, autofocus put back on the password, and the demo sign-in filling the owner's
+form again.
+
+**Trade-off.**
+
+- **The public instance still holds one real secret.** Unlike the dashboard, `ADMIN_PASSWORD` is set there and opens
+  more than a visitor can see. Everything decision 7 and decision 18 say about it still applies.
+- **The owner takes one more click.** Opening "Owner sign-in" before typing. A self-hosted copy with no visitors pays
+  that on every sign-in.
+- **A visitor still cannot see settings or the request log.** Those stay the owner's, as decision 17 set out; the
+  page now says so beside the button instead of under a password.
 
 ---
 

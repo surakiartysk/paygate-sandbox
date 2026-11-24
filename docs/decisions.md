@@ -42,6 +42,7 @@ one that was obvious.
 28. [A name is judged by where it points](#28-a-name-is-judged-by-where-it-points)
 29. [The review's lows: ids, error text, the dev server and the log write](#29-the-reviews-lows-ids-error-text-the-dev-server-and-the-log-write)
 30. [The demo is the front door, and the owner's sign-in is folded away](#30-the-demo-is-the-front-door-and-the-owners-sign-in-is-folded-away)
+31. [A visitor has settings and a request log of their own](#31-a-visitor-has-settings-and-a-request-log-of-their-own)
 
 ---
 
@@ -482,7 +483,9 @@ after a day. The token, never the shared password, is the credential after that.
   admin route that has not been written with visitors in mind turns them away. The ones that
   have opted in: the payment list, one payment's routes (status, callback, inquiry config,
   delete) and reading the config. Clearing all payments, writing the config and reading the
-  request log answer `403`.
+  request log answer `403`. (Since [decision 31](#31-a-visitor-has-settings-and-a-request-log-of-their-own)
+  a visitor reads and writes settings of their own, and reads the log entries for their own
+  invoices; the instance's config and the rest of the log stay out of reach.)
 - **Ownership is checked where the payment is read.** Each payment route reads through one
   `loadPayment`, which answers "not found" for a payment that is not the visitor's, so the routes
   cannot be used to learn which invoice numbers exist.
@@ -1079,6 +1082,58 @@ form again.
   that on every sign-in.
 - **A visitor still cannot see settings or the request log.** Those stay the owner's, as decision 17 set out; the
   page now says so beside the button instead of under a password.
+
+## 31. A visitor has settings and a request log of their own
+
+**Context.** Decision 17 kept the settings and the request log from visitors, and rightly: the settings apply to
+every caller of the instance, and the log holds every caller's traffic, callback addresses included. So a visitor
+saw half the product. The settings button and the Request logs tab were simply not there, and the banner said
+"Settings and logs stay with the owner". The run dashboard had just shown the other way: every visitor gets a
+sandbox where every control works on their own data.
+
+**Decision.**
+
+- **Each visitor has settings of their own**, in `lib/demoSettings.js`, keyed by the owner id in their invoice
+  numbers and kept until they expire. They start at the defaults, never the owner's: starting from the owner's
+  would show a stranger how the instance is set, and change under them when the owner changed it.
+- **They apply to what is the visitor's.** A provider request carrying a live visitor's `X-Demo-Token` gets that
+  visitor's delay, forced errors and failure rate, and never the instance's; without the header a request is
+  answered as before. A callback for a visitor's payment is duplicated by that visitor's setting, whoever sends it.
+  Auto-refresh and the custom-field presets are the visitor's dashboard's.
+- **Not retention.** `logTTLDays` stays the owner's; a visitor setting it gets `400`.
+- **A visitor's delay is held to the ceiling twice**: refused past `MOCK_MAX_DELAY_MS` when it is saved, and cut to
+  it where the request actually waits. The second is the one that holds if a stored value ever gets past the first.
+- **One check for both.** The owner's and the visitor's updates go through the same `invalidUpdate`; a visitor gets
+  fewer keys and a ceiling. Writing it once tightened the owner's side too: `duplicateCallback` must now be a
+  boolean and a forced error a code (letters, digits and underscores), empty, or null, where before anything was
+  stored.
+- **The log is filtered by invoice number.** A visitor reads the entries whose invoice starts with their own
+  `DEMO-<owner id>-`, counted as theirs, across the whole log rather than among the newest page of everyone's.
+  Clearing the log stays the owner's.
+- **The page shows them.** The settings button and the Request logs tab are there for a visitor; the dialog says the
+  settings are theirs and what they reach; the log says it is the requests for their payments. Clear is the owner's
+  alone, so it is not drawn for a visitor.
+
+Fifteen mutations, each failing its own test: ten on the server (the token ignored, settings starting from the
+owner's, a visitor's save writing the owner's config, the owner's keys allowed, no ceiling on save, duplicates
+ignoring the visitor, the log unfiltered, the log filtered only within the newest page, no ceiling where the delay
+is applied, a visitor clearing the log) and five on the page.
+
+**Trade-off.**
+
+- **A provider request with the header costs two more reads**, the visitor and their settings. One without it costs
+  what it did.
+- **A visitor's settings reach their requests only when the request says whose it is.** A visitor who tries the
+  provider API with `curl` and forgets `X-Demo-Token` gets the instance's settings, and may think theirs do nothing.
+  The dialog says the header is needed.
+- **A payment a visitor creates through the provider API is not theirs.** It has no owner, so it is not in their
+  list or their log. Their world is the ten payments they were given.
+- **A stranger can write into a visitor's log.** The invoice numbers are not secret, so anyone can send a provider
+  request naming one, and its entry shows in that visitor's log. It is the stranger's own request, escaped when
+  drawn; a visitor never reads anyone else's traffic.
+- **"Duplicate callbacks" does not touch a sequence.** The Send callback dialog sends a sequence, and a sequence
+  sends exactly what it lists, as it always has for the owner too. A visitor sees the duplicate on a callback sent
+  with a status change. The docs now say so.
 
 ---
 

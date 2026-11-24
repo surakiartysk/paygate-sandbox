@@ -47,12 +47,32 @@ for 24 hours. Send the token as `X-Demo-Token`. What it can reach:
 | `POST /api/admin/payments/:invoiceNo/status` | Their own |
 | `POST /api/admin/payments/:invoiceNo/callback` | Their own, delivered to their inspector session; naming a `callbackUrl` is `403` |
 | `GET`, `POST /api/admin/payments/:invoiceNo/inquiry-config` | Their own; delays and timeouts stop at the `MOCK_MAX_DELAY_MS` ceiling |
-| `GET /api/admin/config`, `GET /api/admin/response-codes` | Read only |
-| `POST /api/admin/config`, `POST /api/admin/payments/clear`, `/api/admin/logs` | `403` |
+| `GET`, `POST /api/admin/config` | Their own settings, not the instance's — see below |
+| `GET /api/admin/response-codes` | The same as anyone's |
+| `GET /api/admin/logs` | Entries for their own invoices only |
+| `DELETE /api/admin/logs`, `POST /api/admin/payments/clear` | `403` |
 
 A visitor is held to `RATE_LIMIT_MAX` on these routes. Sign-in, admin or demo, allows ten attempts
 a minute per client in a bucket of its own. Past 2,000 live visitor payments, sign-in answers `503`
 until older visitors expire. Why it is shaped this way: [decisions.md](decisions.md), decision 17.
+
+**A visitor's settings are their own** (decision 31). They start at the defaults, last as long as the
+visitor, and may not set `logTTLDays` or a `globalDelay` past the `MOCK_MAX_DELAY_MS` ceiling (`400`).
+They apply to:
+
+- a provider request that carries the visitor's `X-Demo-Token` — the delay, the forced errors and
+  the failure rate. Without the header, a request gets the instance's settings as before;
+- a callback for one of the visitor's payments, whoever sends it — `duplicateCallback`;
+- the visitor's dashboard — `autoRefresh` and `customFieldPresets`.
+
+```bash
+# Force a decline on your own requests only
+curl -X POST http://localhost:3000/api/admin/config \
+  -H "X-Demo-Token: $TOKEN" -H 'Content-Type: application/json' -d '{"forceError2c2p":"4005"}'
+curl http://localhost:3000/api/2c2p/token -H "X-Demo-Token: $TOKEN" \
+  -H 'Content-Type: application/json' -d '{"invoiceNo":"MINE-1","amount":100}'
+# → "respCode": "4005"; the same request without the header still succeeds
+```
 
 ---
 
@@ -367,13 +387,13 @@ Makes inquiries on one payment misbehave.
 
 ### `GET` / `POST /api/admin/config`
 
-Global simulation settings.
+Global simulation settings for the admin; a demo visitor's own for a visitor (above).
 
 | Key | Type | Effect |
 | --- | --- | --- |
 | `globalDelay` | number | Milliseconds added to every provider response |
 | `failureRate` | number | Percentage of requests that fail randomly (0–100) |
-| `duplicateCallback` | boolean | Send every callback twice |
+| `duplicateCallback` | boolean | Send a single callback twice; a sequence sends exactly what it lists |
 | `forceError2c2p` | string | Force this response code on 2C2P |
 | `forceErrorOmise` | string | Force this error on Omise |
 | `logTTLDays` | number | How long request logs are kept |

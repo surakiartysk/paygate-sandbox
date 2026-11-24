@@ -6,8 +6,9 @@
  */
 
 import { getLogs, clearAllLogs, cleanupOldLogs, getConfig, updateConfig } from '../../lib/storage.js';
-import { isAuthenticated, unauthorized } from '../../lib/auth.js';
-import { refuseDemo, resolveDemoVisitor } from '../../lib/demoAccess.js';
+import { unauthorized } from '../../lib/auth.js';
+import { refuseDemo, resolvePrincipal } from '../../lib/demoAccess.js';
+import { enforceRateLimit } from '../../lib/rateLimit.js';
 
 export default async function handler(request, response) {
   // No CORS headers: the admin API answers this origin's own pages and
@@ -17,12 +18,16 @@ export default async function handler(request, response) {
     return response.status(200).end();
   }
   
-  // Admin only. The request log holds every caller's traffic, including the
-  // callback addresses other people's integrations registered. A demo visitor
-  // is told so rather than answered 401, which would sign them out.
-  if (!isAuthenticated(request)) {
-    if (await resolveDemoVisitor(request)) return refuseDemo(response);
-    return unauthorized(response);
+  // The request log holds every caller's traffic, including the callback
+  // addresses other people's integrations registered. The admin reads all of
+  // it. A demo visitor reads the entries for their own invoices and nothing
+  // else (decision 31), and may not clear anything: clearing is the instance's.
+  const principal = await resolvePrincipal(request);
+  if (!principal) return unauthorized(response);
+  const visitor = principal.role === 'demo' ? principal.visitor : null;
+  if (visitor) {
+    if (enforceRateLimit(request, response)) return;
+    if (request.method !== 'GET') return refuseDemo(response);
   }
   
   try {
@@ -33,7 +38,10 @@ export default async function handler(request, response) {
       const offset = (page - 1) * limit;
       
       const { type, invoiceNo } = request.query;
-      const filtering = Boolean(type || invoiceNo);
+      // A visitor's view is always a filtered one: every log is read and only
+      // theirs are kept, so a page of fifty is fifty of theirs and not the few
+      // of theirs among the newest fifty of everyone's.
+      const filtering = Boolean(type || invoiceNo || visitor);
 
       // A filter has to see every log, not the page being shown: filtering the
       // newest fifty can only ever find what is already among the newest fifty.
@@ -44,6 +52,16 @@ export default async function handler(request, response) {
       );
 
       let filteredLogs = fetched;
+      if (visitor) {
+        // By the invoice number the entry was written with: a visitor's
+        // invoices all start with their owner id, and the trailing dash stops
+        // owner AB12 matching AB123's. Anyone may send a provider request that
+        // names one of these numbers, and it shows here — but that is a
+        // stranger putting their own request in front of this visitor, escaped
+        // when drawn, never the visitor reading someone else's traffic.
+        const prefix = `DEMO-${visitor.ownerId}-`;
+        filteredLogs = filteredLogs.filter(log => typeof log.invoiceNo === 'string' && log.invoiceNo.startsWith(prefix));
+      }
       if (type) {
         filteredLogs = filteredLogs.filter(log => log.type === type);
       }

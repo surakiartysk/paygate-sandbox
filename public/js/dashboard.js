@@ -109,7 +109,7 @@ function applyDemoMode() {
   const inspector = localStorage.getItem('demo_inspector');
   banner.innerHTML = 'Demo: these ten payments are yours alone for a day. Change a status, send a callback, '
     + 'then see what arrived in <a class="demo-inspector-link">your inspector</a>. '
-    + 'Settings and logs stay with the owner.';
+    + 'Settings and the request log are yours too.';
   const link = banner.querySelector('.demo-inspector-link');
   if (inspector) link.href = `/inspector?session=${encodeURIComponent(inspector)}`;
   else link.replaceWith(document.createTextNode('your inspector'));
@@ -734,7 +734,10 @@ async function loadLogs(page = null) {
     }
     
     // Update TTL info
-    document.getElementById('log-ttl-info').textContent = `TTL: ${data.logTTLDays} days`;
+    // A visitor's log is a filtered one (decision 31), and says so.
+    document.getElementById('log-ttl-info').textContent = isDemo()
+      ? `Requests for your payments · kept ${data.logTTLDays} days`
+      : `TTL: ${data.logTTLDays} days`;
     
     renderLogs();
     renderLogsPagination();

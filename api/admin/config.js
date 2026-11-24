@@ -8,6 +8,63 @@ import { getConfig, updateConfig } from '../../lib/storage.js';
 import { unauthorized } from '../../lib/auth.js';
 import { refuseDemo, resolvePrincipal } from '../../lib/demoAccess.js';
 import { enforceRateLimit } from '../../lib/rateLimit.js';
+import { saveVisitorSettings, settingsForOwner, VISITOR_SETTING_KEYS } from '../../lib/demoSettings.js';
+import { maxHeaderDelay } from '../../lib/simulation.js';
+
+const OWNER_KEYS = ['globalDelay', 'forceError', 'forceError2c2p', 'forceErrorOmise', 'duplicateCallback', 'failureRate', 'logTTLDays', 'customFieldPresets', 'autoRefresh'];
+
+/**
+ * What is wrong with a settings update, or null when nothing is.
+ *
+ * One check for the owner and for a visitor, so the two cannot drift: a
+ * visitor gets a shorter list of keys and a ceiling on the delay, and
+ * otherwise the same rules.
+ *
+ * @param {unknown} updates - The request body
+ * @param {{ keys: string[], maxDelay?: number }} limits - What this caller may set
+ * @returns {string|null} The error, for a 400
+ */
+function invalidUpdate(updates, { keys, maxDelay = Infinity }) {
+  if (!updates || typeof updates !== 'object' || Array.isArray(updates)) {
+    return 'The body must be a JSON object';
+  }
+  const invalidKeys = Object.keys(updates).filter(k => !keys.includes(k));
+  if (invalidKeys.length > 0) return `Invalid config keys: ${invalidKeys.join(', ')}`;
+
+  if (updates.globalDelay !== undefined && (typeof updates.globalDelay !== 'number' || updates.globalDelay < 0)) {
+    return 'globalDelay must be a non-negative number';
+  }
+  if (updates.globalDelay !== undefined && updates.globalDelay > maxDelay) {
+    return `globalDelay may be at most ${maxDelay} ms in the demo`;
+  }
+  if (updates.failureRate !== undefined && (typeof updates.failureRate !== 'number' || updates.failureRate < 0 || updates.failureRate > 100)) {
+    return 'failureRate must be a number between 0 and 100';
+  }
+  if (updates.logTTLDays !== undefined && (typeof updates.logTTLDays !== 'number' || updates.logTTLDays < 1)) {
+    return 'logTTLDays must be a number >= 1';
+  }
+  if (updates.autoRefresh !== undefined && typeof updates.autoRefresh !== 'boolean') {
+    return 'autoRefresh must be true or false';
+  }
+  if (updates.duplicateCallback !== undefined && typeof updates.duplicateCallback !== 'boolean') {
+    return 'duplicateCallback must be true or false';
+  }
+  for (const key of ['forceError', 'forceError2c2p', 'forceErrorOmise']) {
+    const value = updates[key];
+    if (value !== undefined && value !== null && (typeof value !== 'string' || !/^[A-Za-z0-9_]{0,40}$/.test(value))) {
+      return `${key} must be an error code, empty, or null`;
+    }
+  }
+  if (updates.customFieldPresets !== undefined) {
+    const presets = updates.customFieldPresets;
+    const isValid = Array.isArray(presets) && presets.every(p =>
+      p && typeof p.name === 'string' && p.name.trim() !== '' &&
+      p.fields && typeof p.fields === 'object' && !Array.isArray(p.fields)
+    );
+    if (!isValid) return 'customFieldPresets must be an array of { name: string, fields: object }';
+  }
+  return null;
+}
 
 // Response codes organized by provider
 // Reference: https://developer.2c2p.com/docs/response-code-payment (2C2P)
@@ -137,16 +194,16 @@ export default async function handler(request, response) {
     return response.status(200).end();
   }
   
-  // A demo visitor may read the config and the response codes, so the
-  // dashboard can render them; only the admin may change anything, because
-  // the config applies to every caller of the instance.
+  // A demo visitor reads and writes settings of their own (decision 31): the
+  // instance's apply to every caller, so a visitor never reads or changes
+  // those. The response codes are the same for everyone.
   const principal = await resolvePrincipal(request);
   if (!principal) {
     return unauthorized(response);
   }
   if (principal.role === 'demo') {
     if (enforceRateLimit(request, response)) return;
-    if (request.method !== 'GET') return refuseDemo(response);
+    if (request.method !== 'GET' && request.method !== 'POST') return refuseDemo(response);
   }
   
   try {
@@ -185,6 +242,25 @@ export default async function handler(request, response) {
     }
     
     // Handle config endpoints (default)
+    if (principal.role === 'demo') {
+      const visitor = principal.visitor;
+      if (request.method === 'GET') {
+        return response.status(200).json({
+          success: true,
+          scope: 'visitor',
+          config: await settingsForOwner(visitor.ownerId)
+        });
+      }
+      const problem = invalidUpdate(request.body, { keys: VISITOR_SETTING_KEYS, maxDelay: maxHeaderDelay() });
+      if (problem) return response.status(400).json({ success: false, error: problem });
+      return response.status(200).json({
+        success: true,
+        scope: 'visitor',
+        message: 'Configuration updated',
+        config: await saveVisitorSettings(visitor, request.body)
+      });
+    }
+
     if (request.method === 'GET') {
       const config = await getConfig();
       return response.status(200).json({
@@ -195,61 +271,8 @@ export default async function handler(request, response) {
     
     if (request.method === 'POST') {
       const updates = request.body;
-      
-      // Validate updates
-      const validKeys = ['globalDelay', 'forceError', 'forceError2c2p', 'forceErrorOmise', 'duplicateCallback', 'failureRate', 'logTTLDays', 'customFieldPresets', 'autoRefresh'];
-      const invalidKeys = Object.keys(updates).filter(k => !validKeys.includes(k));
-      
-      if (invalidKeys.length > 0) {
-        return response.status(400).json({
-          success: false,
-          error: `Invalid config keys: ${invalidKeys.join(', ')}`
-        });
-      }
-      
-      // Validate values
-      if (updates.globalDelay !== undefined && (typeof updates.globalDelay !== 'number' || updates.globalDelay < 0)) {
-        return response.status(400).json({
-          success: false,
-          error: 'globalDelay must be a non-negative number'
-        });
-      }
-      
-      if (updates.failureRate !== undefined && (typeof updates.failureRate !== 'number' || updates.failureRate < 0 || updates.failureRate > 100)) {
-        return response.status(400).json({
-          success: false,
-          error: 'failureRate must be a number between 0 and 100'
-        });
-      }
-      
-      if (updates.logTTLDays !== undefined && (typeof updates.logTTLDays !== 'number' || updates.logTTLDays < 1)) {
-        return response.status(400).json({
-          success: false,
-          error: 'logTTLDays must be a number >= 1'
-        });
-      }
-      
-      if (updates.autoRefresh !== undefined && typeof updates.autoRefresh !== 'boolean') {
-        return response.status(400).json({
-          success: false,
-          error: 'autoRefresh must be true or false'
-        });
-      }
-      
-      if (updates.customFieldPresets !== undefined) {
-        const presets = updates.customFieldPresets;
-        const isValid = Array.isArray(presets) && presets.every(p =>
-          p && typeof p.name === 'string' && p.name.trim() !== '' &&
-          p.fields && typeof p.fields === 'object' && !Array.isArray(p.fields)
-        );
-        if (!isValid) {
-          return response.status(400).json({
-            success: false,
-            error: 'customFieldPresets must be an array of { name: string, fields: object }'
-          });
-        }
-      }
-      
+      const problem = invalidUpdate(updates, { keys: OWNER_KEYS });
+      if (problem) return response.status(400).json({ success: false, error: problem });
       const newConfig = await updateConfig(updates);
       
       return response.status(200).json({

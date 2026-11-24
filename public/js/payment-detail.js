@@ -88,7 +88,7 @@ function applyDemoMode() {
   const inspector = localStorage.getItem('demo_inspector');
   banner.innerHTML = 'Demo: these ten payments are yours alone for a day. Change a status, send a callback, '
     + 'then see what arrived in <a class="demo-inspector-link">your inspector</a>. '
-    + 'Settings and logs stay with the owner.';
+    + 'Settings and the request log are yours too.';
   const link = banner.querySelector('.demo-inspector-link');
   if (inspector) link.href = `/inspector?session=${encodeURIComponent(inspector)}`;
   else link.replaceWith(document.createTextNode('your inspector'));

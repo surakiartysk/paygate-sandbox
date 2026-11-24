@@ -29,7 +29,7 @@ describe('what the pages claim', () => {
     }
     const config = read('api/admin/config.js');
     assert.match(config, /GET\/POST \/api\/admin\/config/);
-    assert.match(config, /validKeys = \[[^\]]*'customFieldPresets'/);
+    assert.match(config, /OWNER_KEYS = \[[^\]]*'customFieldPresets'/);
   });
 
   test('say a deleted payment takes its callback history with it, which it does: the history is on the record', () => {

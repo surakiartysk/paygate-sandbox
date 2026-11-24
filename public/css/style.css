@@ -2419,6 +2419,11 @@ a:hover {
   display: none !important;
 }
 
+/* The other way round: said to a visitor only, such as whose settings these are. */
+body:not(.is-demo) [data-demo-only] {
+  display: none !important;
+}
+
 .demo-banner {
   padding: 0.625rem 1rem;
   background: var(--accent-dim);

@@ -52,6 +52,7 @@ export async function startSandbox(env = {}) {
 
   return {
     baseUrl,
+    dataDir,
     async stop() {
       child.kill('SIGTERM');
       await new Promise(resolve => child.once('exit', resolve));
